@@ -38,6 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Swagger
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
+
     # Local apps
     'dasii_backend',
     'users',
@@ -116,6 +120,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "users.exceptions.custom_exception_handler",
 }
 
