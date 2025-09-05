@@ -17,12 +17,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}
         }
 
-    # def validate_email(self, data):
-    #     if User.objects.filter(email=data).exists():
-    #         raise serializers.ValidationError("이미 사용 중인 이메일입니다.")
-    #
-    #     return data
-
     def validate_password(self, data):
         # 비밀번호 규칙 검사(8~20자, 영문/숫자/특수문자 포함)
         import re
