@@ -1,10 +1,11 @@
+from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from users.models import User
 
 
-class RegisterSerializer(serializers.ModelSerializer):
+class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 이메일입니다.")]
     )
@@ -38,3 +39,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('password2') # DB에는 password2 저장 X
 
         return User.objects.create_user(**validated_data)
+
+class SignInSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        user = authenticate(email=data['email'], password=data['password'])
+        if not user:
+            raise serializers.ValidationError("이메일 또는 비밀번호가 올바르지 않습니다.")
+        data['user'] = user
+        return data
