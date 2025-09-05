@@ -2,7 +2,6 @@ from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
 
-
 def custom_exception_handler(exc, context):
     # 기본 DRF exception 처리
     response = exception_handler(exc, context)
@@ -17,9 +16,9 @@ def custom_exception_handler(exc, context):
             elif "detail" in response.data:
                 message = response.data["detail"]
             else:
-                # 필드별 에러 처리 (예: email, password)
+                # 필드별 에러 처리 -> key 제거
                 key, value = list(response.data.items())[0]
-                message = f"{key}: {', '.join(value)}"
+                message = f"{', '.join(value)}"
 
             response.data = {
                 "success": False,
