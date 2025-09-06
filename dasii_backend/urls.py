@@ -25,4 +25,5 @@ urlpatterns = [
 
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')), # users 앱 라우팅
+    path('socials/', include('socials.urls')) # socials 앱 라우팅
 ]
