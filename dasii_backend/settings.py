@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # Local apps
     'dasii_backend',
     'users',
+    'socials',
 
     # Third-party
     "rest_framework",
