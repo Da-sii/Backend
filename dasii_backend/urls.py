@@ -25,7 +25,6 @@ urlpatterns = [
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 
     path('admin/', admin.site.urls),
-    path('users/', include('users.urls')), # users 앱 라우팅
+    path(settings.API_PREFIX, include('users.urls')), # users 앱 라우팅 (api/ 접두사)
     path('socials/', include('socials.urls')), # socials 앱 라우팅
-    path(settings.API_PREFIX, include('users.urls')),
 ]
