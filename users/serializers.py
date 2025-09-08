@@ -50,3 +50,10 @@ class SignInSerializer(serializers.Serializer):
             raise serializers.ValidationError("이메일 또는 비밀번호가 올바르지 않습니다.")
         data['user'] = user
         return data
+
+
+class KakaoLoginSerializer(serializers.Serializer):
+    code = serializers.CharField(
+        help_text="카카오 로그인 후 받은 authorization code",
+        required=True
+    )
