@@ -12,8 +12,18 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from decouple import config
+from dotenv import load_dotenv
+import os
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load Kakao API environment variables
+load_dotenv(dotenv_path=os.path.join(BASE_DIR, ".env.kakao"))
+
+KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY")
+KAKAO_REDIRECT_URI = os.getenv("KAKAO_REDIRECT_URI")
+KAKAO_CLIENT_SECRET = os.getenv("KAKAO_CLIENT_SECRET", "")  # 없으면 빈 문자열
 
 
 # Quick-start development settings - unsuitable for production
@@ -128,3 +138,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# API Settings
+API_PREFIX = 'api/'
