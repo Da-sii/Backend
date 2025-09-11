@@ -1,7 +1,13 @@
+import json
+import requests
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.conf import settings
+from drf_spectacular.utils import extend_schema
+
 from users.models import User
 from socials.serializers import AppleSigninSerializer
 from socials.utils import verify_identity_token
