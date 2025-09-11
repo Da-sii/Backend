@@ -15,6 +15,22 @@ class Product(models.Model):
     def __str__(self):
         return self.product
 
+class ProductImage(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="images",)
+    url = models.URLField(
+        max_length=500,
+        verbose_name="이미지 URL"
+    )
+
+    class Meta:
+        db_table = "product_images"
+
+    def __str__(self):
+        return f"{self.product.name} 이미지"
+
 class Ingredient(models.Model):
     name = models.TextField(verbose_name="성분 이름")
     englishIngredient = models.CharField(verbose_name="영어이름")
