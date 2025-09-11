@@ -51,7 +51,6 @@ class SignInSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
-
 class KakaoLoginSerializer(serializers.Serializer):
     code = serializers.CharField(
         help_text="카카오 로그인 후 받은 authorization code",
