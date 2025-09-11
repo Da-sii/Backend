@@ -17,7 +17,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-from django.conf import settings
 
 urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
@@ -25,6 +24,6 @@ urlpatterns = [
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 
     path('admin/', admin.site.urls),
-    path(settings.API_PREFIX, include('users.urls')), # users 앱 라우팅 (api/ 접두사)
-    path('socials/', include('socials.urls')), # socials 앱 라우팅
+    path('auth/', include('users.urls')), # users 앱 라우팅
+    path('auth/', include('socials.urls')), # socials 앱 라우팅
 ]
