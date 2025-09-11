@@ -69,7 +69,6 @@ class SignInView(GenericAPIView):
             },
             status=status.HTTP_200_OK,
         )
-
 class KakaoLoginView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = KakaoLoginSerializer
@@ -196,3 +195,4 @@ class KakaoLoginView(GenericAPIView):
             "refresh": str(refresh),
             "message": "Login successful" if not created else "User created and logged in",
         }, status=status.HTTP_200_OK)
+
