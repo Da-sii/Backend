@@ -31,6 +31,7 @@ class Product(models.Model):
     price = models.IntegerField(verbose_name="가격")
     unit = models.TextField(verbose_name="단위")
     piece = models.IntegerField(verbose_name="개수")
+    productType = models.TextField(verbose_name="식품의 유형")
     viewCount = models.IntegerField(verbose_name="조회수", default=0)
 
     class Meta:

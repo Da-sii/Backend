@@ -6,12 +6,9 @@ from django.conf import settings
 
 from products.models import Product, ProductImage, Ingredient, ProductIngredient
 
-
 class ProductIngredientInputSerializer(serializers.Serializer):
     ingredientId = serializers.IntegerField()
     amount = serializers.CharField()
-
-
 class ProductCreateSerializer(serializers.ModelSerializer):
     # 여러 이미지 파일
     images = serializers.ListField(
@@ -22,7 +19,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("name", "company", "price", "unit", "piece", "images", "ingredients")
+        fields = ("name", "company", "price", "unit", "piece", "productType", "images", "ingredients")
 
     def validate_ingredients(self, value: str) -> List[Dict[str, Any]]:
         if not value:
@@ -65,27 +62,26 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                 uploaded_images.append(ProductImage(product=product, url=url))
             ProductImage.objects.bulk_create(uploaded_images)
 
-            # --- Ingredients 저장 ---
-            if ingredients_input:
-                ingredient_id_to_obj = {
-                    ing.id: ing
-                    for ing in Ingredient.objects.filter(
-                        id__in=[item["ingredientId"] for item in ingredients_input]
-                    )
-                }
-                ProductIngredient.objects.bulk_create(
-                    [
-                        ProductIngredient(
-                            product=product,
-                            ingredient=ingredient_id_to_obj[item["ingredientId"]],
-                            amount=item["amount"],
-                        )
-                        for item in ingredients_input
-                    ]
+        # --- Ingredients 저장 ---
+        if ingredients_input:
+            ingredient_id_to_obj = {
+                ing.id: ing
+                for ing in Ingredient.objects.filter(
+                    id__in=[item["ingredientId"] for item in ingredients_input]
                 )
+            }
+            ProductIngredient.objects.bulk_create(
+                [
+                    ProductIngredient(
+                        product=product,
+                        ingredient=ingredient_id_to_obj[item["ingredientId"]],
+                        amount=item["amount"],
+                    )
+                    for item in ingredients_input
+                ]
+            )
 
-            return product
-
+        return product
 class ProductIngredientReadSerializer(serializers.ModelSerializer):
     ingredientName = serializers.CharField(source="ingredient.name")
 
@@ -106,3 +102,31 @@ class ProductReadSerializer(serializers.ModelSerializer):
         model = Product
         fields = ("id", "name", "company", "price", "unit", "piece", "images", "ingredients")
 
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ("url",)
+
+class ProductIngredientDetailSerializer(serializers.ModelSerializer):
+    ingredientName = serializers.CharField(source="ingredient.name")
+    englishName = serializers.CharField(source="ingredient.englishIngredient")
+    minRecommended = serializers.CharField(source="ingredient.minRecommended")
+    maxRecommended = serializers.CharField(source="ingredient.maxRecommended")
+    effect = serializers.CharField(source="ingredient.effect")
+    sideEffect = serializers.CharField(source="ingredient.sideEffect")
+
+    class Meta:
+        model = ProductIngredient
+        fields = ("ingredientName", "englishName", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect")
+
+class ProductDetailSerializer(serializers.ModelSerializer):
+    images = ProductImageSerializer(many=True, read_only=True)
+    ingredients = ProductIngredientDetailSerializer(many=True, read_only=True)
+    ingredientsCount = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "company", "price", "unit", "piece", "viewCount", "images", "ingredientsCount", "ingredients")
+
+    def get_ingredientsCount(self, obj):
+        return obj.ingredients.count()
