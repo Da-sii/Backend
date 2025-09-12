@@ -1,9 +1,9 @@
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from products.models import Product
-from products.serializers import ProductCreateSerializer
+from products.serializers import ProductCreateSerializer, ProductReadSerializer
 
 
 # 제품 등록
@@ -13,16 +13,10 @@ class ProductCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated] # 접근 권한 확인
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        product = serializer.save()
-        headers = self.get_success_headers(serializer.data)
+        create_serializer = self.get_serializer(data=request.data)
+        create_serializer.is_valid(raise_exception=True)
+        product = create_serializer.save()
 
-        return Response(
-            {
-                "success": True,
-                "productId": product.id,
-            },
-            status=status.HTTP_201_CREATED,
-            headers=headers,
-        )
+        read_serializer = ProductReadSerializer(product)
+        return Response({"success": True, "product": read_serializer.data}, status=201)
+
