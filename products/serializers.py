@@ -100,7 +100,7 @@ class ProductReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "images", "ingredients")
+        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "images", "ingredients")
 
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -114,10 +114,27 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
     maxRecommended = serializers.CharField(source="ingredient.maxRecommended")
     effect = serializers.CharField(source="ingredient.effect")
     sideEffect = serializers.CharField(source="ingredient.sideEffect")
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductIngredient
-        fields = ("ingredientName", "englishName", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect")
+        fields = ("ingredientName", "englishName", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect", "status")
+
+    def get_status(self, obj):
+        try:
+            # 문자열에서 숫자만 추출 (예: "750mg" -> 750)
+            amount_value = float("".join([c for c in obj.amount if c.isdigit() or c == "."]))
+            min_value = float("".join([c for c in obj.ingredient.minRecommended if c.isdigit() or c == "."]))
+            max_value = float("".join([c for c in obj.ingredient.maxRecommended if c.isdigit() or c == "."]))
+        except Exception:
+            return "unknown"
+
+        if amount_value < min_value:
+            return "미만"
+        elif amount_value > max_value:
+            return "초과"
+        else:
+            return "적정"
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
@@ -126,7 +143,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "viewCount", "images", "ingredientsCount", "ingredients")
+        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "viewCount", "images", "ingredientsCount", "ingredients")
 
     def get_ingredientsCount(self, obj):
         return obj.ingredients.count()
