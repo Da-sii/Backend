@@ -68,39 +68,7 @@ class KakaoLoginView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = KakaoLoginSerializer
     
-    @extend_schema(
-        summary="카카오 로그인",
-        description="카카오 OAuth를 통한 로그인/회원가입",
-        request=KakaoLoginSerializer,
-        responses={
-            200: {
-                "type": "object",
-                "properties": {
-                    "success": {"type": "boolean"},
-                    "user": {
-                        "type": "object",
-                        "properties": {
-                            "id": {"type": "integer"},
-                            "nickname": {"type": "string"},
-                            "email": {"type": "string"},
-                            "kakao": {"type": "boolean"}
-                        }
-                    },
-                    "access": {"type": "string"},
-                    "refresh": {"type": "string"},
-                    "message": {"type": "string"}
-                }
-            },
-            400: {
-                "type": "object",
-                "properties": {
-                    "error": {"type": "string"},
-                    "detail": {"type": "object"}
-                }
-            }
-        },
-        tags=["인증"]
-    )
+
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
