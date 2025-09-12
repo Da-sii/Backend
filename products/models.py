@@ -31,14 +31,13 @@ class Product(models.Model):
     price = models.IntegerField(verbose_name="가격")
     unit = models.TextField(verbose_name="단위")
     piece = models.IntegerField(verbose_name="개수")
-    nutrients = models.TextField(verbose_name="영양정보")
     viewCount = models.IntegerField(verbose_name="조회수", default=0)
 
     class Meta:
         db_table = "products"
 
     def __str__(self):
-        return self.product
+        return self.name
 
 class ProductImage(models.Model):
     product = models.ForeignKey(
@@ -77,9 +76,9 @@ class CategoryProduct(models.Model):
 
 class Ingredient(models.Model):
     name = models.TextField(verbose_name="성분 이름")
-    englishIngredient = models.CharField(verbose_name="영어이름")
-    minRecommended = models.IntegerField(verbose_name="최소권장량")
-    maxRecommended = models.IntegerField(verbose_name="최대권장량")
+    englishIngredient = models.CharField(max_length=100, verbose_name="영어이름")
+    minRecommended = models.CharField(max_length=50, verbose_name="최소권장량")
+    maxRecommended = models.CharField(max_length=50, verbose_name="최대권장량")
     effect = models.TextField(verbose_name="효과")
     sideEffect = models.TextField(verbose_name="부작용")
 
@@ -87,7 +86,7 @@ class Ingredient(models.Model):
         db_table = "ingredients"
 
     def __str__(self):
-        return self.ingredient
+        return self.name
 
 class ProductIngredient(models.Model):
     product = models.ForeignKey(
@@ -100,10 +99,10 @@ class ProductIngredient(models.Model):
         on_delete=models.PROTECT, # 성분은 삭제 방지
         related_name="productIngredients",
     )
-    amount = models.IntegerField(verbose_name="포함량")
+    amount = models.CharField(max_length=50, verbose_name="포함량")
 
     class Meta:
-        db_table = "productIngredients"
+        db_table = "product_ingredients"
 
     def __str__(self):
-        return f"{self.product.product} - {self.ingredient.ingredient} ({self.amount})"
+        return f"{self.product.name} - {self.ingredient.name} ({self.amount})"

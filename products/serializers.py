@@ -8,7 +8,7 @@ from products.models import Product, ProductImage, Ingredient, ProductIngredient
 
 class ProductIngredientInputSerializer(serializers.Serializer):
     ingredientId = serializers.IntegerField()
-    amount = serializers.IntegerField()
+    amount = serializers.CharField()
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
@@ -19,16 +19,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = (
-            "name",
-            "company",
-            "price",
-            "unit",
-            "piece",
-            "nutrients",
-            "images",
-            "ingredients",
-        )
+        fields = ("name", "company", "price", "unit", "piece", "images", "ingredients")
 
     def validate_ingredients(self, value: List[Dict[str, Any]]):
         if not value:
@@ -51,8 +42,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         for item in value:
             amount = item.get("amount")
 
-            if amount is None or amount < 0:
-                raise serializers.ValidationError("amount는 0 이상이어야 합니다.")
+            if amount is None:
+                raise serializers.ValidationError("amount는 필수입니다.")
 
         return value
 
@@ -88,4 +79,23 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
         return product
 
+class ProductIngredientReadSerializer(serializers.ModelSerializer):
+    ingredientName = serializers.CharField(source="ingredient.name")
+
+    class Meta:
+        model = ProductIngredient
+        fields = ("ingredientName", "amount")
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ("url",)
+
+class ProductReadSerializer(serializers.ModelSerializer):
+    images = ProductImageSerializer(many=True, read_only=True)
+    ingredients = ProductIngredientReadSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "company", "price", "unit", "piece", "images", "ingredients")
 
