@@ -1,9 +1,9 @@
 from rest_framework import generics, parsers
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from products.models import Product
-from products.serializers import ProductCreateSerializer, ProductReadSerializer
+from products.serializers import ProductCreateSerializer, ProductReadSerializer, ProductDetailSerializer
 
 
 # 제품 등록
@@ -20,3 +20,10 @@ class ProductCreateView(generics.CreateAPIView):
 
         read_serializer = ProductReadSerializer(product)
         return Response({"success": True, "product": read_serializer.data}, status=201)
+
+# 제품 상세 (GET /products/<id>/)
+class ProductDetailView(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductDetailSerializer
+    permission_classes = [AllowAny] # 누구나 접근 가능
+    lookup_field = "id"
