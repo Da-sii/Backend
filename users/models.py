@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
-import random, string
+import random
+import string
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, nickname=None, **extra_fields):
@@ -24,7 +25,7 @@ class UserManager(BaseUserManager):
     @staticmethod
     def generate_nickname():
         while True:
-            number = ''.join(random.choices(string.digits, k=6))
+            number = "".join(random.choices(string.digits, k=6))
             nickname = f"user{number}"
             if not User.objects.filter(nickname=nickname).exists():
                 return nickname

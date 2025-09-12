@@ -1,0 +1,15 @@
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.format]
+quote-style = "double"       # 모든 문자열을 쌍따옴표로
+docstring-code-format = true # docstring 안의 코드 블럭도 포맷팅
+
+[tool.ruff.lint]
+select = ["Q"]   # flake8-quotes 규칙
+fixable = ["Q"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+multiline-quotes = "double"
+docstring-quotes = "double"
