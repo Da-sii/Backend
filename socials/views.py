@@ -1,12 +1,7 @@
-import json
-import requests
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.conf import settings
-from drf_spectacular.utils import extend_schema
 
 from users.models import User
 from socials.serializers import AppleSigninSerializer
@@ -19,7 +14,7 @@ class AppleSigninView(GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        identityToken = serializer.validated_data['identityToken']
+        identityToken = serializer.validated_data["identityToken"]
         
         try:
             payload = verify_identity_token(identityToken)
@@ -32,8 +27,8 @@ class AppleSigninView(GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        appleId = payload['sub']
-        email = payload.get('email', f'{appleId}@apple.com')
+        appleId = payload["sub"]
+        email = payload.get("email", f"{appleId}@apple.com")
 
         user, created = User.objects.get_or_create(
             email=email,
