@@ -26,7 +26,6 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "unit",
             "piece",
             "nutrients",
-            "viewCount",
             "images",
             "ingredients",
         )
@@ -56,13 +55,6 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("amount는 0 이상이어야 합니다.")
 
         return value
-
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # viewCount 기본값 0 처리
-        if attrs.get("viewCount") is None:
-            attrs["viewCount"] = 0
-            
-        return attrs
 
     @transaction.atomic
     def create(self, validated_data: Dict[str, Any]) -> Product:

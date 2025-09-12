@@ -1,5 +1,30 @@
 from django.db import models
 
+class BigCategory(models.Model):
+    category = models.CharField(max_length=100, verbose_name="카테고리")
+
+    class Meta:
+        db_table = "big_categories"
+
+    def __str__(self):
+        return self.category
+
+
+class SmallCategory(models.Model):
+    bigCategory = models.ForeignKey(
+        BigCategory,
+        on_delete=models.CASCADE,
+        related_name="smallCategories",
+        verbose_name="대분류 외래키",
+    )
+    category = models.CharField(max_length=100, verbose_name="카테고리")
+
+    class Meta:
+        db_table = "small_categories"
+
+    def __str__(self):
+        return f"{self.bigCategory.category} - {self.category}"
+
 class Product(models.Model):
     name = models.TextField(verbose_name="제품 이름")
     company = models.TextField(verbose_name="회사 이름")
@@ -7,7 +32,7 @@ class Product(models.Model):
     unit = models.TextField(verbose_name="단위")
     piece = models.IntegerField(verbose_name="개수")
     nutrients = models.TextField(verbose_name="영양정보")
-    viewCount = models.IntegerField(verbose_name="조회수")
+    viewCount = models.IntegerField(verbose_name="조회수", default=0)
 
     class Meta:
         db_table = "products"
@@ -30,6 +55,25 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"{self.product.name} 이미지"
+class CategoryProduct(models.Model):
+    category = models.ForeignKey(
+        SmallCategory,
+        on_delete=models.PROTECT, # 카테고리 삭제 방지
+        related_name="category_products",
+        verbose_name="카테고리 외래키",
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT, # 제품 삭제 방지,
+        related_name="category_products",
+        verbose_name="제품 외래키",
+    )
+
+    class Meta:
+        db_table = "category_products"
+
+    def __str__(self):
+        return f"{self.category.category} - {self.product.name}"
 
 class Ingredient(models.Model):
     name = models.TextField(verbose_name="성분 이름")

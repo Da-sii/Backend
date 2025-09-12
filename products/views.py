@@ -6,16 +6,18 @@ from products.models import Product
 from products.serializers import ProductCreateSerializer
 
 
+# 제품 등록
 class ProductCreateView(generics.CreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductCreateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated] # 접근 권한 확인
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         product = serializer.save()
         headers = self.get_success_headers(serializer.data)
+
         return Response(
             {
                 "success": True,
