@@ -23,7 +23,8 @@ urlpatterns = [
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 
-    path('admin/', admin.site.urls),
-    path('auth/', include('users.urls')), # users 앱 라우팅
-    path('auth/', include('socials.urls')), # socials 앱 라우팅
+    path("admin/", admin.site.urls),
+    path("auth/", include("users.urls")), # users 앱 라우팅
+    path("auth/", include("socials.urls")), # socials 앱 라우팅
+    path("api/", include("products.urls")), # products 앱 라우팅
 ]

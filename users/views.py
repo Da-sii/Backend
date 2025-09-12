@@ -5,7 +5,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
-from drf_spectacular.utils import extend_schema
 
 from .models import User
 from .serializers import SignUpSerializer, SignInSerializer, KakaoLoginSerializer
