@@ -58,8 +58,9 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                     filename,
                     ExtraArgs={"ContentType": img.content_type},
                 )
-                url = f"{settings.AWS_S3_BASE_URL}/{filename}"
+                url = f"{settings.CLOUDFRONT_DOMAIN}/{filename}"
                 uploaded_images.append(ProductImage(product=product, url=url))
+
             ProductImage.objects.bulk_create(uploaded_images)
 
         # --- Ingredients 저장 ---
