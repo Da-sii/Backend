@@ -25,5 +25,5 @@ class ProductCreateView(generics.CreateAPIView):
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductDetailSerializer
-    permission_classes = [AllowAny] # 누구나 접근 가능
+    permission_classes = [IsAuthenticated] # 접근 권한 확인
     lookup_field = "id"
