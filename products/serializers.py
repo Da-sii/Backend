@@ -121,7 +121,7 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
         model = ProductIngredient
         fields = ("ingredientName", "englishName", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect", "status")
 
-    def get_status(self, obj):
+    def get_status(self, obj: ProductIngredient) -> str:
         try:
             # 문자열에서 숫자만 추출 (예: "750mg" -> 750)
             amount_value = float("".join([c for c in obj.amount if c.isdigit() or c == "."]))
@@ -146,5 +146,5 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = ("id", "name", "company", "price", "unit", "piece", "productType", "viewCount", "images", "ingredientsCount", "ingredients")
 
-    def get_ingredientsCount(self, obj):
+    def get_ingredientsCount(self, obj: Product) -> int:
         return obj.ingredients.count()
