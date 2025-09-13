@@ -148,3 +148,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     def get_ingredientsCount(self, obj: Product) -> int:
         return obj.ingredients.count()
+class ProductRankingSerializer(serializers.ModelSerializer):
+    totalViews = serializers.IntegerField()  # annotate에서 나온 값 받기
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "company", "price", "unit", "piece", "totalViews")
