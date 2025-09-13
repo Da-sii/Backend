@@ -1,10 +1,11 @@
 import requests
 from rest_framework import generics, status
 from rest_framework.generics import GenericAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
+from drf_spectacular.utils import extend_schema, OpenApiExample
 
 from .models import User
 from .serializers import SignUpSerializer, SignInSerializer, KakaoLoginSerializer
@@ -145,7 +146,7 @@ class KakaoLoginView(GenericAPIView):
         refresh = RefreshToken.for_user(user)
         access = str(refresh.access_token)
 
-        return Response({
+        response = Response({
             "success": True,
             "user": {
                 "id": user.id,
@@ -157,4 +158,79 @@ class KakaoLoginView(GenericAPIView):
             "refresh": str(refresh),
             "message": "Login successful" if not created else "User created and logged in",
         }, status=status.HTTP_200_OK)
+        
+        # refresh token을 쿠키로 설정
+        response.set_cookie(
+            'refresh_token',
+            str(refresh),
+            httponly=True,      # XSS 방지
+            secure=False,       # HTTP에서 테스트 (HTTPS에서는 True)
+            samesite='Strict',  # CSRF 방지
+            max_age=14*24*60*60  # 14일
+        )
+        
+        return response
+
+class LogoutView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="로그아웃",
+        description="사용자를 로그아웃합니다. refresh 토큰 쿠키를 삭제합니다.",
+        request=None,  # body 없음, 쿠키로만 처리
+        responses={
+            200: {
+                'description': '로그아웃 성공',
+                'examples': {
+                    'application/json': {
+                        'success': True,
+                        'message': '로그아웃되었습니다.'
+                    }
+                }
+            },
+            400: {
+                'description': '잘못된 요청 데이터',
+                'examples': {
+                    'application/json': {
+                        'error': '로그아웃 실패'
+                    }
+                }
+            },
+            401: {'description': '인증되지 않은 사용자'}
+        },
+        tags=['인증']
+    )
+    def post(self, request):
+        try:
+            # 쿠키에서 refresh token 가져오기
+            refresh_token = request.COOKIES.get('refresh_token')
+            
+            if not refresh_token:
+                return Response({"error": "refresh 토큰 쿠키가 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # refresh token 유효성 검사
+            try:
+                refresh_token_obj = RefreshToken(refresh_token)
+                user_id = refresh_token_obj['user_id']
+            except Exception as e:
+                return Response({"error": f"유효하지 않은 refresh 토큰입니다: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 로그아웃 성공 - refresh token 쿠키만 삭제
+            response = Response({
+                "success": True, 
+                "message": "로그아웃되었습니다. refresh token 쿠키가 삭제되었습니다."
+            }, status=status.HTTP_200_OK)
+            
+            # refresh token 쿠키 삭제
+            response.delete_cookie(
+                'refresh_token',
+                path='/',
+                domain=None,
+                samesite='Strict'
+            )
+            
+            return response
+            
+        except Exception as e:
+            return Response({"error": f"로그아웃 실패: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
