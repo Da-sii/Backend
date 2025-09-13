@@ -14,7 +14,8 @@ from .serializers import (
     ReviewImageUploadRequestSerializer,
     ReviewImageUploadResponseSerializer,
     ReviewImageDeleteResponseSerializer,
-    ProductReviewImagesResponseSerializer
+    ProductReviewImagesResponseSerializer,
+    ProductRatingStatsResponseSerializer
 )
 from .models import Review, ReviewImage
 from django.shortcuts import get_object_or_404
@@ -645,6 +646,110 @@ class ProductReviewImagesView(GenericAPIView):
             'product_id': product_id,
             'total_images': len(image_urls),
             'image_urls': list(image_urls)
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProductRatingStatsView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="상품 별점 통계 조회",
+        description="특정 상품의 별점 분포와 평균 별점을 조회합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='product_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='상품 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=ProductRatingStatsResponseSerializer,
+                description='상품 별점 통계 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "product_id": 1,
+                            "total_reviews": 15,
+                            "average_rating": 4.2,
+                            "rating_distribution": {
+                                "1": 0,
+                                "2": 1,
+                                "3": 2,
+                                "4": 5,
+                                "5": 7
+                            }
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='상품을 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '상품 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 통계']
+    )
+    def get(self, request, product_id):
+        """
+        특정 상품의 별점 통계를 조회합니다.
+        """
+        # 상품 존재 확인
+        from products.models import Product
+        product = get_object_or_404(Product, id=product_id)
+        
+        # 해당 상품의 모든 리뷰 조회
+        reviews = Review.objects.filter(product_id=product_id)
+        
+        # 리뷰가 없는 경우
+        if not reviews.exists():
+            response_data = {
+                'success': True,
+                'product_id': product_id,
+                'total_reviews': 0,
+                'average_rating': 0.0,
+                'rating_distribution': {
+                    '1': 0,
+                    '2': 0,
+                    '3': 0,
+                    '4': 0,
+                    '5': 0
+                }
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        # 별점 분포 계산
+        rating_counts = {}
+        total_rating = 0
+        
+        for i in range(1, 6):
+            count = reviews.filter(rate=i).count()
+            rating_counts[str(i)] = count
+            total_rating += count * i
+        
+        # 평균 별점 계산
+        total_reviews = reviews.count()
+        average_rating = round(total_rating / total_reviews, 1) if total_reviews > 0 else 0.0
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'product_id': product_id,
+            'total_reviews': total_reviews,
+            'average_rating': average_rating,
+            'rating_distribution': rating_counts
         }
         
         return Response(response_data, status=status.HTTP_200_OK)

@@ -89,3 +89,13 @@ class ProductReviewImagesResponseSerializer(serializers.Serializer):
         child=serializers.CharField(),
         help_text="해당 상품의 모든 리뷰 이미지 URL 목록"
     )
+
+class ProductRatingStatsResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    product_id = serializers.IntegerField()
+    total_reviews = serializers.IntegerField()
+    average_rating = serializers.FloatField()
+    rating_distribution = serializers.DictField(
+        child=serializers.IntegerField(),
+        help_text="별점별 리뷰 개수 (1점, 2점, 3점, 4점, 5점)"
+    )
