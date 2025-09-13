@@ -80,3 +80,12 @@ class ReviewImageUploadRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError("빈 URL은 허용되지 않습니다.")
         
         return value
+
+class ProductReviewImagesResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    product_id = serializers.IntegerField()
+    total_images = serializers.IntegerField()
+    image_urls = serializers.ListField(
+        child=serializers.CharField(),
+        help_text="해당 상품의 모든 리뷰 이미지 URL 목록"
+    )

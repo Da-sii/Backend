@@ -13,7 +13,8 @@ from .serializers import (
     ReviewUpdateResponseSerializer,
     ReviewImageUploadRequestSerializer,
     ReviewImageUploadResponseSerializer,
-    ReviewImageDeleteResponseSerializer
+    ReviewImageDeleteResponseSerializer,
+    ProductReviewImagesResponseSerializer
 )
 from .models import Review, ReviewImage
 from django.shortcuts import get_object_or_404
@@ -572,4 +573,79 @@ class ReviewImageDeleteView(GenericAPIView):
             return Response({
                 'error': f'이미지 삭제 실패: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProductReviewImagesView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="상품 리뷰 이미지 URL 목록 조회",
+        description="특정 상품의 모든 리뷰 이미지 URL을 조회합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='product_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='상품 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=ProductReviewImagesResponseSerializer,
+                description='상품 리뷰 이미지 URL 목록 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "product_id": 1,
+                            "total_images": 3,
+                            "image_urls": [
+                                "https://s3.amazonaws.com/bucket/image1.jpg",
+                                "https://s3.amazonaws.com/bucket/image2.jpg",
+                                "https://s3.amazonaws.com/bucket/image3.jpg"
+                            ]
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='상품을 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '상품 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 이미지']
+    )
+    def get(self, request, product_id):
+        """
+        특정 상품의 모든 리뷰 이미지 URL을 조회합니다.
+        """
+        # 상품 존재 확인
+        from products.models import Product
+        product = get_object_or_404(Product, id=product_id)
+        
+        # 1. 해당 상품의 리뷰 ID들 조회
+        review_ids = Review.objects.filter(product_id=product_id).values_list('id', flat=True)
+        
+        # 2. 해당 리뷰 ID들의 이미지 URL들 조회
+        image_urls = ReviewImage.objects.filter(
+            review_id__in=review_ids
+        ).values_list('url', flat=True)
+        
+        # 3. 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'product_id': product_id,
+            'total_images': len(image_urls),
+            'image_urls': list(image_urls)
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
     
