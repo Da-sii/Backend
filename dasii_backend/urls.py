@@ -26,4 +26,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('users.urls')), # users 앱 라우팅
     path('auth/', include('socials.urls')), # socials 앱 라우팅
+    path('review/', include('review.urls')), # review 앱 라우팅
 ]
