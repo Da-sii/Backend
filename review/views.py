@@ -15,7 +15,8 @@ from .serializers import (
     ReviewImageUploadResponseSerializer,
     ReviewImageDeleteResponseSerializer,
     ProductReviewImagesResponseSerializer,
-    ProductRatingStatsResponseSerializer
+    ProductRatingStatsResponseSerializer,
+    ReviewImageDetailResponseSerializer
 )
 from .models import Review, ReviewImage
 from django.shortcuts import get_object_or_404
@@ -750,6 +751,81 @@ class ProductRatingStatsView(GenericAPIView):
             'total_reviews': total_reviews,
             'average_rating': average_rating,
             'rating_distribution': rating_counts
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ReviewImageDetailView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="이미지 ID로 리뷰 정보 조회",
+        description="특정 이미지 ID에 해당하는 리뷰 정보를 조회합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='image_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='이미지 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=ReviewImageDetailResponseSerializer,
+                description='리뷰 정보 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "image_id": 1,
+                            "review_info": {
+                                "url": "https://s3.amazonaws.com/bucket/image1.jpg",
+                                "nickname": "닉네임1",
+                                "rate": 5,
+                                "date": "2024-01-15",
+                                "review": "정말 좋은 제품이었습니다! 향도 좋고 지속력도 길어요."
+                            }
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='이미지를 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '이미지 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 이미지']
+    )
+    def get(self, request, image_id):
+        """
+        특정 이미지 ID에 해당하는 리뷰 정보를 조회합니다.
+        """
+        # 이미지와 관련 리뷰 정보를 함께 조회 (N+1 쿼리 방지)
+        review_image = get_object_or_404(
+            ReviewImage.objects.select_related('review', 'review__user'),
+            id=image_id
+        )
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'image_id': image_id,
+            'review_info': {
+                'url': review_image.url,
+                'nickname': review_image.review.user.nickname,
+                'rate': review_image.review.rate,
+                'date': review_image.review.date,
+                'review': review_image.review.review
+            }
         }
         
         return Response(response_data, status=status.HTTP_200_OK)
