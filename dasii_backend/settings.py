@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'users',
     'socials',
     'products',
+    'review',
 
     # Third-party
     "rest_framework",
