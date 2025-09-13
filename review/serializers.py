@@ -99,3 +99,18 @@ class ProductRatingStatsResponseSerializer(serializers.Serializer):
         child=serializers.IntegerField(),
         help_text="별점별 리뷰 개수 (1점, 2점, 3점, 4점, 5점)"
     )
+
+class ReviewImageDetailSerializer(serializers.ModelSerializer):
+    nickname = serializers.CharField(source='review.user.nickname', read_only=True)
+    rate = serializers.IntegerField(source='review.rate', read_only=True)
+    date = serializers.DateField(source='review.date', read_only=True)
+    review = serializers.CharField(source='review.review', read_only=True)
+    
+    class Meta:
+        model = ReviewImage
+        fields = ['url', 'nickname', 'rate', 'date', 'review']
+
+class ReviewImageDetailResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    image_id = serializers.IntegerField()
+    review_info = ReviewImageDetailSerializer()
