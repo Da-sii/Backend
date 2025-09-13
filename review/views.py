@@ -4,12 +4,24 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, OpenApiResponse
 from drf_spectacular.types import OpenApiTypes
-from .serializers import ReviewSerializer
+from .serializers import (
+    ReviewSerializer, 
+    ReviewListResponseSerializer, 
+    ReviewCreateResponseSerializer, 
+    ReviewUpdateResponseSerializer,
+    ReviewImageUploadRequestSerializer,
+    ReviewImageUploadResponseSerializer,
+    ReviewImageDeleteResponseSerializer,
+    ProductReviewImagesResponseSerializer,
+    ProductRatingStatsResponseSerializer,
+    ReviewImageDetailResponseSerializer
+)
 from .models import Review, ReviewImage
 from django.shortcuts import get_object_or_404
 from .utils import S3Uploader
+from django.db.models import Prefetch
 
 @method_decorator(csrf_exempt, name='dispatch')
 class PostView(GenericAPIView):
@@ -30,29 +42,46 @@ class PostView(GenericAPIView):
             )
         ],
         responses={
-            201: {
-                'description': '리뷰 작성 성공',
-                'examples': {
-                    'application/json': {
-                        'message': '리뷰가 성공적으로 작성되었습니다.',
-                        'review_id': 1,
-                        'user_id': 1,
-                        'product_id': 1,
-                        'rate': 5,
-                        'review': '정말 좋은 제품이었습니다! 향도 좋고 지속력도 길어요. 다음에도 구매하고 싶어요.'
-                    }
-                }
-            },
-            400: {
-                'description': '잘못된 요청 데이터',
-                'examples': {
-                    'application/json': {
-                        'rate': ['별점은 1~5 사이여야 합니다.'],
-                        'review': ['리뷰는 최소 20자 이상 최대 1000자 이하로 작성해주세요.']
-                    }
-                }
-            },
-            401: {'description': '인증되지 않은 사용자'}
+            201: OpenApiResponse(
+                response=ReviewCreateResponseSerializer,
+                description='리뷰 작성 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            'message': '리뷰가 성공적으로 작성되었습니다.',
+                            'review_id': 1,
+                            'user_id': 1,
+                            'product_id': 1,
+                            'rate': 5,
+                            'review': '정말 좋은 제품이었습니다! 향도 좋고 지속력도 길어요. 다음에도 구매하고 싶어요.'
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='잘못된 요청 데이터',
+                examples=[
+                    OpenApiExample(
+                        '유효성 검사 실패',
+                        value={
+                            'rate': ['별점은 1~5 사이여야 합니다.'],
+                            'review': ['리뷰는 최소 20자 이상 최대 1000자 이하로 작성해주세요.']
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '인증 실패',
+                        value={
+                            'detail': 'Authentication credentials were not provided.'
+                        }
+                    )
+                ]
+            )
         },
         tags=['리뷰']
     )
@@ -68,14 +97,21 @@ class PostView(GenericAPIView):
             review=serializer.validated_data['review']
         )
         
-        return Response({
+        # 응답 데이터를 Serializer로 직렬화
+        response_data = {
             'message': '리뷰가 성공적으로 작성되었습니다.',
             'review_id': review.id,
             'user_id': request.user.id,
             'product_id': product_id,
             'rate': review.rate,
             'review': review.review
-        }, status=status.HTTP_201_CREATED)
+        }
+        
+        # Serializer로 유효성 검사 (선택사항)
+        response_serializer = ReviewCreateResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ReviewUpdateView(GenericAPIView):
@@ -96,30 +132,57 @@ class ReviewUpdateView(GenericAPIView):
             )
         ],
         responses={
-            200: {
-                'description': '리뷰 수정 성공',
-                'examples': {
-                    'application/json': {
-                        'message': '리뷰가 성공적으로 수정되었습니다.',
-                        'review_id': 1,
-                        'user_id': 1,
-                        'product_id': 1,
-                        'rate': 4,
-                        'review': '품질은 좋지만 가격이 조금 아쉬워요. 그래도 추천합니다.'
-                    }
-                }
-            },
-            400: {
-                'description': '잘못된 요청 데이터',
-                'examples': {
-                    'application/json': {
-                        'rate': ['별점은 1~5 사이여야 합니다.'],
-                        'review': ['리뷰는 최소 20자 이상 최대 1000자 이하로 작성해주세요.']
-                    }
-                }
-            },
-            401: {'description': '인증되지 않은 사용자'},
-            404: {'description': '리뷰를 찾을 수 없음'}
+            200: OpenApiResponse(
+                response=ReviewUpdateResponseSerializer,
+                description='리뷰 수정 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            'message': '리뷰가 성공적으로 수정되었습니다.',
+                            'review_id': 1,
+                            'user_id': 1,
+                            'product_id': 1,
+                            'rate': 4,
+                            'review': '품질은 좋지만 가격이 조금 아쉬워요. 그래도 추천합니다.'
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='잘못된 요청 데이터',
+                examples=[
+                    OpenApiExample(
+                        '유효성 검사 실패',
+                        value={
+                            'rate': ['별점은 1~5 사이여야 합니다.'],
+                            'review': ['리뷰는 최소 20자 이상 최대 1000자 이하로 작성해주세요.']
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '인증 실패',
+                        value={
+                            'detail': 'Authentication credentials were not provided.'
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='리뷰를 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '리뷰 없음',
+                        value={
+                            'detail': 'Not found.'
+                        }
+                    )
+                ]
+            )
         },
         tags=['리뷰']
     )
@@ -133,63 +196,211 @@ class ReviewUpdateView(GenericAPIView):
         # 리뷰 수정
         serializer.save()
         
-        return Response({
+        # 응답 데이터를 Serializer로 직렬화
+        response_data = {
             'message': '리뷰가 성공적으로 수정되었습니다.',
             'review_id': review.id,
             'user_id': request.user.id,
             'product_id': review.product_id,
             'rate': review.rate,
             'review': review.review
-        }, status=status.HTTP_200_OK)
+        }
+        
+        # Serializer로 유효성 검사 (선택사항)
+        response_serializer = ReviewUpdateResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ReviewListView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="상품 리뷰 목록 조회",
+        description="특정 상품의 모든 리뷰를 조회합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='product_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='상품 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=ReviewListResponseSerializer,
+                description='리뷰 목록 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "reviews": {
+                                "닉네임1": {
+                                    "rate": 5,
+                                    "date": "2024-01-15",
+                                    "review": "정말 좋은 제품이었습니다!",
+                                    "images": [
+                                        {
+                                            "url": "https://s3.amazonaws.com/bucket/image1.jpg"
+                                        },
+                                        {
+                                            "url": "https://s3.amazonaws.com/bucket/image2.jpg"
+                                        }
+                                    ]
+                                },
+                                "닉네임2": {
+                                    "rate": 4,
+                                    "date": "2024-01-14",
+                                    "review": "품질은 좋지만 가격이 조금 아쉬워요.",
+                                    "images": []
+                                }
+                            }
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='상품을 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '상품 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰']
+    )
+    def get(self, request, product_id):
+        """
+        상품의 모든 리뷰를 조회합니다.
+        """
+        # 상품 존재 확인
+        from products.models import Product
+        product = get_object_or_404(Product, id=product_id)
+        
+        # 리뷰와 이미지를 함께 조회 (N+1 쿼리 방지)
+        reviews = Review.objects.filter(product_id=product_id).select_related('user').prefetch_related(
+            Prefetch('images', queryset=ReviewImage.objects.all())
+        ).order_by('-date')
+        
+        # Serializer를 사용하여 응답 데이터 구성
+        reviews_data = {}
+        for review in reviews:
+            user_nickname = review.user.nickname
+            # ReviewSerializer를 사용하여 리뷰 데이터 직렬화
+            review_serializer = ReviewSerializer(review)
+            reviews_data[user_nickname] = review_serializer.data
+        
+        # 최종 응답 데이터 직렬화
+        response_data = {
+            'success': True,
+            'reviews': reviews_data
+        }
+        
+        # Serializer로 유효성 검사 (선택사항)
+        response_serializer = ReviewListResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ReviewImageView(GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ReviewImageUploadRequestSerializer
     
     @extend_schema(
         summary="리뷰 이미지 업로드",
         description="리뷰에 이미지를 업로드합니다. Presigned URL을 생성하여 반환합니다.",
-        request={
-            'application/json': {
-                'type': 'object',
-                'properties': {
-                    'urls': {
-                        'type': 'array',
-                        'items': {'type': 'string'},
-                        'description': '업로드할 이미지 URL 목록'
-                    }
-                },
-                'required': ['urls']
-            }
-        },
+        request=ReviewImageUploadRequestSerializer,
+        examples=[
+            OpenApiExample(
+                '이미지 업로드 요청',
+                value={
+                    'urls': [
+                        'https://example.com/image1.jpg',
+                        'https://example.com/image2.jpg'
+                    ]
+                }
+            )
+        ],
         responses={
-            200: {
-                'description': 'Presigned URL 생성 성공',
-                'examples': {
-                    'application/json': {
-                        'message': '2개의 업로드 URL이 생성되었습니다.',
-                        'presigned_urls': [
-                            {
-                                'image_id': 1,
-                                'original_url': 'https://example.com/image1.jpg',
-                                'upload_url': 'https://s3.amazonaws.com/...',
-                                'final_url': 'https://s3.amazonaws.com/...',
-                                'filename': '1/1/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg'
-                            }
-                        ]
-                    }
-                }
-            },
-            400: {
-                'description': '잘못된 요청 데이터',
-                'examples': {
-                    'application/json': {
-                        'error': '업로드할 URL이 필요합니다.'
-                    }
-                }
-            },
-            401: {'description': '인증되지 않은 사용자'},
-            404: {'description': '리뷰를 찾을 수 없음'}
+            200: OpenApiResponse(
+                response=ReviewImageUploadResponseSerializer,
+                description='Presigned URL 생성 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            'message': '2개의 업로드 URL이 생성되었습니다.',
+                            'presigned_urls': [
+                                {
+                                    'image_id': 1,
+                                    'original_url': 'https://example.com/image1.jpg',
+                                    'upload_url': 'https://s3.amazonaws.com/bucket/...',
+                                    'final_url': 'https://s3.amazonaws.com/bucket/...',
+                                    'filename': '1/1/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg'
+                                },
+                                {
+                                    'image_id': 2,
+                                    'original_url': 'https://example.com/image2.jpg',
+                                    'upload_url': 'https://s3.amazonaws.com/bucket/...',
+                                    'final_url': 'https://s3.amazonaws.com/bucket/...',
+                                    'filename': '1/1/b2c3d4e5-f6g7-8901-bcde-f23456789012.jpg'
+                                }
+                            ]
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='잘못된 요청 데이터',
+                examples=[
+                    OpenApiExample(
+                        'URL 없음',
+                        value={
+                            'error': '업로드할 URL이 필요합니다.'
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '인증 실패',
+                        value={
+                            'detail': 'Authentication credentials were not provided.'
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='리뷰를 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '리뷰 없음',
+                        value={
+                            'detail': 'Not found.'
+                        }
+                    )
+                ]
+            ),
+            500: OpenApiResponse(
+                description='서버 오류',
+                examples=[
+                    OpenApiExample(
+                        'Presigned URL 생성 실패',
+                        value={
+                            'error': 'Presigned URL 생성 실패: S3 연결 오류'
+                        }
+                    )
+                ]
+            )
         },
         tags=['리뷰 이미지']
     )
@@ -197,10 +408,12 @@ class ReviewImageView(GenericAPIView):
         # 리뷰 존재 확인 및 권한 체크
         review = get_object_or_404(Review, id=review_id, user=request.user)
         
-        # 프론트에서 받은 원본 URL들
-        original_urls = request.data.get('urls', [])
-        if not original_urls:
-            return Response({'error': '업로드할 URL이 필요합니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Serializer로 요청 데이터 유효성 검사
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # 유효성 검사된 URL들 가져오기
+        original_urls = serializer.validated_data['urls']
         
         # S3 업로더 초기화
         s3_uploader = S3Uploader()
@@ -244,10 +457,17 @@ class ReviewImageView(GenericAPIView):
                     'error': f'Presigned URL 생성 실패: {str(e)}'
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        return Response({
+        # 응답 데이터를 Serializer로 직렬화
+        response_data = {
             'message': f'{len(presigned_urls)}개의 업로드 URL이 생성되었습니다.',
             'presigned_urls': presigned_urls
-        }, status=status.HTTP_200_OK)
+        }
+        
+        # Serializer로 유효성 검사 (선택사항)
+        response_serializer = ReviewImageUploadResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ReviewImageDeleteView(GenericAPIView):
@@ -271,25 +491,48 @@ class ReviewImageDeleteView(GenericAPIView):
             )
         ],
         responses={
-            200: {
-                'description': '이미지 삭제 성공',
-                'examples': {
-                    'application/json': {
-                        'message': '이미지가 성공적으로 삭제되었습니다.',
-                        'image_id': 1,
-                        'filename': '1/1/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg'
-                    }
-                }
-            },
-            401: {'description': '인증되지 않은 사용자'},
-            404: {
-                'description': '리뷰 또는 이미지를 찾을 수 없음',
-                'examples': {
-                    'application/json': {
-                        'error': '이미지를 찾을 수 없습니다.'
-                    }
-                }
-            }
+            200: OpenApiResponse(
+                response=ReviewImageDeleteResponseSerializer,
+                description='이미지 삭제 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            'message': '이미지가 성공적으로 삭제되었습니다.',
+                            'image_id': 1,
+                            'filename': '1/1/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg'
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '인증 실패',
+                        value={
+                            'detail': 'Authentication credentials were not provided.'
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='리뷰 또는 이미지를 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '이미지 없음',
+                        value={
+                            'error': '이미지를 찾을 수 없습니다.'
+                        }
+                    ),
+                    OpenApiExample(
+                        '리뷰 없음',
+                        value={
+                            'detail': 'Not found.'
+                        }
+                    )
+                ]
+            )
         },
         tags=['리뷰 이미지']
     )
@@ -315,14 +558,275 @@ class ReviewImageDeleteView(GenericAPIView):
             filename = image_to_delete.url
             image_to_delete.delete()
             
-            return Response({
+            # 응답 데이터를 Serializer로 직렬화
+            response_data = {
                 'message': '이미지가 성공적으로 삭제되었습니다.',
                 'image_id': image_id,
                 'filename': filename
-            }, status=status.HTTP_200_OK)
+            }
+            
+            # Serializer로 유효성 검사 (선택사항)
+            response_serializer = ReviewImageDeleteResponseSerializer(data=response_data)
+            response_serializer.is_valid(raise_exception=True)
+            
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
             
         except Exception as e:
             return Response({
                 'error': f'이미지 삭제 실패: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProductReviewImagesView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="상품 리뷰 이미지 URL 목록 조회",
+        description="특정 상품의 모든 리뷰 이미지 URL을 조회합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='product_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='상품 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=ProductReviewImagesResponseSerializer,
+                description='상품 리뷰 이미지 URL 목록 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "product_id": 1,
+                            "total_images": 3,
+                            "image_urls": [
+                                "https://s3.amazonaws.com/bucket/image1.jpg",
+                                "https://s3.amazonaws.com/bucket/image2.jpg",
+                                "https://s3.amazonaws.com/bucket/image3.jpg"
+                            ]
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='상품을 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '상품 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 이미지']
+    )
+    def get(self, request, product_id):
+        """
+        특정 상품의 모든 리뷰 이미지 URL을 조회합니다.
+        """
+        # 상품 존재 확인
+        from products.models import Product
+        product = get_object_or_404(Product, id=product_id)
+        
+        # 1. 해당 상품의 리뷰 ID들 조회
+        review_ids = Review.objects.filter(product_id=product_id).values_list('id', flat=True)
+        
+        # 2. 해당 리뷰 ID들의 이미지 URL들 조회
+        image_urls = ReviewImage.objects.filter(
+            review_id__in=review_ids
+        ).values_list('url', flat=True)
+        
+        # 3. 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'product_id': product_id,
+            'total_images': len(image_urls),
+            'image_urls': list(image_urls)
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProductRatingStatsView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="상품 별점 통계 조회",
+        description="특정 상품의 별점 분포와 평균 별점을 조회합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='product_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='상품 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=ProductRatingStatsResponseSerializer,
+                description='상품 별점 통계 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "product_id": 1,
+                            "total_reviews": 15,
+                            "average_rating": 4.2,
+                            "rating_distribution": {
+                                "1": 0,
+                                "2": 1,
+                                "3": 2,
+                                "4": 5,
+                                "5": 7
+                            }
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='상품을 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '상품 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 통계']
+    )
+    def get(self, request, product_id):
+        """
+        특정 상품의 별점 통계를 조회합니다.
+        """
+        # 상품 존재 확인
+        from products.models import Product
+        product = get_object_or_404(Product, id=product_id)
+        
+        # 해당 상품의 모든 리뷰 조회
+        reviews = Review.objects.filter(product_id=product_id)
+        
+        # 리뷰가 없는 경우
+        if not reviews.exists():
+            response_data = {
+                'success': True,
+                'product_id': product_id,
+                'total_reviews': 0,
+                'average_rating': 0.0,
+                'rating_distribution': {
+                    '1': 0,
+                    '2': 0,
+                    '3': 0,
+                    '4': 0,
+                    '5': 0
+                }
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        # 별점 분포 계산
+        rating_counts = {}
+        total_rating = 0
+        
+        for i in range(1, 6):
+            count = reviews.filter(rate=i).count()
+            rating_counts[str(i)] = count
+            total_rating += count * i
+        
+        # 평균 별점 계산
+        total_reviews = reviews.count()
+        average_rating = round(total_rating / total_reviews, 1) if total_reviews > 0 else 0.0
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'product_id': product_id,
+            'total_reviews': total_reviews,
+            'average_rating': average_rating,
+            'rating_distribution': rating_counts
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ReviewImageDetailView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="이미지 ID로 리뷰 정보 조회",
+        description="특정 이미지 ID에 해당하는 리뷰 정보를 조회합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='image_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='이미지 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=ReviewImageDetailResponseSerializer,
+                description='리뷰 정보 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "image_id": 1,
+                            "review_info": {
+                                "url": "https://s3.amazonaws.com/bucket/image1.jpg",
+                                "nickname": "닉네임1",
+                                "rate": 5,
+                                "date": "2024-01-15",
+                                "review": "정말 좋은 제품이었습니다! 향도 좋고 지속력도 길어요."
+                            }
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='이미지를 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '이미지 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 이미지']
+    )
+    def get(self, request, image_id):
+        """
+        특정 이미지 ID에 해당하는 리뷰 정보를 조회합니다.
+        """
+        # 이미지와 관련 리뷰 정보를 함께 조회 (N+1 쿼리 방지)
+        review_image = get_object_or_404(
+            ReviewImage.objects.select_related('review', 'review__user'),
+            id=image_id
+        )
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'image_id': image_id,
+            'review_info': {
+                'url': review_image.url,
+                'nickname': review_image.review.user.nickname,
+                'rate': review_image.review.rate,
+                'date': review_image.review.date,
+                'review': review_image.review.review
+            }
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
     
