@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "users",
     "socials",
     "products",
+    "review",
 
     # Third-party
     "rest_framework",
@@ -183,3 +184,36 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # API Settings
 API_PREFIX = "api/"
+
+# REST Framework Settings
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+# DRF Spectacular Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'DASII Backend API',
+    'DESCRIPTION': 'DASII 백엔드 API 문서',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/',
+}
+
+# CSRF 설정 (API 전용)
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+# API 요청에서 CSRF 토큰 비활성화
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
