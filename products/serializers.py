@@ -12,6 +12,7 @@ from products.models import Product, ProductImage, Ingredient, ProductIngredient
 class ProductIngredientInputSerializer(serializers.Serializer):
     ingredientId = serializers.IntegerField()
     amount = serializers.CharField()
+
 class ProductCreateSerializer(serializers.ModelSerializer):
     # 여러 이미지 파일
     images = serializers.ListField(
@@ -86,6 +87,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             )
 
         return product
+
 class ProductIngredientReadSerializer(serializers.ModelSerializer):
     ingredientName = serializers.CharField(source="ingredient.name")
 
@@ -180,6 +182,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             results.append({"category": category_name, "monthlyRank": rank})
 
         return results
+
 class ProductRankingSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     rankDiff = serializers.SerializerMethodField()
@@ -202,3 +205,18 @@ class ProductRankingSerializer(serializers.ModelSerializer):
             return None  # 이전 50위권 밖이거나 데이터 없음 → NEW 처리 가능
 
         return prev - current  # 양수면 상승, 음수면 하락, 0이면 동일
+
+class ProductsListSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    reviewCount = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount")
+
+    def get_image(self, obj):
+        first_image = obj.images.order_by("id").first()
+        return first_image.url if first_image else None
+
+    def get_reviewCount(self, obj):
+        return obj.reviews.count()
