@@ -247,7 +247,7 @@ class ProductsListSerializer(serializers.ModelSerializer):
         value = agg.get("avg")
         return round(float(value), 2) if value is not None else None
 
-class categorySerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     smallCategories = serializers.SerializerMethodField()
 
     class Meta:
@@ -256,3 +256,24 @@ class categorySerializer(serializers.ModelSerializer):
 
     def get_smallCategories(self, obj):
         return list(obj.smallCategories.order_by("id").values_list("category", flat=True))
+
+class ProductSearchSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    reviewCount = serializers.SerializerMethodField()
+    reviewAvg = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount", "reviewAvg")
+
+    def get_image(self, obj):
+        first_image = obj.images.order_by("id").first()
+        return first_image.url if first_image else None
+
+    def get_reviewCount(self, obj):
+        return obj.reviews.count()
+
+    def get_reviewAvg(self, obj):
+        agg = obj.reviews.aggregate(avg=Avg("rate"))
+        value = agg.get("avg")
+        return round(float(value), 2) if value is not None else None
