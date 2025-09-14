@@ -1,5 +1,8 @@
 import json, boto3, uuid
 from typing import List, Dict, Any
+from datetime import timedelta
+from django.utils import timezone
+from django.db.models import Sum
 from django.db import transaction
 from rest_framework import serializers
 from django.conf import settings
@@ -103,11 +106,6 @@ class ProductReadSerializer(serializers.ModelSerializer):
         model = Product
         fields = ("id", "name", "company", "price", "unit", "piece", "productType", "images", "ingredients")
 
-class ProductImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductImage
-        fields = ("url",)
-
 class ProductIngredientDetailSerializer(serializers.ModelSerializer):
     ingredientName = serializers.CharField(source="ingredient.name")
     englishName = serializers.CharField(source="ingredient.englishIngredient")
@@ -121,7 +119,7 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
         model = ProductIngredient
         fields = ("ingredientName", "englishName", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect", "status")
 
-    def get_status(self, obj):
+    def get_status(self, obj: ProductIngredient) -> str:
         try:
             # 문자열에서 숫자만 추출 (예: "750mg" -> 750)
             amount_value = float("".join([c for c in obj.amount if c.isdigit() or c == "."]))
@@ -141,10 +139,66 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     ingredients = ProductIngredientDetailSerializer(many=True, read_only=True)
     ingredientsCount = serializers.SerializerMethodField()
+    ranking = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "viewCount", "images", "ingredientsCount", "ingredients")
+        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "ranking", "images", "ingredientsCount", "ingredients")
 
-    def get_ingredientsCount(self, obj):
+    def get_ingredientsCount(self, obj: Product) -> int:
         return obj.ingredients.count()
+
+    def get_ranking(self, obj):
+        # 카테고리별 월간 랭킹
+        today = timezone.now().date()
+        start_date = today - timedelta(days=30)
+
+        # 이 제품이 속한 모든 소분류 카테고리 수집
+        category_pairs = list(
+            obj.category_products.select_related("category").values_list(
+                "category_id", "category__category"
+            )
+        )
+
+        results = []
+        for category_id, category_name in category_pairs:
+            ranked_ids = list(
+                Product.objects.filter(
+                    category_products__category_id=category_id,
+                    daily_views__date__gte=start_date,
+                )
+                .annotate(totalViews=Sum("daily_views__views"))
+                .order_by("-totalViews", "id")
+                .values_list("id", flat=True)[:50]
+            )
+
+            try:
+                rank = ranked_ids.index(obj.id) + 1
+            except ValueError:
+                rank = None  # 50위 밖
+
+            results.append({"category": category_name, "monthlyRank": rank})
+
+        return results
+class ProductRankingSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    rankDiff = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "image", "company", "price", "unit", "piece", "rankDiff")
+
+    def get_image(self, obj):
+        first_image = obj.images.order_by("id").first()
+        return first_image.url if first_image else None
+
+    def get_rankDiff(self, obj):
+        current_ranks = self.context.get("current_ranks", {})
+        prev_ranks = self.context.get("prev_ranks", {})
+        current = current_ranks.get(obj.id)
+        prev = prev_ranks.get(obj.id)
+
+        if current is None or prev is None:
+            return None  # 이전 50위권 밖이거나 데이터 없음 → NEW 처리 가능
+
+        return prev - current  # 양수면 상승, 음수면 하락, 0이면 동일

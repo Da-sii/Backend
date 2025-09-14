@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.utils import timezone
 class BigCategory(models.Model):
     category = models.CharField(max_length=100, verbose_name="카테고리")
 
@@ -74,6 +74,22 @@ class CategoryProduct(models.Model):
 
     def __str__(self):
         return f"{self.category.category} - {self.product.name}"
+
+class ProductDailyView(models.Model):
+    product = models.ForeignKey("Product", on_delete=models.CASCADE, related_name="daily_views")
+    date = models.DateField(default=timezone.now)
+    views = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "product_daily_views"
+        unique_together = ("product", "date")  # 하루에 한 행만
+        indexes = [
+            models.Index(fields=["date"]),                 # 날짜 검색 빠르게
+            models.Index(fields=["product", "date"]),      # 제품별 날짜 검색 빠르게
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.date} - {self.views}"
 
 class Ingredient(models.Model):
     name = models.TextField(verbose_name="성분 이름")
