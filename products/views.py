@@ -6,13 +6,12 @@ from django.utils import timezone
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, Subquery
 from django.db.models.functions import Coalesce
-from products.models import Product, BigCategory
+from products.models import Product, BigCategory, ProductIngredient
 from products.serializers import ProductCreateSerializer, ProductReadSerializer, ProductDetailSerializer, ProductRankingSerializer
-from products.serializers import ProductsListSerializer, categorySerializer
+from products.serializers import ProductsListSerializer, CategorySerializer, ProductSearchSerializer
 from products.utils import record_view
-
 
 # 제품 등록
 class ProductCreateView(generics.CreateAPIView):
@@ -215,7 +214,7 @@ class ProductListView(generics.ListAPIView):
 
 # 제품 카테고리 조회
 class ProductCategoryView(generics.ListAPIView):
-    serializer_class = categorySerializer
+    serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -227,3 +226,79 @@ class ProductCategoryView(generics.ListAPIView):
 
     def get_queryset(self):
         return BigCategory.objects.prefetch_related("smallCategories").order_by("id")
+
+# 검색
+class ProductSearchView(generics.ListAPIView):
+    serializer_class = ProductSearchSerializer
+    permission_classes = [IsAuthenticated]
+
+    class ListPagination(PageNumberPagination):
+        page_size = 10
+        page_query_param = "page"
+        page_size_query_param = None
+        max_page_size = 10
+
+    pagination_class = ListPagination
+
+    @extend_schema(
+        summary="제품 검색",
+        parameters=[
+            OpenApiParameter(
+                name="word",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="검색어(제품명, 회사명, 기능성 원료명)",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="sort",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="정렬: monthly_rank | price_asc | price_desc | review_desc (기본: monthly_rank)",
+                required=False,
+                enum=["monthly_rank", "price_asc", "price_desc", "review_desc"],
+            ),
+        ],
+        tags=["제품"]
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        sort = self.request.query_params.get("sort", "monthly_rank")
+        query = self.request.query_params.get("word")
+        today = timezone.now().date()
+        start_date = today - timedelta(days=30)
+
+        qs = Product.objects.all()
+        if query:
+            ingredient_product_ids = ProductIngredient.objects.filter(
+                Q(ingredient__name__icontains=query) | Q(ingredient__englishIngredient__icontains=query)
+            ).values("product_id")
+            qs = qs.filter(
+                Q(name__icontains=query) |
+                Q(company__icontains=query) |
+                Q(id__in=Subquery(ingredient_product_ids))
+            )
+
+        if sort == "price_asc":
+            return qs.order_by("price", "id")
+        if sort == "price_desc":
+            return qs.order_by("-price", "id")
+        if sort == "review_desc":
+            return (
+                qs.annotate(review_count=Count("reviews", distinct=True))
+                .order_by("-review_count", "id")
+            )
+
+        # default: monthly_rank (최근 30일 조회수 합계 기준)
+        # 조회수 없는 상품도 포함(0으로 취급)하여 정렬
+        return (
+            qs.annotate(
+                totalViews=Coalesce(
+                    Sum("daily_views__views", filter=Q(daily_views__date__gte=start_date)),
+                    0,
+                )
+            )
+            .order_by("-totalViews", "id")
+        )
