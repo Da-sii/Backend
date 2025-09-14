@@ -114,3 +114,9 @@ class ReviewImageDetailResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()
     image_id = serializers.IntegerField()
     review_info = ReviewImageDetailSerializer()
+
+class UserReviewsResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    user_id = serializers.IntegerField()
+    total_reviews = serializers.IntegerField()
+    reviews = ReviewSerializer(many=True)
