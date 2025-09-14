@@ -120,3 +120,10 @@ class UserReviewsResponseSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
     total_reviews = serializers.IntegerField()
     reviews = ReviewSerializer(many=True)
+
+class ReviewDeleteResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+    review_id = serializers.IntegerField()
+    user_id = serializers.IntegerField()
+    product_id = serializers.IntegerField()
