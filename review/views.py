@@ -16,7 +16,9 @@ from .serializers import (
     ReviewImageDeleteResponseSerializer,
     ProductReviewImagesResponseSerializer,
     ProductRatingStatsResponseSerializer,
-    ReviewImageDetailResponseSerializer
+    ReviewImageDetailResponseSerializer,
+    UserReviewsResponseSerializer,
+    ReviewDeleteResponseSerializer
 )
 from .models import Review, ReviewImage
 from django.shortcuts import get_object_or_404
@@ -826,6 +828,191 @@ class ReviewImageDetailView(GenericAPIView):
                 'date': review_image.review.date,
                 'review': review_image.review.review
             }
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class UserReviewsView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="사용자 리뷰 목록 조회",
+        description="현재 로그인한 사용자의 모든 리뷰와 이미지를 조회합니다.",
+        responses={
+            200: OpenApiResponse(
+                response=UserReviewsResponseSerializer,
+                description='사용자 리뷰 목록 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "user_id": 1,
+                            "total_reviews": 3,
+                            "reviews": [
+                                {
+                                    "rate": 5,
+                                    "date": "2024-01-15",
+                                    "review": "정말 좋은 제품이었습니다!",
+                                    "images": [
+                                        {
+                                            "url": "https://s3.amazonaws.com/bucket/image1.jpg"
+                                        },
+                                        {
+                                            "url": "https://s3.amazonaws.com/bucket/image2.jpg"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "rate": 4,
+                                    "date": "2024-01-14",
+                                    "review": "품질은 좋지만 가격이 조금 아쉬워요.",
+                                    "images": []
+                                },
+                                {
+                                    "rate": 5,
+                                    "date": "2024-01-13",
+                                    "review": "다음에도 구매하고 싶어요!",
+                                    "images": [
+                                        {
+                                            "url": "https://s3.amazonaws.com/bucket/image3.jpg"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '인증 실패',
+                        value={
+                            "detail": "Authentication credentials were not provided."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['사용자 리뷰']
+    )
+    def get(self, request):
+        """
+        현재 로그인한 사용자의 모든 리뷰와 이미지를 조회합니다.
+        """
+        # 현재 사용자의 모든 리뷰와 이미지를 함께 조회 (N+1 쿼리 방지)
+        reviews = Review.objects.filter(
+            user=request.user
+        ).prefetch_related(
+            Prefetch('images', queryset=ReviewImage.objects.all())
+        ).order_by('-date')
+        
+        # Serializer를 사용하여 리뷰 데이터 직렬화
+        reviews_serializer = ReviewSerializer(reviews, many=True)
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'user_id': request.user.id,
+            'total_reviews': reviews.count(),
+            'reviews': reviews_serializer.data
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ReviewDeleteView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="리뷰 삭제",
+        description="작성한 리뷰를 삭제합니다. 본인이 작성한 리뷰만 삭제 가능합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='review_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='삭제할 리뷰 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=ReviewDeleteResponseSerializer,
+                description='리뷰 삭제 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "message": "리뷰가 성공적으로 삭제되었습니다.",
+                            "review_id": 1,
+                            "user_id": 1,
+                            "product_id": 1
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '인증 실패',
+                        value={
+                            "detail": "Authentication credentials were not provided."
+                        }
+                    )
+                ]
+            ),
+            403: OpenApiResponse(
+                description='권한 없음 (본인 리뷰가 아님)',
+                examples=[
+                    OpenApiExample(
+                        '권한 없음',
+                        value={
+                            "detail": "You do not have permission to perform this action."
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='리뷰를 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '리뷰 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰']
+    )
+    def delete(self, request, review_id):
+        """
+        리뷰를 삭제합니다. 본인이 작성한 리뷰만 삭제 가능합니다.
+        """
+        # 리뷰 존재 확인 및 권한 체크 (본인 리뷰만 삭제 가능)
+        review = get_object_or_404(Review, id=review_id, user=request.user)
+        
+        # 리뷰 정보 저장 (삭제 전에)
+        review_id_value = review.id
+        user_id_value = review.user.id
+        product_id_value = review.product_id
+        
+        # 리뷰 삭제
+        review.delete()
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'message': '리뷰가 성공적으로 삭제되었습니다.',
+            'review_id': review_id_value,
+            'user_id': user_id_value,
+            'product_id': product_id_value
         }
         
         return Response(response_data, status=status.HTTP_200_OK)
