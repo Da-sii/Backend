@@ -160,6 +160,8 @@ class ProductRankingSerializer(serializers.ModelSerializer):
         prev_ranks = self.context.get("prev_ranks", {})
         current = current_ranks.get(obj.id)
         prev = prev_ranks.get(obj.id)
+
         if current is None or prev is None:
             return None  # 이전 50위권 밖이거나 데이터 없음 → NEW 처리 가능
+
         return prev - current  # 양수면 상승, 음수면 하락, 0이면 동일

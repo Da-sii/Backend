@@ -90,6 +90,7 @@ class ProductRankingView(generics.ListAPIView):
 
         current_ranks = {product.id: idx + 1 for idx, product in enumerate(ranked)}
         self.serializer_class.context = {"period": period, "current_ranks": current_ranks, "prev_ranks": prev_ranks}
+        
         return ranked
 
     @extend_schema(
