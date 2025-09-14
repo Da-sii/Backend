@@ -277,3 +277,25 @@ class ProductSearchSerializer(serializers.ModelSerializer):
         agg = obj.reviews.aggregate(avg=Avg("rate"))
         value = agg.get("avg")
         return round(float(value), 2) if value is not None else None
+
+class MainSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    reviewCount = serializers.SerializerMethodField()
+    reviewAvg = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount", "reviewAvg")
+
+    def get_image(self, obj):
+        first_image = obj.images.order_by("id").first()
+        return first_image.url if first_image else None
+
+    def get_reviewCount(self, obj):
+        return obj.reviews.count()
+
+    def get_reviewAvg(self, obj):
+        agg = obj.reviews.aggregate(avg=Avg("rate"))
+        value = agg.get("avg")
+        return round(float(value), 2) if value is not None else None
+        

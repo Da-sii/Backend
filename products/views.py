@@ -1,5 +1,6 @@
 from rest_framework import generics, parsers
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
@@ -10,7 +11,7 @@ from django.db.models import Sum, Count, Q, Subquery
 from django.db.models.functions import Coalesce
 from products.models import Product, BigCategory, ProductIngredient
 from products.serializers import ProductCreateSerializer, ProductReadSerializer, ProductDetailSerializer, ProductRankingSerializer
-from products.serializers import ProductsListSerializer, CategorySerializer, ProductSearchSerializer
+from products.serializers import ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer
 from products.utils import record_view
 
 # 제품 등록
@@ -302,3 +303,54 @@ class ProductSearchView(generics.ListAPIView):
             )
             .order_by("-totalViews", "id")
         )
+
+# 메인
+class MainView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="메인 화면",
+        tags=["제품"]
+    )
+    def get(self, request, *args, **kwargs):
+        # 소분류별 지난 30일 조회수 합계 순 상위 소분류 목록
+        today = timezone.now().date()
+        start_date = today - timedelta(days=30)
+
+        from products.models import SmallCategory
+        small_with_views = (
+            SmallCategory.objects
+            .exclude(category="전체")
+            .annotate(
+                totalViews=Coalesce(
+                    Sum(
+                        "category_products__product__daily_views__views",
+                        filter=Q(category_products__product__daily_views__date__gte=start_date)
+                    ),
+                    0,
+                )
+            )
+            .order_by("-totalViews", "id")
+        )
+
+        # 오늘 조회수 상위 10개 제품
+        top_today_products = (
+            Product.objects.annotate(
+                todayViews=Coalesce(
+                    Sum("daily_views__views", filter=Q(daily_views__date=today)),
+                    0,
+                )
+            )
+            .order_by("-todayViews", "id")[:10]
+        )
+
+        categories_payload = [
+            {"smallCategory": sc.category, "bigCategory": sc.bigCategory.category}
+            for sc in small_with_views
+        ]
+
+        serializer = MainSerializer(top_today_products, many=True)
+        return Response({
+            "topSmallCategories": categories_payload,
+            "topProductsToday": serializer.data,
+        })
