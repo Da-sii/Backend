@@ -9,7 +9,6 @@ class BigCategory(models.Model):
     def __str__(self):
         return self.category
 
-
 class SmallCategory(models.Model):
     bigCategory = models.ForeignKey(
         BigCategory,

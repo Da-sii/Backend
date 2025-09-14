@@ -2,16 +2,16 @@ import json, boto3, uuid
 from typing import List, Dict, Any
 from datetime import timedelta
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, Avg
 from django.db import transaction
 from rest_framework import serializers
 from django.conf import settings
 
-from products.models import Product, ProductImage, Ingredient, ProductIngredient
-
+from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory
 class ProductIngredientInputSerializer(serializers.Serializer):
     ingredientId = serializers.IntegerField()
     amount = serializers.CharField()
+
 class ProductCreateSerializer(serializers.ModelSerializer):
     # 여러 이미지 파일
     images = serializers.ListField(
@@ -86,6 +86,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             )
 
         return product
+
 class ProductIngredientReadSerializer(serializers.ModelSerializer):
     ingredientName = serializers.CharField(source="ingredient.name")
 
@@ -140,10 +141,20 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     ingredients = ProductIngredientDetailSerializer(many=True, read_only=True)
     ingredientsCount = serializers.SerializerMethodField()
     ranking = serializers.SerializerMethodField()
+    reviewCount = serializers.SerializerMethodField()
+    reviewAvg = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "ranking", "images", "ingredientsCount", "ingredients")
+        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "reviewCount", "reviewAvg", "ranking", "images", "ingredientsCount", "ingredients")
+
+    def get_reviewCount(self, obj):
+        return obj.reviews.count()
+
+    def get_reviewAvg(self, obj):
+        agg = obj.reviews.aggregate(avg=Avg("rate"))
+        value = agg.get("avg")
+        return round(float(value), 2) if value is not None else None
 
     def get_ingredientsCount(self, obj: Product) -> int:
         return obj.ingredients.count()
@@ -155,13 +166,15 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
         # 이 제품이 속한 모든 소분류 카테고리 수집
         category_pairs = list(
-            obj.category_products.select_related("category").values_list(
-                "category_id", "category__category"
+            obj.category_products.select_related("category__bigCategory").values_list(
+                "category_id",
+                "category__bigCategory__category",
+                "category__category",
             )
         )
 
         results = []
-        for category_id, category_name in category_pairs:
+        for category_id, big_name, small_name in category_pairs:
             ranked_ids = list(
                 Product.objects.filter(
                     category_products__category_id=category_id,
@@ -177,16 +190,19 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             except ValueError:
                 rank = None  # 50위 밖
 
-            results.append({"category": category_name, "monthlyRank": rank})
+            results.append({"bigCategory": big_name, "smallCategory": small_name, "monthlyRank": rank})
 
         return results
+
 class ProductRankingSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     rankDiff = serializers.SerializerMethodField()
+    reviewCount = serializers.SerializerMethodField()
+    reviewAvg = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ("id", "name", "image", "company", "price", "unit", "piece", "rankDiff")
+        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount", "reviewAvg", "rankDiff")
 
     def get_image(self, obj):
         first_image = obj.images.order_by("id").first()
@@ -202,3 +218,62 @@ class ProductRankingSerializer(serializers.ModelSerializer):
             return None  # 이전 50위권 밖이거나 데이터 없음 → NEW 처리 가능
 
         return prev - current  # 양수면 상승, 음수면 하락, 0이면 동일
+
+    def get_reviewCount(self, obj):
+        return obj.reviews.count()
+
+    def get_reviewAvg(self, obj):
+        agg = obj.reviews.aggregate(avg=Avg("rate"))
+        value = agg.get("avg")
+        return round(float(value), 2) if value is not None else None
+
+class ProductsListSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    reviewCount = serializers.SerializerMethodField()
+    reviewAvg = serializers.SerializerMethodField()
+    class Meta:
+        model = Product
+        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount", "reviewAvg")
+
+    def get_image(self, obj):
+        first_image = obj.images.order_by("id").first()
+        return first_image.url if first_image else None
+
+    def get_reviewCount(self, obj):
+        return obj.reviews.count()
+
+    def get_reviewAvg(self, obj):
+        agg = obj.reviews.aggregate(avg=Avg("rate"))
+        value = agg.get("avg")
+        return round(float(value), 2) if value is not None else None
+
+class CategorySerializer(serializers.ModelSerializer):
+    smallCategories = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BigCategory
+        fields = ("category", "smallCategories")
+
+    def get_smallCategories(self, obj):
+        return list(obj.smallCategories.order_by("id").values_list("category", flat=True))
+
+class ProductSearchSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    reviewCount = serializers.SerializerMethodField()
+    reviewAvg = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount", "reviewAvg")
+
+    def get_image(self, obj):
+        first_image = obj.images.order_by("id").first()
+        return first_image.url if first_image else None
+
+    def get_reviewCount(self, obj):
+        return obj.reviews.count()
+
+    def get_reviewAvg(self, obj):
+        agg = obj.reviews.aggregate(avg=Avg("rate"))
+        value = agg.get("avg")
+        return round(float(value), 2) if value is not None else None
