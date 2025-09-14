@@ -1,5 +1,8 @@
 import json, boto3, uuid
 from typing import List, Dict, Any
+from datetime import timedelta
+from django.utils import timezone
+from django.db.models import Sum
 from django.db import transaction
 from rest_framework import serializers
 from django.conf import settings
@@ -136,13 +139,47 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     ingredients = ProductIngredientDetailSerializer(many=True, read_only=True)
     ingredientsCount = serializers.SerializerMethodField()
+    ranking = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "viewCount", "images", "ingredientsCount", "ingredients")
+        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "ranking", "images", "ingredientsCount", "ingredients")
 
     def get_ingredientsCount(self, obj: Product) -> int:
         return obj.ingredients.count()
+
+    def get_ranking(self, obj):
+        # 카테고리별 월간 랭킹
+        today = timezone.now().date()
+        start_date = today - timedelta(days=30)
+
+        # 이 제품이 속한 모든 소분류 카테고리 수집
+        category_pairs = list(
+            obj.category_products.select_related("category").values_list(
+                "category_id", "category__category"
+            )
+        )
+
+        results = []
+        for category_id, category_name in category_pairs:
+            ranked_ids = list(
+                Product.objects.filter(
+                    category_products__category_id=category_id,
+                    daily_views__date__gte=start_date,
+                )
+                .annotate(totalViews=Sum("daily_views__views"))
+                .order_by("-totalViews", "id")
+                .values_list("id", flat=True)[:50]
+            )
+
+            try:
+                rank = ranked_ids.index(obj.id) + 1
+            except ValueError:
+                rank = None  # 50위 밖
+
+            results.append({"category": category_name, "monthlyRank": rank})
+
+        return results
 class ProductRankingSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     rankDiff = serializers.SerializerMethodField()

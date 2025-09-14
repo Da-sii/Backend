@@ -25,6 +25,7 @@ class ProductCreateView(generics.CreateAPIView):
         product = create_serializer.save()
 
         read_serializer = ProductReadSerializer(product)
+        
         return Response({"success": True, "product": read_serializer.data}, status=201)
 
 # 제품 상세 (GET /products/<id>/)
@@ -37,6 +38,7 @@ class ProductDetailView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         product = self.get_object()
         record_view(product)
+
         return self.retrieve(request, *args, **kwargs)
 
 # 랭킹
@@ -90,7 +92,7 @@ class ProductRankingView(generics.ListAPIView):
 
         current_ranks = {product.id: idx + 1 for idx, product in enumerate(ranked)}
         self.serializer_class.context = {"period": period, "current_ranks": current_ranks, "prev_ranks": prev_ranks}
-        
+
         return ranked
 
     @extend_schema(
