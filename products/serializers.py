@@ -7,8 +7,7 @@ from django.db import transaction
 from rest_framework import serializers
 from django.conf import settings
 
-from products.models import Product, ProductImage, Ingredient, ProductIngredient
-
+from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory
 class ProductIngredientInputSerializer(serializers.Serializer):
     ingredientId = serializers.IntegerField()
     amount = serializers.CharField()
@@ -247,3 +246,13 @@ class ProductsListSerializer(serializers.ModelSerializer):
         agg = obj.reviews.aggregate(avg=Avg("rate"))
         value = agg.get("avg")
         return round(float(value), 2) if value is not None else None
+
+class categorySerializer(serializers.ModelSerializer):
+    smallCategories = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BigCategory
+        fields = ("category", "smallCategories")
+
+    def get_smallCategories(self, obj):
+        return list(obj.smallCategories.order_by("id").values_list("category", flat=True))

@@ -8,9 +8,9 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
-from products.models import Product
+from products.models import Product, BigCategory
 from products.serializers import ProductCreateSerializer, ProductReadSerializer, ProductDetailSerializer, ProductRankingSerializer
-from products.serializers import ProductsListSerializer
+from products.serializers import ProductsListSerializer, categorySerializer
 from products.utils import record_view
 
 
@@ -212,3 +212,18 @@ class ProductListView(generics.ListAPIView):
             )
             .order_by("-totalViews", "id")
         )
+
+# 제품 카테고리 조회
+class ProductCategoryView(generics.ListAPIView):
+    serializer_class = categorySerializer
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="카테고리 조회",
+        tags=["제품"]
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return BigCategory.objects.prefetch_related("smallCategories").order_by("id")
