@@ -4,11 +4,13 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 from datetime import timedelta
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q
+from django.db.models.functions import Coalesce
 from products.models import Product
 from products.serializers import ProductCreateSerializer, ProductReadSerializer, ProductDetailSerializer, ProductRankingSerializer
+from products.serializers import ProductsListSerializer
 from products.utils import record_view
 
 
@@ -28,12 +30,24 @@ class ProductCreateView(generics.CreateAPIView):
         
         return Response({"success": True, "product": read_serializer.data}, status=201)
 
+    @extend_schema(
+        summary="제품 등록",
+        tags=["제품"]
+    )
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
 # 제품 상세 (GET /products/<id>/)
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductDetailSerializer
     permission_classes = [IsAuthenticated] # 접근 권한 확인
     lookup_field = "id"
+
+    @extend_schema(
+        summary="제품 상세 조회",
+        tags=["제품"]
+    )
 
     def get(self, request, *args, **kwargs):
         product = self.get_object()
@@ -96,6 +110,7 @@ class ProductRankingView(generics.ListAPIView):
         return ranked
 
     @extend_schema(
+        summary="랭킹 조회",
         parameters=[
             OpenApiParameter(
                 name="period",
@@ -113,6 +128,87 @@ class ProductRankingView(generics.ListAPIView):
                 required=False,
             ),
         ],
+        tags=["제품"]
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+# 제품 리스트 (필터/정렬/페이징)
+class ProductListView(generics.ListAPIView):
+    serializer_class = ProductsListSerializer
+    permission_classes = [IsAuthenticated]
+
+    class ListPagination(PageNumberPagination):
+        page_size = 10
+        page_query_param = "page"
+        page_size_query_param = None
+        max_page_size = 10
+
+    pagination_class = ListPagination
+
+    @extend_schema(
+        summary="제품 리스트 조회",
+        parameters=[
+            OpenApiParameter(
+                name="bigCategory",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="대분류 카테고리 이름(예: 다이어트 약, 다이어트 식품 등). 기본: 다이어트 약",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="smallCategory",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="소분류 카테고리 이름(예: 전체, 체지방 관리 등). 기본: 전체",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="sort",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="정렬: monthly_rank | price_asc | price_desc | review_desc (기본: monthly_rank)",
+                required=False,
+                enum=["monthly_rank", "price_asc", "price_desc", "review_desc"],
+            ),
+        ],
+        tags=["제품"]
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        bigCategory = self.request.query_params.get("bigCategory", "다이어트 약")
+        smallCategory = self.request.query_params.get("smallCategory")
+        sort = self.request.query_params.get("sort", "monthly_rank")
+        today = timezone.now().date()
+        start_date = today - timedelta(days=30)
+
+        qs = Product.objects.all()
+        if bigCategory:
+            qs = qs.filter(category_products__category__bigCategory__category=bigCategory)
+
+        if smallCategory and smallCategory != "전체":
+            qs = qs.filter(category_products__category__category=smallCategory)
+
+        if sort == "price_asc":
+            return qs.order_by("price", "id")
+        if sort == "price_desc":
+            return qs.order_by("-price", "id")
+        if sort == "review_desc":
+            return (
+                qs.annotate(review_count=Count("reviews", distinct=True))
+                .order_by("-review_count", "id")
+            )
+
+        # default: monthly_rank (최근 30일 조회수 합계 기준)
+        # 조회수 없는 상품도 포함(0으로 취급)하여 정렬
+        return (
+            qs.annotate(
+                totalViews=Coalesce(
+                    Sum("daily_views__views", filter=Q(daily_views__date__gte=start_date)),
+                    0,
+                )
+            )
+            .order_by("-totalViews", "id")
+        )
