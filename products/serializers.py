@@ -103,11 +103,6 @@ class ProductReadSerializer(serializers.ModelSerializer):
         model = Product
         fields = ("id", "name", "company", "price", "unit", "piece", "productType", "images", "ingredients")
 
-class ProductImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductImage
-        fields = ("url",)
-
 class ProductIngredientDetailSerializer(serializers.ModelSerializer):
     ingredientName = serializers.CharField(source="ingredient.name")
     englishName = serializers.CharField(source="ingredient.englishIngredient")
@@ -149,8 +144,22 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     def get_ingredientsCount(self, obj: Product) -> int:
         return obj.ingredients.count()
 class ProductRankingSerializer(serializers.ModelSerializer):
-    totalViews = serializers.IntegerField()  # annotate에서 나온 값 받기
+    image = serializers.SerializerMethodField()
+    rankDiff = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "totalViews")
+        fields = ("id", "name", "image", "company", "price", "unit", "piece", "rankDiff")
+
+    def get_image(self, obj):
+        first_image = obj.images.order_by("id").first()
+        return first_image.url if first_image else None
+
+    def get_rankDiff(self, obj):
+        current_ranks = self.context.get("current_ranks", {})
+        prev_ranks = self.context.get("prev_ranks", {})
+        current = current_ranks.get(obj.id)
+        prev = prev_ranks.get(obj.id)
+        if current is None or prev is None:
+            return None  # 이전 50위권 밖이거나 데이터 없음 → NEW 처리 가능
+        return prev - current  # 양수면 상승, 음수면 하락, 0이면 동일
