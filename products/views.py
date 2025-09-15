@@ -41,7 +41,7 @@ class ProductCreateView(generics.CreateAPIView):
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductDetailSerializer
-    permission_classes = [IsAuthenticated] # 접근 권한 확인
+    permission_classes = [AllowAny]
     lookup_field = "id"
 
     @extend_schema(
@@ -58,7 +58,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 # 랭킹
 class ProductRankingView(generics.ListAPIView):
     serializer_class = ProductRankingSerializer
-    permission_classes = [IsAuthenticated] # 접근 권한 확인
+    permission_classes = [AllowAny]
     class RankingPagination(PageNumberPagination):
         page_size = 10                # 고정 10개
         page_query_param = "page"     # 페이지 번호만 허용
@@ -136,7 +136,7 @@ class ProductRankingView(generics.ListAPIView):
 # 제품 리스트 (필터/정렬/페이징)
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductsListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     class ListPagination(PageNumberPagination):
         page_size = 10
@@ -216,7 +216,7 @@ class ProductListView(generics.ListAPIView):
 # 제품 카테고리 조회
 class ProductCategoryView(generics.ListAPIView):
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @extend_schema(
         summary="카테고리 조회",
@@ -231,7 +231,7 @@ class ProductCategoryView(generics.ListAPIView):
 # 검색
 class ProductSearchView(generics.ListAPIView):
     serializer_class = ProductSearchSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     class ListPagination(PageNumberPagination):
         page_size = 10
