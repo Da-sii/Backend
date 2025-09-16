@@ -20,12 +20,21 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load Kakao API environment variables
+# Load environment variables
 load_dotenv(dotenv_path=os.path.join(BASE_DIR, ".env.kakao"))
+load_dotenv(dotenv_path=os.path.join(BASE_DIR, ".env"))
 
+# Kakao API environment variables
 KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY")
 KAKAO_REDIRECT_URI = os.getenv("KAKAO_REDIRECT_URI")
 KAKAO_CLIENT_SECRET = os.getenv("KAKAO_CLIENT_SECRET", "")  # 없으면 빈 문자열
+
+# SMS Service environment variables
+SMS_API_KEY = os.getenv("SMS_API_KEY", "")
+SMS_API_URL = os.getenv("SMS_API_URL", "")
+SMS_SENDER_NUMBER = os.getenv("SMS_SENDER_NUMBER", "")
+SMS_SERVICE_NAME = os.getenv("SMS_SERVICE_NAME", "다시")
+DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 
 
 # Quick-start development settings - unsuitable for production

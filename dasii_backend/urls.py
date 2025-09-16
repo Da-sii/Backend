@@ -24,6 +24,7 @@ urlpatterns = [
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 
     path("admin/", admin.site.urls),
+    path("auth/", include("auth.urls")), # auth 앱 라우팅
     path("auth/", include("users.urls")), # users 앱 라우팅
     path("auth/", include("socials.urls")), # socials 앱 라우팅
     path("products/", include("products.urls")), # products 앱 라우팅

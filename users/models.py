@@ -34,10 +34,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128) # Django가 해싱해서 저장
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
     kakao = models.BooleanField(default=False)
     google = models.BooleanField(default=False)
     apple = models.BooleanField(default=False)
-
     # Django 기본 인증 시스템을 위한 필드
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
