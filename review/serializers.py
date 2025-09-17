@@ -48,7 +48,7 @@ class ReviewUpdateResponseSerializer(serializers.Serializer):
 
 class PresignedUrlSerializer(serializers.Serializer):
     image_id = serializers.IntegerField()
-    original_url = serializers.URLField()
+    original_url = serializers.CharField()
     upload_url = serializers.URLField()
     final_url = serializers.URLField()
     filename = serializers.CharField()
@@ -64,20 +64,20 @@ class ReviewImageDeleteResponseSerializer(serializers.Serializer):
 
 class ReviewImageUploadRequestSerializer(serializers.Serializer):
     urls = serializers.ListField(
-        child=serializers.URLField(),
+        child=serializers.CharField(),
         min_length=1,
         max_length=10,
-        help_text="업로드할 이미지 URL 목록 (최대 10개)"
+        help_text="업로드할 이미지 파일명 또는 URL 목록 (최대 10개)"
     )
     
     def validate_urls(self, value):
         if not value:
-            raise serializers.ValidationError("업로드할 URL이 필요합니다.")
+            raise serializers.ValidationError("업로드할 파일명이 필요합니다.")
         
-        # URL 형식 검증
-        for url in value:
-            if not url.strip():
-                raise serializers.ValidationError("빈 URL은 허용되지 않습니다.")
+        # 파일명 형식 검증
+        for filename in value:
+            if not filename.strip():
+                raise serializers.ValidationError("빈 파일명은 허용되지 않습니다.")
         
         return value
 

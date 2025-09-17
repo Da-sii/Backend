@@ -425,8 +425,10 @@ class ReviewImageView(GenericAPIView):
         
         for original_url in original_urls:
             try:
-                # 원본 파일명에서 확장자 추출
+                # 파일명에서 확장자 추출
                 import os
+                
+                # 파일명에서 확장자 추출 (URL이든 파일명이든 상관없이)
                 file_extension = os.path.splitext(original_url)[1] or '.jpg'
                 
                 # presigned URL 생성 (백엔드에서 파일명 생성)
