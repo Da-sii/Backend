@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Review, ReviewImage
+from .models import Review, ReviewImage, ReviewReport, ReviewReportReason
 
 class ReviewImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -128,3 +128,14 @@ class ReviewDeleteResponseSerializer(serializers.Serializer):
     review_id = serializers.IntegerField()
     user_id = serializers.IntegerField()
     product_id = serializers.IntegerField()
+
+class ReviewReportRequestSerializer(serializers.Serializer):
+    reason = serializers.ChoiceField(choices=ReviewReportReason.choices)
+
+
+class ReviewReportResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+    review_id = serializers.IntegerField()
+    reporter_id = serializers.IntegerField()
+    reason = serializers.ChoiceField(choices=ReviewReportReason.choices)
