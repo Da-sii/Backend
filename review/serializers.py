@@ -12,7 +12,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Review
-        fields = ['rate', 'date', 'review', 'images']
+        fields = ['rate', 'date', 'review', 'images', 'product_id']
     
     def validate_rate(self, value):
         if value < 1 or value > 5:
@@ -26,6 +26,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class ReviewListResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()
+    product_id = serializers.IntegerField()
     reviews = serializers.DictField(
         child=ReviewSerializer()
     )

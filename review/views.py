@@ -301,6 +301,7 @@ class ReviewListView(GenericAPIView):
         # 최종 응답 데이터 직렬화
         response_data = {
             'success': True,
+            'product_id': product_id,
             'reviews': reviews_data
         }
         
