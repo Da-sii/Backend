@@ -8,7 +8,13 @@ from django.conf import settings
 from drf_spectacular.utils import extend_schema, OpenApiExample
 
 from .models import User
-from .serializers import SignUpSerializer, SignInSerializer, KakaoLoginSerializer
+from .serializers import (
+    SignUpSerializer, 
+    SignInSerializer, 
+    KakaoLoginSerializer,
+    NicknameUpdateRequestSerializer,
+    NicknameUpdateResponseSerializer
+)
 
 
 class SignUpView(generics.CreateAPIView):
@@ -64,6 +70,7 @@ class SignInView(GenericAPIView):
             },
             status=status.HTTP_200_OK,
         )
+
 class KakaoLoginView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = KakaoLoginSerializer
@@ -234,3 +241,36 @@ class LogoutView(GenericAPIView):
         except Exception as e:
             return Response({"error": f"로그아웃 실패: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
+class NicknameUpdateView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = NicknameUpdateRequestSerializer
+
+    @extend_schema(
+        summary="닉네임 변경",
+        description="현재 로그인한 사용자의 닉네임을 변경합니다.",
+        request=NicknameUpdateRequestSerializer,
+        responses={
+            200: NicknameUpdateResponseSerializer,
+            400: {
+                'description': '유효성 오류',
+                'examples': {'application/json': {'nickname': ['이미 사용 중인 닉네임입니다.']}}
+            },
+            401: {'description': '인증 필요'}
+        },
+    )
+    def patch(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        request.user.nickname = serializer.validated_data['nickname']
+        request.user.save(update_fields=['nickname'])
+
+        response_data = {
+            'success': True,
+            'user_id': request.user.id,
+            'nickname': request.user.nickname
+        }
+        response_serializer = NicknameUpdateResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
