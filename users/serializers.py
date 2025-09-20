@@ -4,7 +4,6 @@ from rest_framework.validators import UniqueValidator
 
 from users.models import User
 
-
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 이메일입니다.")]
@@ -56,3 +55,23 @@ class KakaoLoginSerializer(serializers.Serializer):
         help_text="카카오 로그인 후 받은 authorization code",
         required=True
     )
+
+class NicknameUpdateRequestSerializer(serializers.Serializer):
+    nickname = serializers.CharField(min_length=2, max_length=10)
+
+    def validate_nickname(self, value):
+        import re
+        # 한글, 영문, 숫자만 허용 (2~10자는 필드에서 이미 검증)
+        if not re.fullmatch(r"[A-Za-z0-9가-힣]+", value):
+            raise serializers.ValidationError("닉네임은 한글, 영문, 숫자만 사용할 수 있습니다.")
+
+        if User.objects.filter(nickname=value).exists():
+            raise serializers.ValidationError("이미 사용 중인 닉네임입니다.")
+            
+        return value
+
+
+class NicknameUpdateResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    user_id = serializers.IntegerField()
+    nickname = serializers.CharField()

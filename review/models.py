@@ -40,3 +40,40 @@ class ReviewImage(models.Model):
 
     def __str__(self):
         return f"Image {self.id} - Review {self.review.id}"
+        
+class ReviewReportReason(models.TextChoices):
+    IRRELEVANT = "IRRELEVANT", "제품과 관련 없는 이미지 / 내용"
+    MISMATCH = "MISMATCH", "제품 미사용 / 리뷰 내용과 다른 제품 선택"
+    PROMOTION = "PROMOTION", "광고 홍보 / 거래 시도"
+    ABUSE = "ABUSE", "욕설, 비속어가 포함된 내용"
+    PRIVACY = "PRIVACY", "개인 정보 노출"
+
+
+class ReviewReport(models.Model):
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name="reports",
+        verbose_name="리뷰 아이디"
+    )
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="review_reports",
+        verbose_name="신고자 아이디"
+    )
+    reason = models.CharField(
+        max_length=32,
+        choices=ReviewReportReason.choices,
+        verbose_name="신고 사유"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="신고 일시")
+
+    class Meta:
+        db_table = "reviewReports"
+        constraints = [
+            models.UniqueConstraint(fields=["review", "reporter"], name="unique_review_report_per_user")
+        ]
+
+    def __str__(self):
+        return f"Report {self.id} - Review {self.review.id} by {self.reporter_id} ({self.reason})"
