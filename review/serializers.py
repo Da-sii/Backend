@@ -12,7 +12,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Review
-        fields = ['rate', 'date', 'review', 'images', 'product_id']
+        fields = ['rate', 'date', 'review', 'images']
     
     def validate_rate(self, value):
         if value < 1 or value > 5:
@@ -26,7 +26,6 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class ReviewListResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()
-    product_id = serializers.IntegerField()
     reviews = serializers.DictField(
         child=ReviewSerializer()
     )
@@ -128,3 +127,26 @@ class ReviewDeleteResponseSerializer(serializers.Serializer):
     review_id = serializers.IntegerField()
     user_id = serializers.IntegerField()
     product_id = serializers.IntegerField()
+
+class ProductInfoSerializer(serializers.Serializer):
+    """제품 정보 시리얼라이저"""
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    company = serializers.CharField()
+    image = serializers.SerializerMethodField()
+    
+    def get_image(self, obj):
+        """첫 번째 이미지 URL을 반환"""
+        first_image = obj.images.first()
+        return first_image.url if first_image else ''
+
+class MyPageReviewSerializer(serializers.ModelSerializer):
+    """마이페이지용 리뷰 시리얼라이저"""
+    images = ReviewImageSerializer(many=True, read_only=True)
+    product_info = ProductInfoSerializer(source='product', read_only=True)
+    review_id = serializers.IntegerField(source='id', read_only=True)
+    date = serializers.DateField(read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = ['review_id', 'rate', 'date', 'review', 'updated', 'images', 'product_info']

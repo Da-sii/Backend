@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, OpenApiResponse
 from drf_spectacular.types import OpenApiTypes
+from products.models import ProductImage
 from .serializers import (
     ReviewSerializer, 
     ReviewListResponseSerializer, 
@@ -285,7 +286,7 @@ class ReviewListView(GenericAPIView):
         from products.models import Product
         product = get_object_or_404(Product, id=product_id)
         
-        # 리뷰와 이미지를 함께 조회 (N+1 쿼리 방지)
+        # 리뷰와 이미지를 함께 조회 
         reviews = Review.objects.filter(product_id=product_id).select_related('user').prefetch_related(
             Prefetch('images', queryset=ReviewImage.objects.all())
         ).order_by('-date')
@@ -298,10 +299,20 @@ class ReviewListView(GenericAPIView):
             review_serializer = ReviewSerializer(review)
             reviews_data[user_nickname] = review_serializer.data
         
+        # 제품 정보 구성 (첫 번째 이미지 가져오기)
+        first_image = product.images.first()
+        product_info = {
+            'id': product.id,
+            'name': product.name,
+            'company': product.company,
+            'image': first_image.url if first_image else ''
+        }
+        
         # 최종 응답 데이터 직렬화
         response_data = {
             'success': True,
             'product_id': product_id,
+            'product_info': product_info,
             'reviews': reviews_data
         }
         
@@ -905,16 +916,19 @@ class UserReviewsView(GenericAPIView):
     def get(self, request):
         """
         현재 로그인한 사용자의 모든 리뷰와 이미지를 조회합니다.
+        마이페이지용: 제품 정보(이미지, 회사명, 제품명), 수정여부, review_id 포함
         """
-        # 현재 사용자의 모든 리뷰와 이미지를 함께 조회 (N+1 쿼리 방지)
+        # 현재 사용자의 모든 리뷰와 제품 정보, 이미지를 함께 조회 (N+1 쿼리 방지)
         reviews = Review.objects.filter(
             user=request.user
-        ).prefetch_related(
-            Prefetch('images', queryset=ReviewImage.objects.all())
+        ).select_related('product').prefetch_related(
+            Prefetch('images', queryset=ReviewImage.objects.all()),
+            Prefetch('product__images', queryset=ProductImage.objects.all())
         ).order_by('-date')
         
-        # Serializer를 사용하여 리뷰 데이터 직렬화
-        reviews_serializer = ReviewSerializer(reviews, many=True)
+        # 마이페이지용 Serializer를 사용하여 리뷰 데이터 직렬화
+        from .serializers import MyPageReviewSerializer
+        reviews_serializer = MyPageReviewSerializer(reviews, many=True)
         
         # 응답 데이터 구성
         response_data = {

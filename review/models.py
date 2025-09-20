@@ -18,6 +18,7 @@ class Review(models.Model):
     rate = models.IntegerField(verbose_name="별점")
     review = models.TextField(verbose_name="리뷰")
     date = models.DateField(auto_now_add=True, verbose_name="최종날짜")
+    updated = models.BooleanField(default=False, verbose_name="수정여부")
 
     class Meta:
         db_table = "reviews"
