@@ -19,9 +19,11 @@ from .serializers import (
     ProductRatingStatsResponseSerializer,
     ReviewImageDetailResponseSerializer,
     UserReviewsResponseSerializer,
-    ReviewDeleteResponseSerializer
+    ReviewDeleteResponseSerializer,
+    ReviewReportRequestSerializer,
+    ReviewReportResponseSerializer
 )
-from .models import Review, ReviewImage
+from .models import Review, ReviewImage, ReviewReport, ReviewReportReason
 from django.shortcuts import get_object_or_404
 from .utils import S3Uploader
 from django.db.models import Prefetch
@@ -1034,3 +1036,52 @@ class ReviewDeleteView(GenericAPIView):
         
         return Response(response_data, status=status.HTTP_200_OK)
     
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ReviewReportView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ReviewReportRequestSerializer
+
+    @extend_schema(
+        summary="리뷰 신고",
+        description="특정 리뷰를 신고합니다. 동일 사용자는 같은 리뷰를 한 번만 신고할 수 있습니다.",
+        request=ReviewReportRequestSerializer,
+        responses={
+            201: OpenApiResponse(response=ReviewReportResponseSerializer, description='신고 생성 성공'),
+            400: OpenApiResponse(description='유효성 오류 또는 중복 신고'),
+            401: OpenApiResponse(description='인증 필요'),
+            404: OpenApiResponse(description='리뷰 없음')
+        },
+        tags=['리뷰 신고']
+    )
+    def post(self, request, review_id):
+        review = get_object_or_404(Review, id=review_id)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        reason = serializer.validated_data['reason']
+
+        # 중복 신고 방지
+        if ReviewReport.objects.filter(review=review, reporter=request.user).exists():
+            return Response({
+                'success': False,
+                'message': '이미 신고한 리뷰입니다.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report = ReviewReport.objects.create(
+            review=review,
+            reporter=request.user,
+            reason=reason,
+        )
+
+        response_data = {
+            'success': True,
+            'message': '신고가 접수되었습니다.',
+            'review_id': review.id,
+            'reporter_id': request.user.id,
+            'reason': report.reason,
+        }
+
+        response_serializer = ReviewReportResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
