@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.models import User
+from users.utils import generate_jwt_tokens_with_metadata
 from socials.serializers import AppleSigninSerializer
 from socials.utils import verify_identity_token
 
@@ -38,10 +39,10 @@ class AppleSigninView(GenericAPIView):
             },
         )
 
-        refresh = RefreshToken.for_user(user)
-        access = str(refresh.access_token)
+        # JWT 토큰 발급 (apple 타입으로 메타데이터 추가)
+        tokens = generate_jwt_tokens_with_metadata(user, 'apple')
 
-        return Response(
+        response = Response(
             {
                 "success": True,
                 "user": {
@@ -49,8 +50,19 @@ class AppleSigninView(GenericAPIView):
                     "email": user.email,
                     "nickname": user.nickname,
                 },
-                "access": access,
-                "refresh": str(refresh),
+                "access": tokens['access'],
             }, 
             status=status.HTTP_200_OK,
         )
+        
+        # refresh token을 쿠키로 설정
+        response.set_cookie(
+            'refresh_token',
+            tokens['refresh'],
+            httponly=True,      # XSS 방지
+            secure=False,       # HTTP에서 테스트 (HTTPS에서는 True)
+            samesite='Strict',  # CSRF 방지
+            max_age=14*24*60*60  # 14일
+        )
+        
+        return response
