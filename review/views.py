@@ -21,7 +21,8 @@ from .serializers import (
     UserReviewsResponseSerializer,
     ReviewDeleteResponseSerializer,
     ReviewReportRequestSerializer,
-    ReviewReportResponseSerializer
+    ReviewReportResponseSerializer,
+    UserReviewCheckResponseSerializer
 )
 from .models import Review, ReviewImage, ReviewReport, ReviewReportReason
 from django.shortcuts import get_object_or_404
@@ -1099,3 +1100,87 @@ class ReviewReportView(GenericAPIView):
         response_serializer = ReviewReportResponseSerializer(data=response_data)
         response_serializer.is_valid(raise_exception=True)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class UserReviewCheckView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="사용자 리뷰 작성 여부 확인",
+        description="현재 사용자가 특정 제품에 리뷰를 작성했는지 확인합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='product_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='상품 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=UserReviewCheckResponseSerializer,
+                description='리뷰 작성 여부 확인 성공',
+                examples=[
+                    OpenApiExample(
+                        '리뷰 작성함',
+                        value={
+                            "success": True,
+                            "product_id": 1,
+                            "user_id": 1,
+                            "has_review": True,
+                            "review_id": 5
+                        }
+                    ),
+                    OpenApiExample(
+                        '리뷰 작성 안함',
+                        value={
+                            "success": True,
+                            "product_id": 1,
+                            "user_id": 1,
+                            "has_review": False,
+                            "review_id": None
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='상품을 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '상품 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 확인']
+    )
+    def get(self, request, product_id):
+        """
+        현재 사용자가 특정 제품에 리뷰를 작성했는지 확인합니다.
+        """
+        # 상품 존재 확인
+        from products.models import Product
+        get_object_or_404(Product, id=product_id)
+        
+        # 사용자의 리뷰 작성 여부 확인
+        user_review = Review.objects.filter(
+            product_id=product_id,
+            user=request.user
+        ).first()
+        
+        has_review = user_review is not None
+        review_id = user_review.id if user_review else None
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'product_id': product_id,
+            'user_id': request.user.id,
+            'has_review': has_review,
+            'review_id': review_id
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)

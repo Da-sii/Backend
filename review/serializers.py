@@ -170,3 +170,11 @@ class ReviewReportResponseSerializer(serializers.Serializer):
     reporter_id = serializers.IntegerField()
     reason = serializers.CharField()
     created_at = serializers.DateTimeField()
+
+class UserReviewCheckResponseSerializer(serializers.Serializer):
+    """사용자 리뷰 작성 여부 확인 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    product_id = serializers.IntegerField()
+    user_id = serializers.IntegerField()
+    has_review = serializers.BooleanField()
+    review_id = serializers.IntegerField(required=False, allow_null=True)
