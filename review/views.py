@@ -223,14 +223,20 @@ class ReviewListView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     
     @extend_schema(
-        summary="상품 리뷰 목록 조회",
-        description="특정 상품의 모든 리뷰를 조회합니다.",
+        summary="상품 리뷰 페이지네이션 조회",
+        description="특정 상품의 리뷰를 페이지네이션으로 조회합니다. 특정 리뷰 ID부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.",
         parameters=[
             OpenApiParameter(
                 name='product_id',
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.PATH,
                 description='상품 ID'
+            ),
+            OpenApiParameter(
+                name='review_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='시작할 리뷰 ID (해당 ID가 없으면 가장 가까운 리뷰부터 반환)'
             )
         ],
         responses={
@@ -281,9 +287,10 @@ class ReviewListView(GenericAPIView):
         },
         tags=['리뷰']
     )
-    def get(self, request, product_id):
+    def get(self, request, product_id, review_id):
         """
-        상품의 모든 리뷰를 조회합니다.
+        상품의 리뷰를 페이지네이션으로 조회합니다.
+        특정 review_id부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
         """
         # 상품 존재 확인 및 이미지 prefetch
         from products.models import Product
@@ -292,13 +299,36 @@ class ReviewListView(GenericAPIView):
             id=product_id
         )
         
-        # 리뷰와 이미지를 함께 조회 (N+1 쿼리 방지)
-        reviews = Review.objects.filter(product_id=product_id).select_related('user').prefetch_related(
+        # 리뷰 쿼리셋 생성 (ID 오름차순으로 정렬)
+        reviews_query = Review.objects.filter(product_id=product_id).select_related('user').prefetch_related(
             Prefetch('images', queryset=ReviewImage.objects.all())
-        ).order_by('-date')
+        ).order_by('id')
+        
+        # 특정 review_id가 존재하는지 확인
+        target_review = reviews_query.filter(id=review_id).first()
+        
+        if target_review:
+            # 해당 review_id가 존재하면, 해당 ID부터 21개 조회
+            reviews = list(reviews_query.filter(id__gte=review_id)[:22])
+        else:
+            # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
+            closest_review = reviews_query.filter(id__gt=review_id).first()
+            if closest_review:
+                reviews = list(reviews_query.filter(id__gte=closest_review.id)[:22])
+            else:
+                # review_id보다 큰 리뷰가 없으면 빈 배열 반환
+                reviews = []
+        
+        # 다음 페이지 존재 여부 확인
+        has_next = len(reviews) > 21
+        if has_next:
+            reviews = reviews[:21]  # 실제로는 21개만 반환
+            next_review_id = reviews[-1].id if reviews else None
+        else:
+            next_review_id = None
         
         # 리뷰가 없는 경우 처리
-        if not reviews.exists():
+        if not reviews:
             response_data = {
                 'success': True,
                 'product_id': product_id,
@@ -308,17 +338,18 @@ class ReviewListView(GenericAPIView):
                     'company': product.company,
                     'image': product.images.first().url if product.images.exists() else ''
                 },
-                'reviews': {}
+                'reviews': []
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
         # Serializer를 사용하여 응답 데이터 구성
-        reviews_data = {}
+        reviews_data = []
         for review in reviews:
-            user_nickname = review.user.nickname
             # ReviewSerializer를 사용하여 리뷰 데이터 직렬화
             review_serializer = ReviewSerializer(review)
-            reviews_data[user_nickname] = review_serializer.data
+            review_data = review_serializer.data
+            review_data['user_nickname'] = review.user.nickname
+            reviews_data.append(review_data)
         
         # 제품 정보 구성 (첫 번째 이미지 가져오기 - 이미 prefetch됨)
         first_image = product.images.first()
