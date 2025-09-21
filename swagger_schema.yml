@@ -548,12 +548,37 @@ paths:
      /auth/password/change/:
          post:
              operationId: auth_password_change_create
-             description: 현재 사용자의 비밀번호를 UUID로 변경합니다. (email 로그인 사용자만 가능)
+             description: 현재 사용자의 비밀번호를 변경합니다. (email 로그인 사용자만 가능)
              summary: 비밀번호 변경
              tags:
                  - 사용자 관리
              security:
                  - jwtAuth: []
+             requestBody:
+                 required: true
+                 content:
+                     application/json:
+                         schema:
+                             type: object
+                             properties:
+                                 current_password:
+                                     type: string
+                                     minLength: 1
+                                     description: 현재 비밀번호
+                                 new_password1:
+                                     type: string
+                                     minLength: 8
+                                     maxLength: 20
+                                     description: 새 비밀번호 (8-20자, 영문/숫자/특수문자 포함)
+                                 new_password2:
+                                     type: string
+                                     minLength: 8
+                                     maxLength: 20
+                                     description: 새 비밀번호 확인
+                             required:
+                                 - current_password
+                                 - new_password1
+                                 - new_password2
              responses:
                  '200':
                      content:
@@ -565,18 +590,40 @@ paths:
                      content:
                          application/json:
                              schema:
-                                 type: object
-                                 properties:
-                                     error:
-                                         type: string
-                                         example: 소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.
-                                     detail:
-                                         type: string
-                                         example: 카카오 또는 애플 로그인 사용자는 비밀번호 변경이 불가능합니다.
-                                     current_token_type:
-                                         type: string
-                                         example: kakao
-                     description: 비밀번호 변경 불가 (소셜 로그인 사용자)
+                                 oneOf:
+                                     - type: object
+                                       properties:
+                                           error:
+                                               type: string
+                                               example: 소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.
+                                           detail:
+                                               type: string
+                                               example: 카카오 또는 애플 로그인 사용자는 비밀번호 변경이 불가능합니다.
+                                           current_token_type:
+                                               type: string
+                                               example: kakao
+                                     - type: object
+                                       properties:
+                                           current_password:
+                                               type: array
+                                               items:
+                                                   type: string
+                                               example: ["현재 비밀번호가 올바르지 않습니다."]
+                                     - type: object
+                                       properties:
+                                           new_password1:
+                                               type: array
+                                               items:
+                                                   type: string
+                                               example: ["비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다."]
+                                     - type: object
+                                       properties:
+                                           non_field_errors:
+                                               type: array
+                                               items:
+                                                   type: string
+                                               example: ["새 비밀번호가 일치하지 않습니다."]
+                     description: 비밀번호 변경 실패
                  '401':
                      content:
                          application/json:

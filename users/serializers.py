@@ -99,12 +99,70 @@ class NicknameUpdateResponseSerializer(serializers.Serializer):
 
 class PasswordChangeRequestSerializer(serializers.Serializer):
     """비밀번호 변경 요청 시리얼라이저"""
-    pass  # 요청 데이터는 필요 없음 (인증된 사용자의 비밀번호만 변경)
+    current_password = serializers.CharField(write_only=True, min_length=1)
+    new_password1 = serializers.CharField(write_only=True, min_length=8, max_length=20)
+    new_password2 = serializers.CharField(write_only=True, min_length=8, max_length=20)
+
+    def validate_current_password(self, value):
+        """현재 비밀번호가 비어있지 않은지 확인"""
+        if not value:
+            raise serializers.ValidationError("현재 비밀번호를 입력해주세요.")
+        return value
+
+    def validate_new_password1(self, value):
+        """새 비밀번호 규칙 검증"""
+        import re
+        if len(value) < 8 or len(value) > 20:
+            raise serializers.ValidationError("비밀번호는 8~20자여야 합니다.")
+        if not re.search(r"[A-Za-z]", value):
+            raise serializers.ValidationError("비밀번호는 영문을 포함해야 합니다.")
+        if not re.search(r"[0-9]", value):
+            raise serializers.ValidationError("비밀번호는 숫자를 포함해야 합니다.")
+        if not re.search(r"[^A-Za-z0-9]", value):
+            raise serializers.ValidationError("비밀번호는 특수문자를 포함해야 합니다.")
+        return value
+
+    def validate(self, data):
+        """새 비밀번호 일치 확인"""
+        if data["new_password1"] != data["new_password2"]:
+            raise serializers.ValidationError("새 비밀번호가 일치하지 않습니다.")
+        
+        # 현재 비밀번호와 새 비밀번호가 같은지 확인
+        if data["current_password"] == data["new_password1"]:
+            raise serializers.ValidationError("새 비밀번호는 현재 비밀번호와 달라야 합니다.")
+        
+        return data
 
 
 class PasswordChangeResponseSerializer(serializers.Serializer):
     """비밀번호 변경 응답 시리얼라이저"""
     success = serializers.BooleanField()
     user_id = serializers.IntegerField()
-    new_password = serializers.CharField()
+    message = serializers.CharField()
+
+
+class PhoneNumberFindAccountRequestSerializer(serializers.Serializer):
+    """핸드폰번호로 계정 찾기 요청 시리얼라이저"""
+    phone_number = serializers.CharField(
+        max_length=20,
+        help_text="핸드폰번호 (예: 010-1234-5678)"
+    )
+
+    def validate_phone_number(self, value):
+        """핸드폰번호 형식 검증"""
+        import re
+        # 한국 핸드폰번호 형식 검증 (010, 011, 016, 017, 018, 019)
+        phone_pattern = r'^01[0-9]-?\d{3,4}-?\d{4}$'
+        if not re.match(phone_pattern, value):
+            raise serializers.ValidationError("올바른 핸드폰번호 형식이 아닙니다. (예: 010-1234-5678)")
+        return value
+
+
+class PhoneNumberFindAccountResponseSerializer(serializers.Serializer):
+    """핸드폰번호로 계정 찾기 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    accounts = serializers.ListField(
+        child=serializers.DictField(),
+        help_text="해당 핸드폰번호로 등록된 계정 목록"
+    )
     message = serializers.CharField()
