@@ -16,7 +16,9 @@ from .serializers import (
     NicknameUpdateRequestSerializer,
     NicknameUpdateResponseSerializer,
     PasswordChangeRequestSerializer,
-    PasswordChangeResponseSerializer
+    PasswordChangeResponseSerializer,
+    PhoneNumberFindAccountRequestSerializer,
+    PhoneNumberFindAccountResponseSerializer
 )
 from .utils import generate_jwt_tokens_with_metadata, get_token_type_from_token
 
@@ -25,6 +27,7 @@ class SignUpView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = SignUpSerializer
     permission_classes = [AllowAny] # 인증 필요 없음 (누구나 회원가입 가능)
+    authentication_classes = []  # 인증 클래스를 비워서 토큰 검증을 완전히 비활성화
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -62,6 +65,7 @@ class SignUpView(generics.CreateAPIView):
 class SignInView(GenericAPIView):
     permission_classes = [AllowAny] # 인증 필요 없음 (누구나 회원가입 가능)
     serializer_class = SignInSerializer
+    authentication_classes = []  # 인증 클래스를 비워서 토큰 검증을 완전히 비활성화
 
     def post(self, request):
         serializer = SignInSerializer(data=request.data)
@@ -99,7 +103,7 @@ class SignInView(GenericAPIView):
 class KakaoLoginView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = KakaoLoginSerializer
-    
+    authentication_classes = []  # 인증 클래스를 비워서 토큰 검증을 완전히 비활성화
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -286,7 +290,7 @@ class PasswordChangeView(GenericAPIView):
 
     @extend_schema(
         summary="비밀번호 변경",
-        description="현재 사용자의 비밀번호를 UUID로 변경합니다. (email 로그인 사용자만 가능)",
+        description="현재 사용자의 비밀번호를 변경합니다. (email 로그인 사용자만 가능)",
         request=PasswordChangeRequestSerializer,
         responses={
             200: OpenApiResponse(
@@ -298,20 +302,38 @@ class PasswordChangeView(GenericAPIView):
                         value={
                             "success": True,
                             "user_id": 1,
-                            "new_password": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                             "message": "비밀번호가 성공적으로 변경되었습니다."
                         }
                     )
                 ]
             ),
             400: OpenApiResponse(
-                description='비밀번호 변경 불가 (소셜 로그인 사용자)',
+                description='비밀번호 변경 실패',
                 examples=[
                     OpenApiExample(
                         '소셜 로그인 사용자',
                         value={
                             "error": "소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.",
-                            "detail": "카카오 또는 애플 로그인 사용자는 비밀번호 변경이 불가능합니다."
+                            "detail": "카카오 또는 애플 로그인 사용자는 비밀번호 변경이 불가능합니다.",
+                            "current_token_type": "kakao"
+                        }
+                    ),
+                    OpenApiExample(
+                        '현재 비밀번호 불일치',
+                        value={
+                            "current_password": ["현재 비밀번호가 올바르지 않습니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '새 비밀번호 규칙 위반',
+                        value={
+                            "new_password1": ["비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '새 비밀번호 불일치',
+                        value={
+                            "non_field_errors": ["새 비밀번호가 일치하지 않습니다."]
                         }
                     )
                 ]
@@ -324,7 +346,7 @@ class PasswordChangeView(GenericAPIView):
     )
     def post(self, request):
         """
-        현재 사용자의 비밀번호를 UUID로 변경합니다.
+        현재 사용자의 비밀번호를 변경합니다.
         (email 로그인 사용자만 가능)
         """
         # JWT 토큰에서 tokenType 확인
@@ -349,21 +371,161 @@ class PasswordChangeView(GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # UUID 생성
-        new_password = str(uuid.uuid4())
+        # 요청 데이터 검증
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         
-        # 사용자의 비밀번호 변경 (Django가 자동으로 해싱)
+        # 현재 비밀번호 확인
+        current_password = serializer.validated_data['current_password']
+        if not request.user.check_password(current_password):
+            return Response(
+                {"current_password": ["현재 비밀번호가 올바르지 않습니다."]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 새 비밀번호로 변경
+        new_password = serializer.validated_data['new_password1']
         request.user.set_password(new_password)
         request.user.save()
         
         response_data = {
             'success': True,
             'user_id': request.user.id,
-            'new_password': new_password,
             'message': '비밀번호가 성공적으로 변경되었습니다.'
         }
         
         response_serializer = PasswordChangeResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class PhoneNumberFindAccountView(GenericAPIView):
+    """핸드폰번호로 계정 찾기"""
+    permission_classes = [AllowAny]
+    authentication_classes = []  # 인증 클래스를 비워서 토큰 검증을 완전히 비활성화
+
+    @extend_schema(
+        summary="핸드폰번호로 계정 찾기",
+        description="핸드폰번호를 쿼리 파라미터로 입력하여 해당 번호로 등록된 계정들을 찾습니다. access token이 없어도 사용 가능합니다.",
+        parameters=[
+            {
+                'name': 'phone_number',
+                'in': 'query',
+                'description': '핸드폰번호 (예: 010-1234-5678)',
+                'required': True,
+                'schema': {'type': 'string', 'pattern': '^01[0-9]-?\\d{3,4}-?\\d{4}$'}
+            }
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=PhoneNumberFindAccountResponseSerializer,
+                description='계정 찾기 성공',
+                examples=[
+                    OpenApiExample(
+                        '계정 찾기 성공',
+                        value={
+                            "success": True,
+                            "accounts": [
+                                {
+                                    "id": 1,
+                                    "email": "user@example.com",
+                                    "nickname": "user123456",
+                                    "login_type": "email"
+                                },
+                                {
+                                    "id": 2,
+                                    "email": "kakao@example.com",
+                                    "nickname": "kakao_user",
+                                    "login_type": "kakao"
+                                }
+                            ],
+                            "message": "해당 핸드폰번호로 등록된 계정을 찾았습니다."
+                        }
+                    ),
+                    OpenApiExample(
+                        '계정 없음',
+                        value={
+                            "success": True,
+                            "accounts": [],
+                            "message": "해당 핸드폰번호로 등록된 계정이 없습니다."
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='잘못된 요청 데이터',
+                examples=[
+                    OpenApiExample(
+                        '핸드폰번호 누락',
+                        value={
+                            "phone_number": ["핸드폰번호는 필수입니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '잘못된 핸드폰번호 형식',
+                        value={
+                            "phone_number": ["올바른 핸드폰번호 형식이 아닙니다. (예: 010-1234-5678)"]
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['계정 관리']
+    )
+    def get(self, request):
+        """핸드폰번호로 등록된 계정들을 찾습니다."""
+        phone_number = request.GET.get('phone_number')
+        
+        if not phone_number:
+            return Response(
+                {"phone_number": ["핸드폰번호는 필수입니다."]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 핸드폰번호 형식 검증
+        import re
+        phone_pattern = r'^01[0-9]-?\d{3,4}-?\d{4}$'
+        if not re.match(phone_pattern, phone_number):
+            return Response(
+                {"phone_number": ["올바른 핸드폰번호 형식이 아닙니다. (예: 010-1234-5678)"]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 해당 핸드폰번호로 등록된 사용자들 조회
+        users = User.objects.filter(phone_number=phone_number)
+        
+        accounts = []
+        for user in users:
+            # 로그인 타입 결정
+            if user.kakao:
+                login_type = "kakao"
+            elif user.google:
+                login_type = "google"
+            elif user.apple:
+                login_type = "apple"
+            else:
+                login_type = "email"
+            
+            accounts.append({
+                "id": user.id,
+                "email": user.email,
+                "nickname": user.nickname,
+                "login_type": login_type
+            })
+        
+        if accounts:
+            message = f"해당 핸드폰번호로 등록된 계정 {len(accounts)}개를 찾았습니다."
+        else:
+            message = "해당 핸드폰번호로 등록된 계정이 없습니다."
+        
+        response_data = {
+            'success': True,
+            'accounts': accounts,
+            'message': message
+        }
+        
+        response_serializer = PhoneNumberFindAccountResponseSerializer(data=response_data)
         response_serializer.is_valid(raise_exception=True)
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
