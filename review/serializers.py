@@ -9,10 +9,12 @@ class ReviewImageSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     images = ReviewImageSerializer(many=True, read_only=True)
     date = serializers.DateField(read_only=True)
+    updated = serializers.BooleanField(read_only=True)
+    review_id = serializers.IntegerField(source='id', read_only=True)
     
     class Meta:
         model = Review
-        fields = ['rate', 'date', 'review', 'images']
+        fields = ['review_id', 'rate', 'date', 'review', 'updated', 'images']
     
     def validate_rate(self, value):
         if value < 1 or value > 5:
@@ -150,3 +152,21 @@ class MyPageReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ['review_id', 'rate', 'date', 'review', 'updated', 'images', 'product_info']
+
+class ReviewReportRequestSerializer(serializers.Serializer):
+    """리뷰 신고 요청 시리얼라이저"""
+    reason = serializers.ChoiceField(choices=ReviewReportReason.choices)
+    
+    def validate_reason(self, value):
+        if value not in [choice[0] for choice in ReviewReportReason.choices]:
+            raise serializers.ValidationError("유효하지 않은 신고 사유입니다.")
+        return value
+
+class ReviewReportResponseSerializer(serializers.Serializer):
+    """리뷰 신고 응답 시리얼라이저"""
+    message = serializers.CharField()
+    report_id = serializers.IntegerField()
+    review_id = serializers.IntegerField()
+    reporter_id = serializers.IntegerField()
+    reason = serializers.CharField()
+    created_at = serializers.DateTimeField()
