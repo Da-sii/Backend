@@ -198,17 +198,17 @@ class ReviewUpdateView(GenericAPIView):
         serializer = self.get_serializer(review, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         
-        # 리뷰 수정
-        serializer.save()
+        # 리뷰 수정 (updated 필드를 True로 설정)
+        updated_review = serializer.save(updated=True)
         
         # 응답 데이터를 Serializer로 직렬화
         response_data = {
             'message': '리뷰가 성공적으로 수정되었습니다.',
-            'review_id': review.id,
+            'review_id': updated_review.id,
             'user_id': request.user.id,
-            'product_id': review.product_id,
-            'rate': review.rate,
-            'review': review.review
+            'product_id': updated_review.product_id,
+            'rate': updated_review.rate,
+            'review': updated_review.review
         }
         
         # Serializer로 유효성 검사 (선택사항)
@@ -284,14 +284,32 @@ class ReviewListView(GenericAPIView):
         """
         상품의 모든 리뷰를 조회합니다.
         """
-        # 상품 존재 확인
+        # 상품 존재 확인 및 이미지 prefetch
         from products.models import Product
-        product = get_object_or_404(Product, id=product_id)
+        product = get_object_or_404(
+            Product.objects.prefetch_related('images'), 
+            id=product_id
+        )
         
-        # 리뷰와 이미지를 함께 조회 
+        # 리뷰와 이미지를 함께 조회 (N+1 쿼리 방지)
         reviews = Review.objects.filter(product_id=product_id).select_related('user').prefetch_related(
             Prefetch('images', queryset=ReviewImage.objects.all())
         ).order_by('-date')
+        
+        # 리뷰가 없는 경우 처리
+        if not reviews.exists():
+            response_data = {
+                'success': True,
+                'product_id': product_id,
+                'product_info': {
+                    'id': product.id,
+                    'name': product.name,
+                    'company': product.company,
+                    'image': product.images.first().url if product.images.exists() else ''
+                },
+                'reviews': {}
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         
         # Serializer를 사용하여 응답 데이터 구성
         reviews_data = {}
@@ -301,7 +319,7 @@ class ReviewListView(GenericAPIView):
             review_serializer = ReviewSerializer(review)
             reviews_data[user_nickname] = review_serializer.data
         
-        # 제품 정보 구성 (첫 번째 이미지 가져오기)
+        # 제품 정보 구성 (첫 번째 이미지 가져오기 - 이미 prefetch됨)
         first_image = product.images.first()
         product_info = {
             'id': product.id,
@@ -310,7 +328,7 @@ class ReviewListView(GenericAPIView):
             'image': first_image.url if first_image else ''
         }
         
-        # 최종 응답 데이터 직렬화
+        # 최종 응답 데이터 구성
         response_data = {
             'success': True,
             'product_id': product_id,
@@ -318,11 +336,7 @@ class ReviewListView(GenericAPIView):
             'reviews': reviews_data
         }
         
-        # Serializer로 유효성 검사 (선택사항)
-        response_serializer = ReviewListResponseSerializer(data=response_data)
-        response_serializer.is_valid(raise_exception=True)
-        
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ReviewImageView(GenericAPIView):
