@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -44,9 +45,28 @@ class SignInSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        user = authenticate(email=data["email"], password=data["password"])
-        if not user:
+        email = data["email"]
+        password = data["password"]
+        
+        # 디버깅을 위한 로그
+        print(f"로그인 시도: {email}")
+        
+        # 사용자 존재 여부 확인
+        try:
+            user_obj = User.objects.get(email=email)
+            print(f"사용자 존재: {user_obj}")
+            print(f"사용자 활성화 상태: {user_obj.is_active}")
+        except User.DoesNotExist:
+            print(f"사용자 없음: {email}")
             raise serializers.ValidationError("이메일 또는 비밀번호가 올바르지 않습니다.")
+        
+        # 인증 시도
+        user = authenticate(email=email, password=password)
+        if not user:
+            print(f"인증 실패: {email}")
+            raise serializers.ValidationError("이메일 또는 비밀번호가 올바르지 않습니다.")
+        
+        print(f"인증 성공: {user}")
         data["user"] = user
         return data
 
@@ -75,3 +95,16 @@ class NicknameUpdateResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()
     user_id = serializers.IntegerField()
     nickname = serializers.CharField()
+
+
+class PasswordChangeRequestSerializer(serializers.Serializer):
+    """비밀번호 변경 요청 시리얼라이저"""
+    pass  # 요청 데이터는 필요 없음 (인증된 사용자의 비밀번호만 변경)
+
+
+class PasswordChangeResponseSerializer(serializers.Serializer):
+    """비밀번호 변경 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    user_id = serializers.IntegerField()
+    new_password = serializers.CharField()
+    message = serializers.CharField()

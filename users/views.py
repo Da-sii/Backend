@@ -1,11 +1,12 @@
 import requests
+import uuid
 from rest_framework import generics, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 
 from .models import User
 from .serializers import (
@@ -13,8 +14,11 @@ from .serializers import (
     SignInSerializer, 
     KakaoLoginSerializer,
     NicknameUpdateRequestSerializer,
-    NicknameUpdateResponseSerializer
+    NicknameUpdateResponseSerializer,
+    PasswordChangeRequestSerializer,
+    PasswordChangeResponseSerializer
 )
+from .utils import generate_jwt_tokens_with_metadata, get_token_type_from_token
 
 
 class SignUpView(generics.CreateAPIView):
@@ -27,11 +31,10 @@ class SignUpView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True) # serializer 안의 validate_* 메서드들이 실행됨
         user = serializer.save() # User 생성
 
-        # 토큰 발급
-        refresh = RefreshToken.for_user(user)
-        access = str(refresh.access_token)
+        # 토큰 발급 (email 타입으로 메타데이터 추가)
+        tokens = generate_jwt_tokens_with_metadata(user, 'email')
 
-        return Response(
+        response = Response(
             {
             "success": True,
             "user": {
@@ -39,11 +42,22 @@ class SignUpView(generics.CreateAPIView):
                 "email": user.email,
                 "nickname": user.nickname,
             },
-            "access": access,
-            "refresh": str(refresh),
+            "access": tokens['access'],
             },
             status=status.HTTP_201_CREATED,
         )
+        
+        # refresh token을 쿠키로 설정
+        response.set_cookie(
+            'refresh_token',
+            tokens['refresh'],
+            httponly=True,      # XSS 방지
+            secure=False,       # HTTP에서 테스트 (HTTPS에서는 True)
+            samesite='Strict',  # CSRF 방지
+            max_age=14*24*60*60  # 14일
+        )
+        
+        return response
 
 class SignInView(GenericAPIView):
     permission_classes = [AllowAny] # 인증 필요 없음 (누구나 회원가입 가능)
@@ -54,10 +68,10 @@ class SignInView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
 
-        refresh = RefreshToken.for_user(user)
-        access = str(refresh.access_token)
+        # 토큰 발급 (email 타입으로 메타데이터 추가)
+        tokens = generate_jwt_tokens_with_metadata(user, 'email')
 
-        return Response(
+        response = Response(
             {
                 "success": True,
                 "user": {
@@ -65,11 +79,22 @@ class SignInView(GenericAPIView):
                     "email": user.email,
                     "nickname": user.nickname,
                 },
-                "access": access,
-                "refresh": str(refresh),
+                "access": tokens['access'],
             },
             status=status.HTTP_200_OK,
         )
+        
+        # refresh token을 쿠키로 설정
+        response.set_cookie(
+            'refresh_token',
+            tokens['refresh'],
+            httponly=True,      # XSS 방지
+            secure=False,       # HTTP에서 테스트 (HTTPS에서는 True)
+            samesite='Strict',  # CSRF 방지
+            max_age=14*24*60*60  # 14일
+        )
+        
+        return response
 
 class KakaoLoginView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -149,9 +174,8 @@ class KakaoLoginView(GenericAPIView):
             )
             created = True
 
-        # 4) JWT 토큰 발급 (세션 로그인 대신)
-        refresh = RefreshToken.for_user(user)
-        access = str(refresh.access_token)
+        # 4) JWT 토큰 발급 (kakao 타입으로 메타데이터 추가)
+        tokens = generate_jwt_tokens_with_metadata(user, 'kakao')
 
         response = Response({
             "success": True,
@@ -161,15 +185,14 @@ class KakaoLoginView(GenericAPIView):
                 "email": user.email,
                 "kakao": user.kakao,
             },
-            "access": access,
-            "refresh": str(refresh),
+            "access": tokens['access'],
             "message": "Login successful" if not created else "User created and logged in",
         }, status=status.HTTP_200_OK)
         
         # refresh token을 쿠키로 설정
         response.set_cookie(
             'refresh_token',
-            str(refresh),
+            tokens['refresh'],
             httponly=True,      # XSS 방지
             secure=False,       # HTTP에서 테스트 (HTTPS에서는 True)
             samesite='Strict',  # CSRF 방지
@@ -208,38 +231,19 @@ class LogoutView(GenericAPIView):
         tags=['인증']
     )
     def post(self, request):
-        try:
-            # 쿠키에서 refresh token 가져오기
-            refresh_token = request.COOKIES.get('refresh_token')
-            
-            if not refresh_token:
-                return Response({"error": "refresh 토큰 쿠키가 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # refresh token 유효성 검사
-            try:
-                refresh_token_obj = RefreshToken(refresh_token)
-                user_id = refresh_token_obj['user_id']
-            except Exception as e:
-                return Response({"error": f"유효하지 않은 refresh 토큰입니다: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # 로그아웃 성공 - refresh token 쿠키만 삭제
-            response = Response({
-                "success": True, 
-                "message": "로그아웃되었습니다. refresh token 쿠키가 삭제되었습니다."
-            }, status=status.HTTP_200_OK)
-            
-            # refresh token 쿠키 삭제
-            response.delete_cookie(
-                'refresh_token',
-                path='/',
-                domain=None,
-                samesite='Strict'
-            )
-            
-            return response
-            
-        except Exception as e:
-            return Response({"error": f"로그아웃 실패: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+        # 로그아웃 응답 생성
+        response = Response({
+            "success": True, 
+            "message": "로그아웃되었습니다. refresh token 쿠키가 삭제되었습니다."
+        }, status=status.HTTP_200_OK)
+        
+        # refresh token 쿠키 삭제 (쿠키가 없어도 에러 없이 처리)
+        response.delete_cookie(
+            'refresh_token',
+            path='/'
+        )
+        
+        return response
 
 class NicknameUpdateView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -273,4 +277,93 @@ class NicknameUpdateView(GenericAPIView):
         response_serializer = NicknameUpdateResponseSerializer(data=response_data)
         response_serializer.is_valid(raise_exception=True)
 
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class PasswordChangeView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PasswordChangeRequestSerializer
+
+    @extend_schema(
+        summary="비밀번호 변경",
+        description="현재 사용자의 비밀번호를 UUID로 변경합니다. (email 로그인 사용자만 가능)",
+        request=PasswordChangeRequestSerializer,
+        responses={
+            200: OpenApiResponse(
+                response=PasswordChangeResponseSerializer,
+                description='비밀번호 변경 성공',
+                examples=[
+                    OpenApiExample(
+                        '비밀번호 변경 성공',
+                        value={
+                            "success": True,
+                            "user_id": 1,
+                            "new_password": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                            "message": "비밀번호가 성공적으로 변경되었습니다."
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='비밀번호 변경 불가 (소셜 로그인 사용자)',
+                examples=[
+                    OpenApiExample(
+                        '소셜 로그인 사용자',
+                        value={
+                            "error": "소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.",
+                            "detail": "카카오 또는 애플 로그인 사용자는 비밀번호 변경이 불가능합니다."
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자'
+            )
+        },
+        tags=['사용자 관리']
+    )
+    def post(self, request):
+        """
+        현재 사용자의 비밀번호를 UUID로 변경합니다.
+        (email 로그인 사용자만 가능)
+        """
+        # JWT 토큰에서 tokenType 확인
+        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return Response(
+                {"error": "Authorization header가 없습니다."}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        access_token = auth_header.split(' ')[1]
+        token_type = get_token_type_from_token(access_token)
+        
+        # tokenType이 'email'이 아니면 비밀번호 변경 불가
+        if token_type != 'email':
+            return Response(
+                {
+                    "error": "소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.",
+                    "detail": "카카오 또는 애플 로그인 사용자는 비밀번호 변경이 불가능합니다.",
+                    "current_token_type": token_type
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # UUID 생성
+        new_password = str(uuid.uuid4())
+        
+        # 사용자의 비밀번호 변경 (Django가 자동으로 해싱)
+        request.user.set_password(new_password)
+        request.user.save()
+        
+        response_data = {
+            'success': True,
+            'user_id': request.user.id,
+            'new_password': new_password,
+            'message': '비밀번호가 성공적으로 변경되었습니다.'
+        }
+        
+        response_serializer = PasswordChangeResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
         return Response(response_serializer.data, status=status.HTTP_200_OK)
