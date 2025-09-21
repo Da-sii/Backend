@@ -1,831 +1,1355 @@
 openapi: 3.0.3
 info:
-  title: DASII Backend API
-  version: 1.0.0
-  description: DASII 백엔드 API 문서
+    title: DASII Backend API
+    version: 1.0.0
+    description: DASII 백엔드 API 문서
 paths:
-  /auth/apple/:
-    post:
-      operationId: auth_apple_create
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AppleSigninRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AppleSigninRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AppleSigninRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AppleSignin'
-          description: ''
-  /auth/kakao/token/:
-    post:
-      operationId: auth_kakao_token_create
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/KakaoLoginRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/KakaoLoginRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/KakaoLoginRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/KakaoLogin'
-          description: ''
-  /auth/signin/:
-    post:
-      operationId: auth_signin_create
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SignInRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SignInRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SignInRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SignIn'
-          description: ''
-  /auth/signup/:
-    post:
-      operationId: auth_signup_create
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SignUpRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SignUpRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SignUpRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SignUp'
-          description: ''
-  /auth/token/refresh/:
-    post:
-      operationId: auth_token_refresh_create
-      description: |-
-        Takes a refresh type JSON web token and returns an access type JSON web
-        token if the refresh token is valid.
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TokenRefreshRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TokenRefreshRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TokenRefreshRequest'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TokenRefresh'
-          description: ''
-  /products/{id}/:
-    get:
-      operationId: products_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - products
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductDetail'
-          description: ''
-  /products/add/:
-    post:
-      operationId: products_add_create
-      tags:
-      - products
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ProductCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ProductCreateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductCreate'
-          description: ''
-  /review/{review_id}/:
-    patch:
-      operationId: review_partial_update
-      description: 작성한 리뷰를 수정합니다.
-      summary: 리뷰 수정
-      parameters:
-      - in: path
-        name: review_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - 리뷰
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedReviewRequest'
-            examples:
-              리뷰수정요청:
-                value:
-                  rate: 4
-                  review: 품질은 좋지만 가격이 조금 아쉬워요. 그래도 추천합니다.
-                summary: 리뷰 수정 요청
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedReviewRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedReviewRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                description: 리뷰 수정 성공
-                examples:
-                  application/json:
-                    message: 리뷰가 성공적으로 수정되었습니다.
-                    review_id: 1
-                    user_id: 1
-                    product_id: 1
-                    rate: 4
-                    review: 품질은 좋지만 가격이 조금 아쉬워요. 그래도 추천합니다.
-              examples:
-                리뷰수정요청:
-                  value:
-                    rate: 4
-                    review: 품질은 좋지만 가격이 조금 아쉬워요. 그래도 추천합니다.
-                  summary: 리뷰 수정 요청
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                description: 잘못된 요청 데이터
-                examples:
-                  application/json:
-                    rate:
-                    - 별점은 1~5 사이여야 합니다.
-                    review:
-                    - 리뷰는 최소 20자 이상 최대 1000자 이하로 작성해주세요.
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                description: 인증되지 않은 사용자
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                description: 리뷰를 찾을 수 없음
-          description: ''
-  /review/{review_id}/images/:
-    post:
-      operationId: review_images_create
-      description: 리뷰에 이미지를 업로드하기 위한 presigned URL을 생성합니다.
-      summary: 리뷰 이미지 업로드 URL 생성
-      parameters:
-      - in: path
-        name: review_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - 리뷰 이미지
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReviewImageUploadRequest'
-            examples:
-              이미지업로드요청:
-                value:
-                  urls:
-                  - https://example.com/temp-image1.png
-                  - https://example.com/temp-image2.png
-                summary: 이미지 업로드 URL 생성 요청
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ReviewImageUploadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ReviewImageUploadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                description: 업로드 URL 생성 성공
+    # 인증 관련 API
+    /auth/signup/:
+        post:
+            operationId: auth_signup_create
+            summary: 회원가입
+            description: 이메일과 비밀번호로 새 계정을 생성합니다.
+            tags:
+                - 인증
+            requestBody:
                 content:
-                  application/json:
-                    schema:
-                      type: object
-                      properties:
-                        message:
-                          type: string
-                          example: 2개의 업로드 URL이 생성되었습니다.
-                        presigned_urls:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              image_id:
-                                type: integer
-                                example: 25
-                              original_url:
-                                type: string
-                                example: https://example.com/temp-image1.png
-                              upload_url:
-                                type: string
-                                example: https://dasii-bucket.s3.amazonaws.com/1/1/uuid.png?X-Amz-Algorithm=...
-                              final_url:
-                                type: string
-                                example: https://dlwh1vi7j26ym.cloudfront.net/1/1/uuid.png
-                              filename:
-                                type: string
-                                example: 1/1/d1d5cc05-94ec-4d77-b12a-7121ad2298d7.png
-                    example:
-                      message: 2개의 업로드 URL이 생성되었습니다.
-                      presigned_urls:
-                      - image_id: 25
-                        original_url: https://example.com/temp-image1.png
-                        upload_url: https://dasii-bucket.s3.amazonaws.com/1/1/d1d5cc05-94ec-4d77-b12a-7121ad2298d7.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&...
-                        final_url: https://dlwh1vi7j26ym.cloudfront.net/1/1/d1d5cc05-94ec-4d77-b12a-7121ad2298d7.png
-                        filename: 1/1/d1d5cc05-94ec-4d77-b12a-7121ad2298d7.png
-                      - image_id: 26
-                        original_url: https://example.com/temp-image2.png
-                        upload_url: https://dasii-bucket.s3.amazonaws.com/1/1/ff2d6b60-12a5-43ce-810a-55575b2d2c2f.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&...
-                        final_url: https://dlwh1vi7j26ym.cloudfront.net/1/1/ff2d6b60-12a5-43ce-810a-55575b2d2c2f.png
-                        filename: 1/1/ff2d6b60-12a5-43ce-810a-55575b2d2c2f.png
-              examples:
-                이미지업로드요청:
-                  value:
-                    urls:
-                    - https://example.com/temp-image1.png
-                    - https://example.com/temp-image2.png
-                  summary: 이미지 업로드 URL 생성 요청
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                description: 잘못된 요청 데이터
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SignUpRequest'
+                required: true
+            security:
+                - {}  # 인증 불필요
+            responses:
+                '201':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    user:
+                                        type: object
+                                        properties:
+                                            id:
+                                                type: integer
+                                            email:
+                                                type: string
+                                                format: email
+                                            nickname:
+                                                type: string
+                                    access:
+                                        type: string
+                                        description: JWT Access Token
+                    description: 회원가입 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    email:
+                                        type: array
+                                        items:
+                                            type: string
+                                    password:
+                                        type: array
+                                        items:
+                                            type: string
+                                    password2:
+                                        type: array
+                                        items:
+                                            type: string
+                    description: 잘못된 요청 데이터
+
+    /auth/signin/:
+        post:
+            operationId: auth_signin_create
+            summary: 로그인
+            description: 이메일과 비밀번호로 로그인합니다.
+            tags:
+                - 인증
+            requestBody:
                 content:
-                  application/json:
-                    schema:
-                      type: object
-                      properties:
-                        error:
-                          type: string
-                          example: 업로드할 URL이 필요합니다.
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                description: 인증되지 않은 사용자
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                description: 리뷰를 찾을 수 없음
-          description: ''
-  /review/{review_id}/images/{image_id}/:
-    delete:
-      operationId: review_images_destroy
-      description: 리뷰에서 특정 이미지를 삭제합니다. S3에서 파일도 함께 삭제됩니다.
-      summary: 리뷰 이미지 삭제
-      parameters:
-      - in: path
-        name: image_id
-        schema:
-          type: integer
-        description: 삭제할 이미지 ID
-        required: true
-      - in: path
-        name: review_id
-        schema:
-          type: integer
-        description: 리뷰 ID
-        required: true
-      tags:
-      - 리뷰 이미지
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                description: 이미지 삭제 성공
-                examples:
-                  application/json:
-                    message: 이미지가 성공적으로 삭제되었습니다.
-                    image_id: 1
-                    filename: 1/1/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                description: 인증되지 않은 사용자
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                description: 리뷰 또는 이미지를 찾을 수 없음
-                examples:
-                  application/json:
-                    error: 이미지를 찾을 수 없습니다.
-          description: ''
-  /review/product/{product_id}/:
-    post:
-      operationId: review_product_create
-      description: 상품에 대한 리뷰를 작성합니다.
-      summary: 리뷰 작성
-      parameters:
-      - in: path
-        name: product_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - 리뷰
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReviewRequest'
-            examples:
-              리뷰작성요청:
-                value:
-                  rate: 5
-                  review: 정말 좋은 제품이었습니다! 향도 좋고 지속력도 길어요. 다음에도 구매하고 싶어요.
-                summary: 리뷰 작성 요청
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ReviewRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ReviewRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                description: 리뷰 작성 성공
-                examples:
-                  application/json:
-                    message: 리뷰가 성공적으로 작성되었습니다.
-                    review_id: 1
-                    user_id: 1
-                    product_id: 1
-                    rate: 5
-                    review: 정말 좋은 제품이었습니다! 향도 좋고 지속력도 길어요. 다음에도 구매하고 싶어요.
-              examples:
-                리뷰작성요청:
-                  value:
-                    rate: 5
-                    review: 정말 좋은 제품이었습니다! 향도 좋고 지속력도 길어요. 다음에도 구매하고 싶어요.
-                  summary: 리뷰 작성 요청
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                description: 잘못된 요청 데이터
-                examples:
-                  application/json:
-                    rate:
-                    - 별점은 1~5 사이여야 합니다.
-                    review:
-                    - 리뷰는 최소 20자 이상 최대 1000자 이하로 작성해주세요.
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                description: 인증되지 않은 사용자
-          description: ''
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SignInRequest'
+                required: true
+            security:
+                - {}  # 인증 불필요
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    user:
+                                        type: object
+                                        properties:
+                                            id:
+                                                type: integer
+                                            email:
+                                                type: string
+                                                format: email
+                                            nickname:
+                                                type: string
+                                    access:
+                                        type: string
+                                        description: JWT Access Token
+                    description: 로그인 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    email:
+                                        type: array
+                                        items:
+                                            type: string
+                                    password:
+                                        type: array
+                                        items:
+                                            type: string
+                    description: 잘못된 요청 데이터
+
+    /auth/kakao/token/:
+        post:
+            operationId: auth_kakao_token_create
+            summary: 카카오 로그인
+            description: 카카오 로그인 후 받은 authorization code로 로그인합니다.
+            tags:
+                - 인증
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/KakaoLoginRequest'
+                required: true
+            security:
+                - {}  # 인증 불필요
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    user:
+                                        type: object
+                                        properties:
+                                            id:
+                                                type: integer
+                                            email:
+                                                type: string
+                                                format: email
+                                            nickname:
+                                                type: string
+                                            kakao:
+                                                type: boolean
+                                    access:
+                                        type: string
+                                        description: JWT Access Token
+                                    message:
+                                        type: string
+                    description: 카카오 로그인 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                                    detail:
+                                        type: object
+                    description: 잘못된 요청 데이터
+
+    /auth/apple/:
+        post:
+            operationId: auth_apple_create
+            summary: 애플 로그인
+            description: 애플 로그인 후 받은 identityToken으로 로그인합니다.
+            tags:
+                - 인증
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AppleSigninRequest'
+                required: true
+            security:
+                - {}  # 인증 불필요
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    user:
+                                        type: object
+                                        properties:
+                                            id:
+                                                type: integer
+                                            email:
+                                                type: string
+                                                format: email
+                                            nickname:
+                                                type: string
+                                            apple:
+                                                type: boolean
+                                    access:
+                                        type: string
+                                        description: JWT Access Token
+                    description: 애플 로그인 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                    description: 잘못된 요청 데이터
+
+    /auth/token/refresh/:
+        post:
+            operationId: auth_token_refresh_create
+            summary: 토큰 갱신
+            description: refresh token을 사용하여 새로운 access token을 발급받습니다.
+            tags:
+                - 인증
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TokenRefreshRequest'
+                required: true
+            security:
+                - {}  # 인증 불필요
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TokenRefresh'
+                    description: 토큰 갱신 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    refresh:
+                                        type: array
+                                        items:
+                                            type: string
+                    description: 잘못된 요청 데이터
+
+    /auth/logout/:
+        post:
+            operationId: auth_logout_create
+            summary: 로그아웃
+            description: 사용자를 로그아웃합니다. refresh token 쿠키를 삭제합니다.
+            tags:
+                - 인증
+            security:
+                - jwtAuth: []
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    message:
+                                        type: string
+                    description: 로그아웃 성공
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+
+    # 계정 관리 API
+    /auth/account/:
+        get:
+            operationId: auth_account_retrieve
+            summary: 핸드폰번호로 계정 찾기
+            description: 핸드폰번호를 쿼리 파라미터로 입력하여 해당 번호로 등록된 계정들을 찾습니다. access token이 없어도 사용 가능합니다.
+            tags:
+                - 계정 관리
+            parameters:
+                - name: phone_number
+                  in: query
+                  description: 핸드폰번호 (예: 010-1234-5678)
+                  required: true
+                  schema:
+                      type: string
+                      pattern: '^01[0-9]-?\d{3,4}-?\d{4}$'
+            security:
+                - {}  # 인증 불필요
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PhoneNumberFindAccountResponse'
+                    description: 계정 찾기 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    phone_number:
+                                        type: array
+                                        items:
+                                            type: string
+                    description: 잘못된 요청 데이터
+
+    /auth/nickname/:
+        patch:
+            operationId: auth_nickname_partial_update
+            summary: 닉네임 변경
+            description: 현재 로그인한 사용자의 닉네임을 변경합니다.
+            tags:
+                - 사용자 관리
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/NicknameUpdateRequest'
+                required: true
+            security:
+                - jwtAuth: []
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/NicknameUpdateResponse'
+                    description: 닉네임 변경 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    nickname:
+                                        type: array
+                                        items:
+                                            type: string
+                    description: 잘못된 요청 데이터
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+
+    /auth/password/:
+        post:
+            operationId: auth_password_create
+            summary: 비밀번호 변경
+            description: 현재 사용자의 비밀번호를 변경합니다. (email 로그인 사용자만 가능)
+            tags:
+                - 사용자 관리
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PasswordChangeRequest'
+                required: true
+            security:
+                - jwtAuth: []
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PasswordChangeResponse'
+                    description: 비밀번호 변경 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                oneOf:
+                                    - type: object
+                                      properties:
+                                          error:
+                                              type: string
+                                              example: 소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.
+                                          detail:
+                                              type: string
+                                              example: 카카오 또는 애플 로그인 사용자는 비밀번호 변경이 불가능합니다.
+                                          current_token_type:
+                                              type: string
+                                              example: kakao
+                                    - type: object
+                                      properties:
+                                          current_password:
+                                              type: array
+                                              items:
+                                                  type: string
+                                              example: ["현재 비밀번호가 올바르지 않습니다."]
+                                    - type: object
+                                      properties:
+                                          new_password1:
+                                              type: array
+                                              items:
+                                                  type: string
+                                              example: ["비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다."]
+                                    - type: object
+                                      properties:
+                                          non_field_errors:
+                                              type: array
+                                              items:
+                                                  type: string
+                                              example: ["새 비밀번호가 일치하지 않습니다."]
+                    description: 비밀번호 변경 실패
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+
+    # 전화번호 인증 API
+    /auth/send/:
+        post:
+            operationId: auth_send_create
+            summary: 전화번호 인증 발송
+            description: 전화번호로 인증번호를 발송합니다.
+            tags:
+                - 전화번호 인증
+            security:
+                - {}  # 인증 불필요
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    message:
+                                        type: string
+                    description: 인증번호 발송 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                    description: 잘못된 요청 데이터
+
+    /auth/verify/:
+        post:
+            operationId: auth_verify_create
+            summary: 인증번호 검증
+            description: 전화번호와 인증번호를 검증합니다.
+            tags:
+                - 전화번호 인증
+            security:
+                - {}  # 인증 불필요
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    message:
+                                        type: string
+                    description: 인증번호 검증 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                    description: 잘못된 요청 데이터
+
+    # 상품 관련 API
+    /products/add/:
+        post:
+            operationId: products_add_create
+            summary: 상품 등록
+            description: 새로운 상품을 등록합니다.
+            tags:
+                - 상품
+            requestBody:
+                content:
+                    multipart/form-data:
+                        schema:
+                            $ref: '#/components/schemas/ProductCreateRequest'
+                required: true
+            security:
+                - jwtAuth: []
+            responses:
+                '201':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProductCreate'
+                    description: 상품 등록 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                    description: 잘못된 요청 데이터
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+
+    /products/{id}/:
+        get:
+            operationId: products_retrieve
+            summary: 상품 상세 조회
+            description: 특정 상품의 상세 정보를 조회합니다.
+            tags:
+                - 상품
+            parameters:
+                - name: id
+                  in: path
+                  description: 상품 ID
+                  required: true
+                  schema:
+                      type: integer
+            security:
+                - {}  # 인증 불필요
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProductDetail'
+                    description: 상품 상세 조회 성공
+                '404':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                    description: 상품을 찾을 수 없음
+
+    # 리뷰 관련 API
+    /review/product/{product_id}/:
+        post:
+            operationId: review_product_create
+            summary: 리뷰 작성
+            description: 상품에 대한 리뷰를 작성합니다.
+            tags:
+                - 리뷰
+            parameters:
+                - name: product_id
+                  in: path
+                  description: 상품 ID
+                  required: true
+                  schema:
+                      type: integer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ReviewRequest'
+                required: true
+            security:
+                - jwtAuth: []
+            responses:
+                '201':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                    review_id:
+                                        type: integer
+                                    user_id:
+                                        type: integer
+                                    product_id:
+                                        type: integer
+                                    rate:
+                                        type: integer
+                                    review:
+                                        type: string
+                    description: 리뷰 작성 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    rate:
+                                        type: array
+                                        items:
+                                            type: string
+                                    review:
+                                        type: array
+                                        items:
+                                            type: string
+                    description: 잘못된 요청 데이터
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+
+    /review/product/{product_id}/reviews/{review_id}/:
+        get:
+            operationId: review_product_reviews_retrieve
+            summary: 상품 리뷰 페이지네이션 조회
+            description: 특정 상품의 리뷰를 페이지네이션으로 조회합니다. 특정 리뷰 ID부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
+            tags:
+                - 리뷰
+            parameters:
+                - name: product_id
+                  in: path
+                  description: 상품 ID
+                  required: true
+                  schema:
+                      type: integer
+                - name: review_id
+                  in: path
+                  description: 시작할 리뷰 ID (해당 ID가 없으면 가장 가까운 리뷰부터 반환)
+                  required: true
+                  schema:
+                      type: integer
+            security:
+                - jwtAuth: []
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    product_id:
+                                        type: integer
+                                    product_info:
+                                        type: object
+                                        properties:
+                                            id:
+                                                type: integer
+                                            name:
+                                                type: string
+                                            company:
+                                                type: string
+                                            image:
+                                                type: string
+                                                format: uri
+                                    reviews:
+                                        type: array
+                                        items:
+                                            type: object
+                                            properties:
+                                                review_id:
+                                                    type: integer
+                                                rate:
+                                                    type: integer
+                                                    minimum: 1
+                                                    maximum: 5
+                                                date:
+                                                    type: string
+                                                    format: date
+                                                review:
+                                                    type: string
+                                                updated:
+                                                    type: boolean
+                                                images:
+                                                    type: array
+                                                    items:
+                                                        type: object
+                                                        properties:
+                                                            url:
+                                                                type: string
+                                                                format: uri
+                                                user_nickname:
+                                                    type: string
+                    description: 리뷰 페이지네이션 조회 성공
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+                '404':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 상품을 찾을 수 없음
+
+    /review/{review_id}/:
+        patch:
+            operationId: review_partial_update
+            summary: 리뷰 수정
+            description: 작성한 리뷰를 수정합니다.
+            tags:
+                - 리뷰
+            parameters:
+                - name: review_id
+                  in: path
+                  description: 리뷰 ID
+                  required: true
+                  schema:
+                      type: integer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PatchedReviewRequest'
+                required: true
+            security:
+                - jwtAuth: []
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                    review_id:
+                                        type: integer
+                                    user_id:
+                                        type: integer
+                                    product_id:
+                                        type: integer
+                                    rate:
+                                        type: integer
+                                    review:
+                                        type: string
+                    description: 리뷰 수정 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    rate:
+                                        type: array
+                                        items:
+                                            type: string
+                                    review:
+                                        type: array
+                                        items:
+                                            type: string
+                    description: 잘못된 요청 데이터
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+                '404':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                    description: 리뷰를 찾을 수 없음
+
+    /review/{review_id}/images/:
+        post:
+            operationId: review_images_create
+            summary: 리뷰 이미지 업로드 URL 생성
+            description: 리뷰에 이미지를 업로드하기 위한 presigned URL을 생성합니다.
+            tags:
+                - 리뷰 이미지
+            parameters:
+                - name: review_id
+                  in: path
+                  description: 리뷰 ID
+                  required: true
+                  schema:
+                      type: integer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ReviewImageUploadRequest'
+                required: true
+            security:
+                - jwtAuth: []
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                    presigned_urls:
+                                        type: array
+                                        items:
+                                            type: object
+                                            properties:
+                                                image_id:
+                                                    type: integer
+                                                original_url:
+                                                    type: string
+                                                upload_url:
+                                                    type: string
+                                                final_url:
+                                                    type: string
+                                                filename:
+                                                    type: string
+                    description: 업로드 URL 생성 성공
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                    description: 잘못된 요청 데이터
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+                '404':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                    description: 리뷰를 찾을 수 없음
+
+    /review/{review_id}/images/{image_id}/:
+        delete:
+            operationId: review_images_destroy
+            summary: 리뷰 이미지 삭제
+            description: 리뷰에서 특정 이미지를 삭제합니다. S3에서 파일도 함께 삭제됩니다.
+            tags:
+                - 리뷰 이미지
+            parameters:
+                - name: review_id
+                  in: path
+                  description: 리뷰 ID
+                  required: true
+                  schema:
+                      type: integer
+                - name: image_id
+                  in: path
+                  description: 삭제할 이미지 ID
+                  required: true
+                  schema:
+                      type: integer
+            security:
+                - jwtAuth: []
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                    image_id:
+                                        type: integer
+                                    filename:
+                                        type: string
+                    description: 이미지 삭제 성공
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+                '404':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                    description: 리뷰 또는 이미지를 찾을 수 없음
+
 components:
-  schemas:
-    AppleSignin:
-      type: object
-      properties:
-        identityToken:
-          type: string
-          description: Apple에서 발급받은 identityToken
-      required:
-      - identityToken
-    AppleSigninRequest:
-      type: object
-      properties:
-        identityToken:
-          type: string
-          minLength: 1
-          description: Apple에서 발급받은 identityToken
-      required:
-      - identityToken
-    KakaoLogin:
-      type: object
-      properties:
-        code:
-          type: string
-          description: 카카오 로그인 후 받은 authorization code
-      required:
-      - code
-    KakaoLoginRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          description: 카카오 로그인 후 받은 authorization code
-      required:
-      - code
-    PatchedReviewRequest:
-      type: object
-      properties:
-        rate:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 별점
-        review:
-          type: string
-          minLength: 1
-          title: 리뷰
-    ProductCreate:
-      type: object
-      properties:
-        name:
-          type: string
-          title: 제품 이름
-        company:
-          type: string
-          title: 회사 이름
-        price:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 가격
-        unit:
-          type: string
-          title: 단위
-        piece:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 개수
-        productType:
-          type: string
-          title: 식품의 유형
-        images:
-          type: array
-          items:
-            type: string
-            format: uri
-        ingredients:
-          type: string
-      required:
-      - company
-      - name
-      - piece
-      - price
-      - productType
-      - unit
-    ProductCreateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          title: 제품 이름
-        company:
-          type: string
-          minLength: 1
-          title: 회사 이름
-        price:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 가격
-        unit:
-          type: string
-          minLength: 1
-          title: 단위
-        piece:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 개수
-        productType:
-          type: string
-          minLength: 1
-          title: 식품의 유형
-        images:
-          type: array
-          items:
-            type: string
-            format: binary
-        ingredients:
-          type: string
-          minLength: 1
-      required:
-      - company
-      - name
-      - piece
-      - price
-      - productType
-      - unit
-    ProductDetail:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          title: 제품 이름
-        company:
-          type: string
-          title: 회사 이름
-        price:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 가격
-        unit:
-          type: string
-          title: 단위
-        piece:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 개수
-        productType:
-          type: string
-          title: 식품의 유형
-        viewCount:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 조회수
-        images:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProductImage'
-          readOnly: true
-        ingredientsCount:
-          type: string
-          readOnly: true
-        ingredients:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProductIngredientDetail'
-          readOnly: true
-      required:
-      - company
-      - id
-      - images
-      - ingredients
-      - ingredientsCount
-      - name
-      - piece
-      - price
-      - productType
-      - unit
-    ProductImage:
-      type: object
-      properties:
-        url:
-          type: string
-          format: uri
-          title: 이미지 URL
-          maxLength: 500
-      required:
-      - url
-    ProductIngredientDetail:
-      type: object
-      properties:
-        ingredientName:
-          type: string
-        englishName:
-          type: string
-        amount:
-          type: string
-          title: 포함량
-          maxLength: 50
-        minRecommended:
-          type: string
-        maxRecommended:
-          type: string
-        effect:
-          type: string
-        sideEffect:
-          type: string
-        status:
-          type: string
-          readOnly: true
-      required:
-      - amount
-      - effect
-      - englishName
-      - ingredientName
-      - maxRecommended
-      - minRecommended
-      - sideEffect
-      - status
-    ReviewImageUploadRequest:
-      type: object
-      properties:
-        urls:
-          type: array
-          items:
-            type: string
-            format: uri
-            minLength: 1
-          description: 업로드할 이미지의 원본 URL 배열
-      required:
-      - urls
-    ReviewRequest:
-      type: object
-      properties:
-        rate:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 별점
-        review:
-          type: string
-          minLength: 1
-          title: 리뷰
-      required:
-      - rate
-      - review
-    SignIn:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-      required:
-      - email
-    SignInRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-          minLength: 1
-        password:
-          type: string
-          writeOnly: true
-          minLength: 1
-      required:
-      - email
-      - password
-    SignUp:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        email:
-          type: string
-          format: email
-      required:
-      - email
-      - id
-    SignUpRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-          minLength: 1
-        password:
-          type: string
-          writeOnly: true
-          minLength: 1
-          maxLength: 128
-        password2:
-          type: string
-          writeOnly: true
-          minLength: 1
-      required:
-      - email
-      - password
-      - password2
-    TokenRefresh:
-      type: object
-      properties:
-        access:
-          type: string
-          readOnly: true
-        refresh:
-          type: string
-      required:
-      - access
-      - refresh
-    TokenRefreshRequest:
-      type: object
-      properties:
-        refresh:
-          type: string
-          minLength: 1
-      required:
-      - refresh
-  securitySchemes:
-    jwtAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    schemas:
+        # 인증 관련 스키마
+        SignUpRequest:
+            type: object
+            properties:
+                email:
+                    type: string
+                    format: email
+                    minLength: 1
+                    description: 이메일
+                password:
+                    type: string
+                    writeOnly: true
+                    minLength: 1
+                    maxLength: 128
+                    description: 비밀번호 (8-20자, 영문/숫자/특수문자 포함)
+                password2:
+                    type: string
+                    writeOnly: true
+                    minLength: 1
+                    description: 비밀번호 확인
+            required:
+                - email
+                - password
+                - password2
+
+        SignInRequest:
+            type: object
+            properties:
+                email:
+                    type: string
+                    format: email
+                    minLength: 1
+                    description: 이메일
+                password:
+                    type: string
+                    writeOnly: true
+                    minLength: 1
+                    description: 비밀번호
+            required:
+                - email
+                - password
+
+        KakaoLoginRequest:
+            type: object
+            properties:
+                code:
+                    type: string
+                    minLength: 1
+                    description: 카카오 로그인 후 받은 authorization code
+            required:
+                - code
+
+        AppleSigninRequest:
+            type: object
+            properties:
+                identityToken:
+                    type: string
+                    minLength: 1
+                    description: 애플에서 발급받은 identityToken
+            required:
+                - identityToken
+
+        TokenRefreshRequest:
+            type: object
+            properties:
+                refresh:
+                    type: string
+                    minLength: 1
+                    description: Refresh Token
+            required:
+                - refresh
+
+        TokenRefresh:
+            type: object
+            properties:
+                access:
+                    type: string
+                    readOnly: true
+                    description: 새로운 Access Token
+                refresh:
+                    type: string
+                    description: Refresh Token
+            required:
+                - access
+                - refresh
+
+        # 계정 관리 관련 스키마
+        PhoneNumberFindAccountResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                accounts:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id:
+                                type: integer
+                            email:
+                                type: string
+                                format: email
+                            nickname:
+                                type: string
+                            login_type:
+                                type: string
+                                enum: [email, kakao, google, apple]
+                message:
+                    type: string
+            required:
+                - success
+                - accounts
+                - message
+
+        NicknameUpdateRequest:
+            type: object
+            properties:
+                nickname:
+                    type: string
+                    minLength: 2
+                    maxLength: 10
+                    description: 닉네임 (2-10자, 한글/영문/숫자만)
+            required:
+                - nickname
+
+        NicknameUpdateResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                user_id:
+                    type: integer
+                nickname:
+                    type: string
+            required:
+                - success
+                - user_id
+                - nickname
+
+        PasswordChangeRequest:
+            type: object
+            properties:
+                current_password:
+                    type: string
+                    minLength: 1
+                    description: 현재 비밀번호
+                new_password1:
+                    type: string
+                    minLength: 8
+                    maxLength: 20
+                    description: 새 비밀번호 (8-20자, 영문/숫자/특수문자 포함)
+                new_password2:
+                    type: string
+                    minLength: 8
+                    maxLength: 20
+                    description: 새 비밀번호 확인
+            required:
+                - current_password
+                - new_password1
+                - new_password2
+
+        PasswordChangeResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                user_id:
+                    type: integer
+                message:
+                    type: string
+            required:
+                - success
+                - user_id
+                - message
+
+        # 상품 관련 스키마
+        ProductCreateRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                    minLength: 1
+                    description: 제품 이름
+                company:
+                    type: string
+                    minLength: 1
+                    description: 회사 이름
+                price:
+                    type: integer
+                    description: 가격
+                unit:
+                    type: string
+                    minLength: 1
+                    description: 단위
+                piece:
+                    type: integer
+                    description: 개수
+                productType:
+                    type: string
+                    minLength: 1
+                    description: 식품의 유형
+                images:
+                    type: array
+                    items:
+                        type: string
+                        format: binary
+                    description: 상품 이미지들
+                ingredients:
+                    type: string
+                    minLength: 1
+                    description: 원재료
+            required:
+                - company
+                - name
+                - piece
+                - price
+                - productType
+                - unit
+
+        ProductCreate:
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: 제품 이름
+                company:
+                    type: string
+                    description: 회사 이름
+                price:
+                    type: integer
+                    description: 가격
+                unit:
+                    type: string
+                    description: 단위
+                piece:
+                    type: integer
+                    description: 개수
+                productType:
+                    type: string
+                    description: 식품의 유형
+                images:
+                    type: array
+                    items:
+                        type: string
+                        format: uri
+                    description: 상품 이미지 URL들
+                ingredients:
+                    type: string
+                    description: 원재료
+            required:
+                - company
+                - name
+                - piece
+                - price
+                - productType
+                - unit
+
+        ProductDetail:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    readOnly: true
+                name:
+                    type: string
+                    description: 제품 이름
+                company:
+                    type: string
+                    description: 회사 이름
+                price:
+                    type: integer
+                    description: 가격
+                unit:
+                    type: string
+                    description: 단위
+                piece:
+                    type: integer
+                    description: 개수
+                productType:
+                    type: string
+                    description: 식품의 유형
+                viewCount:
+                    type: integer
+                    description: 조회수
+                images:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ProductImage'
+                    readOnly: true
+                ingredientsCount:
+                    type: string
+                    readOnly: true
+                ingredients:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ProductIngredientDetail'
+                    readOnly: true
+            required:
+                - company
+                - id
+                - images
+                - ingredients
+                - ingredientsCount
+                - name
+                - piece
+                - price
+                - productType
+                - unit
+
+        ProductImage:
+            type: object
+            properties:
+                url:
+                    type: string
+                    format: uri
+                    maxLength: 500
+                    description: 이미지 URL
+            required:
+                - url
+
+        ProductIngredientDetail:
+            type: object
+            properties:
+                ingredientName:
+                    type: string
+                    description: 성분명
+                englishName:
+                    type: string
+                    description: 영문명
+                amount:
+                    type: string
+                    maxLength: 50
+                    description: 포함량
+                minRecommended:
+                    type: string
+                    description: 최소 권장량
+                maxRecommended:
+                    type: string
+                    description: 최대 권장량
+                effect:
+                    type: string
+                    description: 효능
+                sideEffect:
+                    type: string
+                    description: 부작용
+                status:
+                    type: string
+                    readOnly: true
+                    description: 상태
+            required:
+                - amount
+                - effect
+                - englishName
+                - ingredientName
+                - maxRecommended
+                - minRecommended
+                - sideEffect
+                - status
+
+        # 리뷰 관련 스키마
+        ReviewRequest:
+            type: object
+            properties:
+                rate:
+                    type: integer
+                    minimum: 1
+                    maximum: 5
+                    description: 별점 (1-5)
+                review:
+                    type: string
+                    minLength: 20
+                    maxLength: 1000
+                    description: 리뷰 내용 (20-1000자)
+            required:
+                - rate
+                - review
+
+        PatchedReviewRequest:
+            type: object
+            properties:
+                rate:
+                    type: integer
+                    minimum: 1
+                    maximum: 5
+                    description: 별점 (1-5)
+                review:
+                    type: string
+                    minLength: 20
+                    maxLength: 1000
+                    description: 리뷰 내용 (20-1000자)
+
+        ReviewImageUploadRequest:
+            type: object
+            properties:
+                urls:
+                    type: array
+                    items:
+                        type: string
+                        format: uri
+                        minLength: 1
+                    description: 업로드할 이미지의 원본 URL 배열
+            required:
+                - urls
+
+    securitySchemes:
+        jwtAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: JWT 토큰을 사용한 인증

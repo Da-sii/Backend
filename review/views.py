@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, OpenApiResponse
 from drf_spectacular.types import OpenApiTypes
+from products.models import ProductImage
 from .serializers import (
     ReviewSerializer, 
     ReviewListResponseSerializer, 
@@ -20,7 +21,8 @@ from .serializers import (
     UserReviewsResponseSerializer,
     ReviewDeleteResponseSerializer,
     ReviewReportRequestSerializer,
-    ReviewReportResponseSerializer
+    ReviewReportResponseSerializer,
+    UserReviewCheckResponseSerializer
 )
 from .models import Review, ReviewImage, ReviewReport, ReviewReportReason
 from django.shortcuts import get_object_or_404
@@ -197,17 +199,17 @@ class ReviewUpdateView(GenericAPIView):
         serializer = self.get_serializer(review, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         
-        # 리뷰 수정
-        serializer.save()
+        # 리뷰 수정 (updated 필드를 True로 설정)
+        updated_review = serializer.save(updated=True)
         
         # 응답 데이터를 Serializer로 직렬화
         response_data = {
             'message': '리뷰가 성공적으로 수정되었습니다.',
-            'review_id': review.id,
+            'review_id': updated_review.id,
             'user_id': request.user.id,
-            'product_id': review.product_id,
-            'rate': review.rate,
-            'review': review.review
+            'product_id': updated_review.product_id,
+            'rate': updated_review.rate,
+            'review': updated_review.review
         }
         
         # Serializer로 유효성 검사 (선택사항)
@@ -221,14 +223,20 @@ class ReviewListView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     
     @extend_schema(
-        summary="상품 리뷰 목록 조회",
-        description="특정 상품의 모든 리뷰를 조회합니다.",
+        summary="상품 리뷰 페이지네이션 조회",
+        description="특정 상품의 리뷰를 페이지네이션으로 조회합니다. 특정 리뷰 ID부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.",
         parameters=[
             OpenApiParameter(
                 name='product_id',
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.PATH,
                 description='상품 ID'
+            ),
+            OpenApiParameter(
+                name='review_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='시작할 리뷰 ID (해당 ID가 없으면 가장 가까운 리뷰부터 반환)'
             )
         ],
         responses={
@@ -279,39 +287,88 @@ class ReviewListView(GenericAPIView):
         },
         tags=['리뷰']
     )
-    def get(self, request, product_id):
+    def get(self, request, product_id, review_id):
         """
-        상품의 모든 리뷰를 조회합니다.
+        상품의 리뷰를 페이지네이션으로 조회합니다.
+        특정 review_id부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
         """
-        # 상품 존재 확인
+        # 상품 존재 확인 및 이미지 prefetch
         from products.models import Product
-        product = get_object_or_404(Product, id=product_id)
+        product = get_object_or_404(
+            Product.objects.prefetch_related('images'), 
+            id=product_id
+        )
         
-        # 리뷰와 이미지를 함께 조회 (N+1 쿼리 방지)
-        reviews = Review.objects.filter(product_id=product_id).select_related('user').prefetch_related(
+        # 리뷰 쿼리셋 생성 (ID 오름차순으로 정렬)
+        reviews_query = Review.objects.filter(product_id=product_id).select_related('user').prefetch_related(
             Prefetch('images', queryset=ReviewImage.objects.all())
-        ).order_by('-date')
+        ).order_by('id')
+        
+        # 특정 review_id가 존재하는지 확인
+        target_review = reviews_query.filter(id=review_id).first()
+        
+        if target_review:
+            # 해당 review_id가 존재하면, 해당 ID부터 21개 조회
+            reviews = list(reviews_query.filter(id__gte=review_id)[:22])
+        else:
+            # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
+            closest_review = reviews_query.filter(id__gt=review_id).first()
+            if closest_review:
+                reviews = list(reviews_query.filter(id__gte=closest_review.id)[:22])
+            else:
+                # review_id보다 큰 리뷰가 없으면 빈 배열 반환
+                reviews = []
+        
+        # 다음 페이지 존재 여부 확인
+        has_next = len(reviews) > 21
+        if has_next:
+            reviews = reviews[:21]  # 실제로는 21개만 반환
+            next_review_id = reviews[-1].id if reviews else None
+        else:
+            next_review_id = None
+        
+        # 리뷰가 없는 경우 처리
+        if not reviews:
+            response_data = {
+                'success': True,
+                'product_id': product_id,
+                'product_info': {
+                    'id': product.id,
+                    'name': product.name,
+                    'company': product.company,
+                    'image': product.images.first().url if product.images.exists() else ''
+                },
+                'reviews': []
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         
         # Serializer를 사용하여 응답 데이터 구성
-        reviews_data = {}
+        reviews_data = []
         for review in reviews:
-            user_nickname = review.user.nickname
             # ReviewSerializer를 사용하여 리뷰 데이터 직렬화
             review_serializer = ReviewSerializer(review)
-            reviews_data[user_nickname] = review_serializer.data
+            review_data = review_serializer.data
+            review_data['user_nickname'] = review.user.nickname
+            reviews_data.append(review_data)
         
-        # 최종 응답 데이터 직렬화
+        # 제품 정보 구성 (첫 번째 이미지 가져오기 - 이미 prefetch됨)
+        first_image = product.images.first()
+        product_info = {
+            'id': product.id,
+            'name': product.name,
+            'company': product.company,
+            'image': first_image.url if first_image else ''
+        }
+        
+        # 최종 응답 데이터 구성
         response_data = {
             'success': True,
             'product_id': product_id,
+            'product_info': product_info,
             'reviews': reviews_data
         }
         
-        # Serializer로 유효성 검사 (선택사항)
-        response_serializer = ReviewListResponseSerializer(data=response_data)
-        response_serializer.is_valid(raise_exception=True)
-        
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ReviewImageView(GenericAPIView):
@@ -907,16 +964,19 @@ class UserReviewsView(GenericAPIView):
     def get(self, request):
         """
         현재 로그인한 사용자의 모든 리뷰와 이미지를 조회합니다.
+        마이페이지용: 제품 정보(이미지, 회사명, 제품명), 수정여부, review_id 포함
         """
-        # 현재 사용자의 모든 리뷰와 이미지를 함께 조회 (N+1 쿼리 방지)
+        # 현재 사용자의 모든 리뷰와 제품 정보, 이미지를 함께 조회 (N+1 쿼리 방지)
         reviews = Review.objects.filter(
             user=request.user
-        ).prefetch_related(
-            Prefetch('images', queryset=ReviewImage.objects.all())
+        ).select_related('product').prefetch_related(
+            Prefetch('images', queryset=ReviewImage.objects.all()),
+            Prefetch('product__images', queryset=ProductImage.objects.all())
         ).order_by('-date')
         
-        # Serializer를 사용하여 리뷰 데이터 직렬화
-        reviews_serializer = ReviewSerializer(reviews, many=True)
+        # 마이페이지용 Serializer를 사용하여 리뷰 데이터 직렬화
+        from .serializers import MyPageReviewSerializer
+        reviews_serializer = MyPageReviewSerializer(reviews, many=True)
         
         # 응답 데이터 구성
         response_data = {
@@ -1071,3 +1131,87 @@ class ReviewReportView(GenericAPIView):
         response_serializer = ReviewReportResponseSerializer(data=response_data)
         response_serializer.is_valid(raise_exception=True)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class UserReviewCheckView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="사용자 리뷰 작성 여부 확인",
+        description="현재 사용자가 특정 제품에 리뷰를 작성했는지 확인합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='product_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='상품 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=UserReviewCheckResponseSerializer,
+                description='리뷰 작성 여부 확인 성공',
+                examples=[
+                    OpenApiExample(
+                        '리뷰 작성함',
+                        value={
+                            "success": True,
+                            "product_id": 1,
+                            "user_id": 1,
+                            "has_review": True,
+                            "review_id": 5
+                        }
+                    ),
+                    OpenApiExample(
+                        '리뷰 작성 안함',
+                        value={
+                            "success": True,
+                            "product_id": 1,
+                            "user_id": 1,
+                            "has_review": False,
+                            "review_id": None
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='상품을 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '상품 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 확인']
+    )
+    def get(self, request, product_id):
+        """
+        현재 사용자가 특정 제품에 리뷰를 작성했는지 확인합니다.
+        """
+        # 상품 존재 확인
+        from products.models import Product
+        get_object_or_404(Product, id=product_id)
+        
+        # 사용자의 리뷰 작성 여부 확인
+        user_review = Review.objects.filter(
+            product_id=product_id,
+            user=request.user
+        ).first()
+        
+        has_review = user_review is not None
+        review_id = user_review.id if user_review else None
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'product_id': product_id,
+            'user_id': request.user.id,
+            'has_review': has_review,
+            'review_id': review_id
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)

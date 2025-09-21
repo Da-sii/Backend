@@ -9,10 +9,12 @@ class ReviewImageSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     images = ReviewImageSerializer(many=True, read_only=True)
     date = serializers.DateField(read_only=True)
+    updated = serializers.BooleanField(read_only=True)
+    review_id = serializers.IntegerField(source='id', read_only=True)
     
     class Meta:
         model = Review
-        fields = ['rate', 'date', 'review', 'images', 'product_id']
+        fields = ['review_id', 'rate', 'date', 'review', 'updated', 'images']
     
     def validate_rate(self, value):
         if value < 1 or value > 5:
@@ -26,7 +28,6 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class ReviewListResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()
-    product_id = serializers.IntegerField()
     reviews = serializers.DictField(
         child=ReviewSerializer()
     )
@@ -129,13 +130,51 @@ class ReviewDeleteResponseSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
     product_id = serializers.IntegerField()
 
-class ReviewReportRequestSerializer(serializers.Serializer):
-    reason = serializers.ChoiceField(choices=ReviewReportReason.choices)
+class ProductInfoSerializer(serializers.Serializer):
+    """제품 정보 시리얼라이저"""
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    company = serializers.CharField()
+    image = serializers.SerializerMethodField()
+    
+    def get_image(self, obj):
+        """첫 번째 이미지 URL을 반환"""
+        first_image = obj.images.first()
+        return first_image.url if first_image else ''
 
+class MyPageReviewSerializer(serializers.ModelSerializer):
+    """마이페이지용 리뷰 시리얼라이저"""
+    images = ReviewImageSerializer(many=True, read_only=True)
+    product_info = ProductInfoSerializer(source='product', read_only=True)
+    review_id = serializers.IntegerField(source='id', read_only=True)
+    date = serializers.DateField(read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = ['review_id', 'rate', 'date', 'review', 'updated', 'images', 'product_info']
+
+class ReviewReportRequestSerializer(serializers.Serializer):
+    """리뷰 신고 요청 시리얼라이저"""
+    reason = serializers.ChoiceField(choices=ReviewReportReason.choices)
+    
+    def validate_reason(self, value):
+        if value not in [choice[0] for choice in ReviewReportReason.choices]:
+            raise serializers.ValidationError("유효하지 않은 신고 사유입니다.")
+        return value
 
 class ReviewReportResponseSerializer(serializers.Serializer):
-    success = serializers.BooleanField()
+    """리뷰 신고 응답 시리얼라이저"""
     message = serializers.CharField()
+    report_id = serializers.IntegerField()
     review_id = serializers.IntegerField()
     reporter_id = serializers.IntegerField()
-    reason = serializers.ChoiceField(choices=ReviewReportReason.choices)
+    reason = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+class UserReviewCheckResponseSerializer(serializers.Serializer):
+    """사용자 리뷰 작성 여부 확인 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    product_id = serializers.IntegerField()
+    user_id = serializers.IntegerField()
+    has_review = serializers.BooleanField()
+    review_id = serializers.IntegerField(required=False, allow_null=True)
