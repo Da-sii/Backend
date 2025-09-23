@@ -574,6 +574,83 @@ paths:
                                         type: string
                     description: 상품을 찾을 수 없음
 
+    # 마이페이지 리뷰 API
+    /review/myReviews/{review_id}/:
+        get:
+            operationId: review_myReviews_retrieve
+            summary: 사용자 리뷰 페이지네이션 조회
+            description: 현재 로그인한 사용자의 리뷰를 페이지네이션으로 조회합니다. 특정 review_id부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
+            tags:
+                - 마이페이지
+            parameters:
+                - name: review_id
+                  in: path
+                  description: 시작할 리뷰 ID (해당 ID가 없으면 가장 가까운 리뷰부터 반환)
+                  required: true
+                  schema:
+                      type: integer
+            security:
+                - jwtAuth: []
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    user_id:
+                                        type: integer
+                                    reviews:
+                                        type: array
+                                        items:
+                                            type: object
+                                            properties:
+                                                review_id:
+                                                    type: integer
+                                                rate:
+                                                    type: integer
+                                                    minimum: 1
+                                                    maximum: 5
+                                                date:
+                                                    type: string
+                                                    format: date
+                                                review:
+                                                    type: string
+                                                updated:
+                                                    type: boolean
+                                                images:
+                                                    type: array
+                                                    items:
+                                                        type: object
+                                                        properties:
+                                                            url:
+                                                                type: string
+                                                                format: uri
+                                                product_info:
+                                                    type: object
+                                                    properties:
+                                                        id:
+                                                            type: integer
+                                                        name:
+                                                            type: string
+                                                        company:
+                                                            type: string
+                                                        image:
+                                                            type: string
+                                                            format: uri
+                    description: 사용자 리뷰 페이지네이션 조회 성공
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
+                    description: 인증되지 않은 사용자
+
     # 리뷰 관련 API
     /review/product/{product_id}/:
         post:
@@ -662,6 +739,14 @@ paths:
                   required: true
                   schema:
                       type: integer
+                - name: sort
+                  in: query
+                  description: 정렬 방식 (high: 별점 높은 순, low: 별점 낮은 순, time: 최신순)
+                  required: false
+                  schema:
+                      type: string
+                      enum: [high, low, time]
+                      default: time
             security:
                 - jwtAuth: []
             responses:
