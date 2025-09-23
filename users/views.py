@@ -18,7 +18,8 @@ from .serializers import (
     PasswordChangeRequestSerializer,
     PasswordChangeResponseSerializer,
     PhoneNumberFindAccountRequestSerializer,
-    PhoneNumberFindAccountResponseSerializer
+    PhoneNumberFindAccountResponseSerializer,
+    MyPageUserInfoResponseSerializer
 )
 from .utils import generate_jwt_tokens_with_metadata, get_token_type_from_token
 
@@ -526,6 +527,81 @@ class PhoneNumberFindAccountView(GenericAPIView):
         }
         
         response_serializer = PhoneNumberFindAccountResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class MyPageUserInfoView(GenericAPIView):
+    """마이페이지 사용자 정보 조회"""
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="마이페이지 사용자 정보 조회",
+        description="현재 로그인한 사용자의 마이페이지 정보를 조회합니다. 닉네임, 이메일, 로그인 방식, 리뷰 개수를 반환합니다.",
+        responses={
+            200: OpenApiResponse(
+                response=MyPageUserInfoResponseSerializer,
+                description='마이페이지 사용자 정보 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "user_info": {
+                                "nickname": "사용자123",
+                                "email": "user@example.com",
+                                "login_type": "kakao",
+                                "review_count": 5
+                            }
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '인증 실패',
+                        value={
+                            "detail": "Authentication credentials were not provided."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['마이페이지']
+    )
+    def get(self, request):
+        """마이페이지 사용자 정보를 조회합니다."""
+        from .utils import get_token_type_from_token
+        from review.models import Review
+        
+        # JWT 토큰에서 로그인 방식 추출
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            login_type = get_token_type_from_token(token)
+        else:
+            login_type = 'email'  # 기본값
+        
+        # 사용자 리뷰 개수 조회
+        review_count = Review.objects.filter(user=request.user).count()
+        
+        # 사용자 정보 구성
+        user_info = {
+            'nickname': request.user.nickname,
+            'email': request.user.email,
+            'login_type': login_type,
+            'review_count': review_count
+        }
+        
+        response_data = {
+            'success': True,
+            'user_info': user_info
+        }
+        
+        response_serializer = MyPageUserInfoResponseSerializer(data=response_data)
         response_serializer.is_valid(raise_exception=True)
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
