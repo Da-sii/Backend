@@ -1000,30 +1000,42 @@ class UserReviewsView(GenericAPIView):
         현재 로그인한 사용자의 리뷰를 페이지네이션으로 조회합니다.
         특정 review_id부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
         """
-        # 현재 사용자의 리뷰 쿼리셋 생성 (ID 오름차순으로 정렬)
+        # 현재 사용자의 리뷰 쿼리셋 생성 (최신순으로 정렬)
         reviews_query = Review.objects.filter(
             user=request.user
         ).select_related('product').prefetch_related(
             Prefetch('images', queryset=ReviewImage.objects.all()),
             Prefetch('product__images', queryset=ProductImage.objects.all())
-        ).order_by('id')
+        ).order_by('-date', '-id')
         
         # review_id가 0이면 처음 요청으로 판단
         if review_id == 0:
             # 처음부터 21개 조회
             reviews = list(reviews_query[:21])
         else:
-            # 특정 review_id가 존재하는지 확인
-            target_review = reviews_query.filter(id=review_id).first()
+            # 정렬된 쿼리셋을 리스트로 변환
+            all_reviews = list(reviews_query)
             
-            if target_review:
+            # 특정 review_id의 위치 찾기
+            target_index = None
+            for i, review in enumerate(all_reviews):
+                if review.id == review_id:
+                    target_index = i
+                    break
+            
+            if target_index is not None:
                 # 해당 review_id 다음부터 21개 조회 (해당 ID 포함하지 않음)
-                reviews = list(reviews_query.filter(id__gt=review_id)[:21])
+                reviews = all_reviews[target_index + 1:target_index + 22]
             else:
                 # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
-                closest_review = reviews_query.filter(id__gt=review_id).first()
-                if closest_review:
-                    reviews = list(reviews_query.filter(id__gte=closest_review.id)[:21])
+                closest_index = None
+                for i, review in enumerate(all_reviews):
+                    if review.id > review_id:
+                        closest_index = i
+                        break
+                
+                if closest_index is not None:
+                    reviews = all_reviews[closest_index:closest_index + 21]
                 else:
                     # review_id보다 큰 리뷰가 없으면 빈 배열 반환
                     reviews = []
