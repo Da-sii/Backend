@@ -237,6 +237,14 @@ class ReviewListView(GenericAPIView):
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.PATH,
                 description='시작할 리뷰 ID (해당 ID가 없으면 가장 가까운 리뷰부터 반환)'
+            ),
+            OpenApiParameter(
+                name='sort',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='정렬 방식 (high: 별점 높은 순, low: 별점 낮은 순, time: 최신순)',
+                required=False,
+                enum=['high', 'low', 'time']
             )
         ],
         responses={
@@ -299,33 +307,51 @@ class ReviewListView(GenericAPIView):
             id=product_id
         )
         
-        # 리뷰 쿼리셋 생성 (ID 오름차순으로 정렬)
+        # 정렬 방식 결정
+        sort_param = request.GET.get('sort', 'time')
+        if sort_param == 'high':
+            order_by = ['-rate', 'id']  # 별점 높은 순, ID 오름차순
+        elif sort_param == 'low':
+            order_by = ['rate', 'id']   # 별점 낮은 순, ID 오름차순
+        else:  # time 또는 기본값
+            order_by = ['-date', '-id']  # 최신순, ID 내림차순
+        
+        # 리뷰 쿼리셋 생성 (정렬 방식에 따라)
         reviews_query = Review.objects.filter(product_id=product_id).select_related('user').prefetch_related(
             Prefetch('images', queryset=ReviewImage.objects.all())
-        ).order_by('id')
+        ).order_by(*order_by)
         
-        # 특정 review_id가 존재하는지 확인
-        target_review = reviews_query.filter(id=review_id).first()
-        
-        if target_review:
-            # 해당 review_id가 존재하면, 해당 ID부터 21개 조회
-            reviews = list(reviews_query.filter(id__gte=review_id)[:22])
+        # review_id가 0이면 처음 요청으로 판단
+        if review_id == 0:
+            # 처음부터 21개 조회
+            reviews = list(reviews_query[:21])
         else:
-            # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
-            closest_review = reviews_query.filter(id__gt=review_id).first()
-            if closest_review:
-                reviews = list(reviews_query.filter(id__gte=closest_review.id)[:22])
+            # 정렬된 쿼리셋을 리스트로 변환
+            all_reviews = list(reviews_query)
+            
+            # 특정 review_id의 위치 찾기
+            target_index = None
+            for i, review in enumerate(all_reviews):
+                if review.id == review_id:
+                    target_index = i
+                    break
+            
+            if target_index is not None:
+                # 해당 review_id 다음부터 21개 조회 (해당 ID 포함하지 않음)
+                reviews = all_reviews[target_index + 1:target_index + 22]
             else:
-                # review_id보다 큰 리뷰가 없으면 빈 배열 반환
-                reviews = []
-        
-        # 다음 페이지 존재 여부 확인
-        has_next = len(reviews) > 21
-        if has_next:
-            reviews = reviews[:21]  # 실제로는 21개만 반환
-            next_review_id = reviews[-1].id if reviews else None
-        else:
-            next_review_id = None
+                # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
+                closest_index = None
+                for i, review in enumerate(all_reviews):
+                    if review.id > review_id:
+                        closest_index = i
+                        break
+                
+                if closest_index is not None:
+                    reviews = all_reviews[closest_index:closest_index + 21]
+                else:
+                    # review_id보다 큰 리뷰가 없으면 빈 배열 반환
+                    reviews = []
         
         # 리뷰가 없는 경우 처리
         if not reviews:
@@ -899,8 +925,16 @@ class UserReviewsView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     
     @extend_schema(
-        summary="사용자 리뷰 목록 조회",
-        description="현재 로그인한 사용자의 모든 리뷰와 이미지를 조회합니다.",
+        summary="사용자 리뷰 페이지네이션 조회",
+        description="현재 로그인한 사용자의 리뷰를 페이지네이션으로 조회합니다. 특정 review_id부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='review_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='시작할 리뷰 ID (해당 ID가 없으면 가장 가까운 리뷰부터 반환)'
+            )
+        ],
         responses={
             200: OpenApiResponse(
                 response=UserReviewsResponseSerializer,
@@ -961,18 +995,50 @@ class UserReviewsView(GenericAPIView):
         },
         tags=['사용자 리뷰']
     )
-    def get(self, request):
+    def get(self, request, review_id):
         """
-        현재 로그인한 사용자의 모든 리뷰와 이미지를 조회합니다.
-        마이페이지용: 제품 정보(이미지, 회사명, 제품명), 수정여부, review_id 포함
+        현재 로그인한 사용자의 리뷰를 페이지네이션으로 조회합니다.
+        특정 review_id부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
         """
-        # 현재 사용자의 모든 리뷰와 제품 정보, 이미지를 함께 조회 (N+1 쿼리 방지)
-        reviews = Review.objects.filter(
+        # 현재 사용자의 리뷰 쿼리셋 생성 (최신순으로 정렬)
+        reviews_query = Review.objects.filter(
             user=request.user
         ).select_related('product').prefetch_related(
             Prefetch('images', queryset=ReviewImage.objects.all()),
             Prefetch('product__images', queryset=ProductImage.objects.all())
-        ).order_by('-date')
+        ).order_by('-date', '-id')
+        
+        # review_id가 0이면 처음 요청으로 판단
+        if review_id == 0:
+            # 처음부터 21개 조회
+            reviews = list(reviews_query[:21])
+        else:
+            # 정렬된 쿼리셋을 리스트로 변환
+            all_reviews = list(reviews_query)
+            
+            # 특정 review_id의 위치 찾기
+            target_index = None
+            for i, review in enumerate(all_reviews):
+                if review.id == review_id:
+                    target_index = i
+                    break
+            
+            if target_index is not None:
+                # 해당 review_id 다음부터 21개 조회 (해당 ID 포함하지 않음)
+                reviews = all_reviews[target_index + 1:target_index + 22]
+            else:
+                # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
+                closest_index = None
+                for i, review in enumerate(all_reviews):
+                    if review.id > review_id:
+                        closest_index = i
+                        break
+                
+                if closest_index is not None:
+                    reviews = all_reviews[closest_index:closest_index + 21]
+                else:
+                    # review_id보다 큰 리뷰가 없으면 빈 배열 반환
+                    reviews = []
         
         # 마이페이지용 Serializer를 사용하여 리뷰 데이터 직렬화
         from .serializers import MyPageReviewSerializer
@@ -982,7 +1048,6 @@ class UserReviewsView(GenericAPIView):
         response_data = {
             'success': True,
             'user_id': request.user.id,
-            'total_reviews': reviews.count(),
             'reviews': reviews_serializer.data
         }
         
