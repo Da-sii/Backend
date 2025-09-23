@@ -166,3 +166,11 @@ class PhoneNumberFindAccountResponseSerializer(serializers.Serializer):
         help_text="해당 핸드폰번호로 등록된 계정 목록"
     )
     message = serializers.CharField()
+
+
+class MyPageUserInfoResponseSerializer(serializers.Serializer):
+    """마이페이지 사용자 정보 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    user_info = serializers.DictField(
+        help_text="사용자 정보 (닉네임, 이메일, 로그인 방식, 리뷰 개수)"
+    )

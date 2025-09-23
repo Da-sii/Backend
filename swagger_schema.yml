@@ -134,28 +134,28 @@ paths:
                 - {}  # 인증 불필요
             responses:
                 '200':
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    success:
-                                        type: boolean
-                                    user:
-                                        type: object
-                                        properties:
-                                            id:
-                                                type: integer
-                                            email:
-                                                type: string
-                                                format: email
-                                            nickname:
-                                                type: string
+                     content:
+                         application/json:
+                             schema:
+                                 type: object
+                                 properties:
+                                     success:
+                                         type: boolean
+                                     user:
+                                         type: object
+                                         properties:
+                                             id:
+                                                 type: integer
+                                             email:
+                                                 type: string
+                                                 format: email
+                                             nickname:
+                                                 type: string
                                             kakao:
                                                 type: boolean
-                                    access:
-                                        type: string
-                                        description: JWT Access Token
+                                     access:
+                                         type: string
+                                         description: JWT Access Token
                                     message:
                                         type: string
                     description: 카카오 로그인 성공
@@ -188,28 +188,28 @@ paths:
                 - {}  # 인증 불필요
             responses:
                 '200':
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    success:
-                                        type: boolean
-                                    user:
-                                        type: object
-                                        properties:
-                                            id:
-                                                type: integer
-                                            email:
-                                                type: string
-                                                format: email
-                                            nickname:
-                                                type: string
+                     content:
+                         application/json:
+                             schema:
+                                 type: object
+                                 properties:
+                                     success:
+                                         type: boolean
+                                     user:
+                                         type: object
+                                         properties:
+                                             id:
+                                                 type: integer
+                                             email:
+                                                 type: string
+                                                 format: email
+                                             nickname:
+                                                 type: string
                                             apple:
                                                 type: boolean
-                                    access:
-                                        type: string
-                                        description: JWT Access Token
+                                     access:
+                                         type: string
+                                         description: JWT Access Token
                     description: 애플 로그인 성공
                 '400':
                     content:
@@ -246,7 +246,7 @@ paths:
                 '400':
                     content:
                         application/json:
-                            schema:
+                  schema:
                                 type: object
                                 properties:
                                     refresh:
@@ -277,9 +277,9 @@ paths:
                                         type: string
                     description: 로그아웃 성공
                 '401':
-                    content:
+                content:
                         application/json:
-                            schema:
+                        schema:
                                 type: object
                                 properties:
                                     detail:
@@ -298,7 +298,7 @@ paths:
                 - name: phone_number
                   in: query
                   description: 핸드폰번호 (예: 010-1234-5678)
-                  required: true
+                required: true
                   schema:
                       type: string
                       pattern: '^01[0-9]-?\d{3,4}-?\d{4}$'
@@ -314,7 +314,7 @@ paths:
                 '400':
                     content:
                         application/json:
-                            schema:
+                  schema:
                                 type: object
                                 properties:
                                     phone_number:
@@ -355,7 +355,7 @@ paths:
                                         type: array
                                         items:
                                             type: string
-                    description: 잘못된 요청 데이터
+                                description: 잘못된 요청 데이터
                 '401':
                     content:
                         application/json:
@@ -364,7 +364,7 @@ paths:
                                 properties:
                                     detail:
                                         type: string
-                    description: 인증되지 않은 사용자
+                                description: 인증되지 않은 사용자
 
     /auth/password/:
         post:
@@ -389,14 +389,14 @@ paths:
                                 $ref: '#/components/schemas/PasswordChangeResponse'
                     description: 비밀번호 변경 성공
                 '400':
-                    content:
-                        application/json:
-                            schema:
+                                content:
+                                    application/json:
+                                        schema:
                                 oneOf:
                                     - type: object
-                                      properties:
+                                            properties:
                                           error:
-                                              type: string
+                                                    type: string
                                               example: 소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.
                                           detail:
                                               type: string
@@ -407,8 +407,8 @@ paths:
                                     - type: object
                                       properties:
                                           current_password:
-                                              type: array
-                                              items:
+                                                    type: array
+                                                    items:
                                                   type: string
                                               example: ["현재 비밀번호가 올바르지 않습니다."]
                                     - type: object
@@ -430,10 +430,10 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: object
-                                properties:
+                                                        type: object
+                                                        properties:
                                     detail:
-                                        type: string
+                                                                type: string
                     description: 인증되지 않은 사용자
 
     # 전화번호 인증 API
@@ -456,7 +456,7 @@ paths:
                                     success:
                                         type: boolean
                                     message:
-                                        type: string
+                                                                type: string
                     description: 인증번호 발송 성공
                 '400':
                     content:
@@ -465,7 +465,7 @@ paths:
                                 type: object
                                 properties:
                                     error:
-                                        type: string
+                                                                type: string
                     description: 잘못된 요청 데이터
 
     /auth/verify/:
@@ -487,7 +487,7 @@ paths:
                                     success:
                                         type: boolean
                                     message:
-                                        type: string
+                                                                type: string
                     description: 인증번호 검증 성공
                 '400':
                     content:
@@ -497,7 +497,7 @@ paths:
                                 properties:
                                     error:
                                         type: string
-                    description: 잘못된 요청 데이터
+                                description: 잘못된 요청 데이터
 
     # 상품 관련 API
     /products/add/:
@@ -523,13 +523,13 @@ paths:
                                 $ref: '#/components/schemas/ProductCreate'
                     description: 상품 등록 성공
                 '400':
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    error:
-                                        type: string
+                                content:
+                                    application/json:
+                                        schema:
+                                            type: object
+                                            properties:
+                                                error:
+                                                    type: string
                     description: 잘못된 요청 데이터
                 '401':
                     content:
@@ -539,7 +539,7 @@ paths:
                                 properties:
                                     detail:
                                         type: string
-                    description: 인증되지 않은 사용자
+                                description: 인증되지 않은 사용자
 
     /products/{id}/:
         get:
@@ -579,16 +579,28 @@ paths:
         get:
             operationId: review_myReviews_retrieve
             summary: 사용자 리뷰 페이지네이션 조회
-            description: 현재 로그인한 사용자의 리뷰를 페이지네이션으로 조회합니다. 특정 review_id부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
+            description: |
+                현재 로그인한 사용자의 리뷰를 페이지네이션으로 조회합니다.
+                - review_id=0: 처음 요청으로 판단하여 최신순으로 처음 21개 반환
+                - review_id>0: 해당 ID 다음부터 21개 반환 (해당 ID 포함하지 않음)
+                - 최신순으로 정렬 (같은 날짜일 때 ID 내림차순)
+                
+                **사용 예시:**
+                - 처음 요청: `GET /review/myReviews/0/`
+                - 다음 페이지: `GET /review/myReviews/5/`
             tags:
                 - 마이페이지
             parameters:
                 - name: review_id
                   in: path
-                  description: 시작할 리뷰 ID (해당 ID가 없으면 가장 가까운 리뷰부터 반환)
+                  description: |
+                    시작할 리뷰 ID
+                    - 0: 처음 요청 (최신순으로 처음 21개)
+                    - >0: 해당 ID 다음부터 21개 (해당 ID 포함하지 않음)
                   required: true
                   schema:
                       type: integer
+                      minimum: 0
             security:
                 - jwtAuth: []
             responses:
@@ -649,6 +661,68 @@ paths:
                                 properties:
                                     detail:
                                         type: string
+                                description: 인증되지 않은 사용자
+
+    # 마이페이지 사용자 정보 조회 API
+    /auth/mypage/:
+        get:
+            operationId: auth_mypage_retrieve
+            summary: 마이페이지 사용자 정보 조회
+            description: |
+                현재 로그인한 사용자의 마이페이지 정보를 조회합니다.
+                - 닉네임, 이메일, 로그인 방식, 리뷰 개수를 반환
+                - JWT 토큰에서 로그인 방식 자동 감지
+                
+                **사용 예시:**
+                - 마이페이지 접속: `GET /auth/mypage/`
+            tags:
+                - 마이페이지
+            security:
+                - jwtAuth: []
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                    user_info:
+                                        type: object
+                                        properties:
+                                            nickname:
+                                                type: string
+                                                description: 사용자 닉네임
+                                            email:
+                                                type: string
+                                                format: email
+                                                description: 사용자 이메일
+                                            login_type:
+                                                type: string
+                                                enum: [email, kakao, apple]
+                                                description: 로그인 방식
+                                            review_count:
+                                                type: integer
+                                                description: 작성한 리뷰 개수
+                            examples:
+                                success:
+                                    value:
+                                        success: true
+                                        user_info:
+                                            nickname: "사용자123"
+                                            email: "user@example.com"
+                                            login_type: "kakao"
+                                            review_count: 5
+                    description: 마이페이지 사용자 정보 조회 성공
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    detail:
+                                        type: string
                     description: 인증되지 않은 사용자
 
     # 리뷰 관련 API
@@ -693,18 +767,18 @@ paths:
                                         type: integer
                                     review:
                                         type: string
-                    description: 리뷰 작성 성공
+                                description: 리뷰 작성 성공
                 '400':
                     content:
                         application/json:
                             schema:
                                 type: object
                                 properties:
-                                    rate:
+                                        rate:
                                         type: array
                                         items:
                                             type: string
-                                    review:
+                                        review:
                                         type: array
                                         items:
                                             type: string
@@ -717,14 +791,24 @@ paths:
                                 properties:
                                     detail:
                                         type: string
-                    description: 인증되지 않은 사용자
+                                description: 인증되지 않은 사용자
 
     /review/product/{product_id}/reviews/{review_id}/:
         get:
             operationId: review_product_reviews_retrieve
             summary: 상품 리뷰 페이지네이션 조회
-            description: 특정 상품의 리뷰를 페이지네이션으로 조회합니다. 특정 리뷰 ID부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
-            tags:
+            description: |
+                특정 상품의 리뷰를 페이지네이션으로 조회합니다.
+                - review_id=0: 처음 요청으로 판단하여 정렬된 상태에서 처음 21개 반환
+                - review_id>0: 해당 ID 다음부터 21개 반환 (해당 ID 포함하지 않음)
+                - sort 파라미터로 정렬 방식 선택 가능
+                
+                **사용 예시:**
+                - 처음 요청: `GET /review/product/1/reviews/0/?sort=high`
+                - 다음 페이지: `GET /review/product/1/reviews/5/?sort=high`
+                - 별점 낮은 순: `GET /review/product/1/reviews/0/?sort=low`
+                - 최신순: `GET /review/product/1/reviews/0/?sort=time`
+             tags:
                 - 리뷰
             parameters:
                 - name: product_id
@@ -735,27 +819,35 @@ paths:
                       type: integer
                 - name: review_id
                   in: path
-                  description: 시작할 리뷰 ID (해당 ID가 없으면 가장 가까운 리뷰부터 반환)
+                  description: |
+                    시작할 리뷰 ID
+                    - 0: 처음 요청 (정렬된 상태에서 처음 21개)
+                    - >0: 해당 ID 다음부터 21개 (해당 ID 포함하지 않음)
                   required: true
                   schema:
                       type: integer
+                      minimum: 0
                 - name: sort
                   in: query
-                  description: 정렬 방식 (high: 별점 높은 순, low: 별점 낮은 순, time: 최신순)
+                  description: |
+                    정렬 방식
+                    - high: 별점 높은 순 (5점→1점), 같은 별점일 때 ID 오름차순
+                    - low: 별점 낮은 순 (1점→5점), 같은 별점일 때 ID 오름차순  
+                    - time: 최신순 (기본값), 같은 날짜일 때 ID 내림차순
                   required: false
                   schema:
                       type: string
                       enum: [high, low, time]
                       default: time
-            security:
-                - jwtAuth: []
+             security:
+                 - jwtAuth: []
             responses:
                 '200':
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
+                 content:
+                     application/json:
+                         schema:
+                             type: object
+                             properties:
                                     success:
                                         type: boolean
                                     product_id:
@@ -766,11 +858,11 @@ paths:
                                             id:
                                                 type: integer
                                             name:
-                                                type: string
+                                     type: string
                                             company:
-                                                type: string
+                                     type: string
                                             image:
-                                                type: string
+                                     type: string
                                                 format: uri
                                     reviews:
                                         type: array
@@ -842,11 +934,11 @@ paths:
                 required: true
             security:
                 - jwtAuth: []
-            responses:
-                '200':
-                    content:
-                        application/json:
-                            schema:
+             responses:
+                 '200':
+                     content:
+                         application/json:
+                             schema:
                                 type: object
                                 properties:
                                     message:
@@ -862,16 +954,16 @@ paths:
                                     review:
                                         type: string
                     description: 리뷰 수정 성공
-                '400':
-                    content:
-                        application/json:
-                            schema:
+                 '400':
+                     content:
+                         application/json:
+                             schema:
                                 type: object
-                                properties:
+                                       properties:
                                     rate:
                                         type: array
                                         items:
-                                            type: string
+                                               type: string
                                     review:
                                         type: array
                                         items:
@@ -883,8 +975,8 @@ paths:
                             schema:
                                 type: object
                                 properties:
-                                    detail:
-                                        type: string
+                                           detail:
+                                               type: string
                     description: 인증되지 않은 사용자
                 '404':
                     content:
@@ -893,7 +985,7 @@ paths:
                                 type: object
                                 properties:
                                     error:
-                                        type: string
+                                               type: string
                     description: 리뷰를 찾을 수 없음
 
     /review/{review_id}/images/:
@@ -924,18 +1016,18 @@ paths:
                         application/json:
                             schema:
                                 type: object
-                                properties:
+                                       properties:
                                     message:
                                         type: string
                                     presigned_urls:
-                                        type: array
-                                        items:
+                                               type: array
+                                               items:
                                             type: object
                                             properties:
                                                 image_id:
                                                     type: integer
                                                 original_url:
-                                                    type: string
+                                                   type: string
                                                 upload_url:
                                                     type: string
                                                 final_url:
@@ -948,18 +1040,18 @@ paths:
                         application/json:
                             schema:
                                 type: object
-                                properties:
+                                       properties:
                                     error:
-                                        type: string
+                                                   type: string
                     description: 잘못된 요청 데이터
                 '401':
                     content:
                         application/json:
                             schema:
                                 type: object
-                                properties:
+                                       properties:
                                     detail:
-                                        type: string
+                                                   type: string
                     description: 인증되지 않은 사용자
                 '404':
                     content:
@@ -1007,15 +1099,15 @@ paths:
                                     filename:
                                         type: string
                     description: 이미지 삭제 성공
-                '401':
-                    content:
-                        application/json:
-                            schema:
+                 '401':
+                     content:
+                         application/json:
+                             schema:
                                 type: object
                                 properties:
                                     detail:
                                         type: string
-                    description: 인증되지 않은 사용자
+                                 description: 인증되지 않은 사용자
                 '404':
                     content:
                         application/json:
@@ -1026,8 +1118,8 @@ paths:
                                         type: string
                     description: 리뷰 또는 이미지를 찾을 수 없음
 
-components:
-    schemas:
+ components:
+     schemas:
         # 인증 관련 스키마
         SignUpRequest:
             type: object
@@ -1126,7 +1218,7 @@ components:
                         type: object
                         properties:
                             id:
-                                type: integer
+                    type: integer
                             email:
                                 type: string
                                 format: email
@@ -1425,9 +1517,9 @@ components:
                 urls:
                     type: array
                     items:
-                        type: string
+                    type: string
                         format: uri
-                        minLength: 1
+                    minLength: 1
                     description: 업로드할 이미지의 원본 URL 배열
             required:
                 - urls
