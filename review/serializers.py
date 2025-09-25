@@ -103,6 +103,13 @@ class ProductRatingStatsResponseSerializer(serializers.Serializer):
         help_text="별점별 리뷰 개수 (1점, 2점, 3점, 4점, 5점)"
     )
 
+class ReviewDetailResponseSerializer(serializers.Serializer):
+    """리뷰 상세 조회 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    review = serializers.DictField(
+        help_text="리뷰 상세 정보 (ID, 사용자 정보, 상품 정보, 별점, 내용, 이미지 등)"
+    )
+
 class ReviewImageDetailSerializer(serializers.ModelSerializer):
     nickname = serializers.CharField(source='review.user.nickname', read_only=True)
     rate = serializers.IntegerField(source='review.rate', read_only=True)
