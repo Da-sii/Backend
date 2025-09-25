@@ -823,6 +823,7 @@ class ReviewDetailView(GenericAPIView):
                                 "rate": 5,
                                 "review": "정말 좋은 제품이었습니다! 향도 좋고 지속력도 길어요.",
                                 "date": "2024-01-15",
+                                "updated": False,
                                 "images": [
                                     {
                                         "id": 1,
@@ -900,6 +901,7 @@ class ReviewDetailView(GenericAPIView):
             'rate': review.rate,
             'review': review.review,
             'date': review.date,
+            'updated': review.updated,
             'images': images_info
         }
         
