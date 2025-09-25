@@ -22,6 +22,7 @@ from .serializers import (
     ReviewDeleteResponseSerializer,
     ReviewReportRequestSerializer,
     ReviewReportResponseSerializer,
+    ReviewDetailResponseSerializer,
     UserReviewCheckResponseSerializer
 )
 from .models import Review, ReviewImage, ReviewReport, ReviewReportReason
@@ -774,6 +775,138 @@ class ProductReviewImagesView(GenericAPIView):
             'total_images': total_images,
             'current_page_images': len(image_data),
             'image_urls': image_data
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ReviewDetailView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="리뷰 상세 조회",
+        description="특정 리뷰 ID에 대한 상세 정보를 조회합니다. 리뷰 작성자 정보, 상품 정보, 별점, 내용, 이미지 등을 포함합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='review_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='조회할 리뷰 ID'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=ReviewDetailResponseSerializer,
+                description='리뷰 상세 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "review": {
+                                "id": 1,
+                                "user": {
+                                    "id": 3,
+                                    "nickname": "이상현",
+                                    "email": "s-h-lee@naver.com"
+                                },
+                                "product": {
+                                    "id": 1,
+                                    "name": "향수 제품명",
+                                    "company": "회사명",
+                                    "price": 50000,
+                                    "unit": "ml",
+                                    "piece": 1,
+                                    "productType": "향수",
+                                    "viewCount": 150
+                                },
+                                "rate": 5,
+                                "review": "정말 좋은 제품이었습니다! 향도 좋고 지속력도 길어요.",
+                                "date": "2024-01-15",
+                                "images": [
+                                    {
+                                        "id": 1,
+                                        "url": "1/1/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg"
+                                    },
+                                    {
+                                        "id": 2,
+                                        "url": "1/1/b2c3d4e5-f6g7-8901-bcde-f23456789012.jpg"
+                                    }
+                                ]
+                            }
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='리뷰를 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '리뷰 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 상세']
+    )
+    def get(self, request, review_id):
+        """
+        특정 리뷰의 상세 정보를 조회합니다.
+        """
+        # 리뷰 존재 확인 및 관련 데이터 prefetch
+        review = get_object_or_404(
+            Review.objects.select_related('user', 'product').prefetch_related(
+                'images'
+            ),
+            id=review_id
+        )
+        
+        # 사용자 정보
+        user_info = {
+            'id': review.user.id,
+            'nickname': review.user.nickname,
+            'email': review.user.email
+        }
+        
+        # 상품 정보
+        product_info = {
+            'id': review.product.id,
+            'name': review.product.name,
+            'company': review.product.company,
+            'price': review.product.price,
+            'unit': review.product.unit,
+            'piece': review.product.piece,
+            'productType': review.product.productType,
+            'viewCount': review.product.viewCount
+        }
+        
+        # 이미지 정보
+        images_info = [
+            {
+                'id': image.id,
+                'url': image.url
+            }
+            for image in review.images.all()
+        ]
+        
+        # 리뷰 상세 정보 구성
+        review_data = {
+            'id': review.id,
+            'user': user_info,
+            'product': product_info,
+            'rate': review.rate,
+            'review': review.review,
+            'date': review.date,
+            'images': images_info
+        }
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'review': review_data
         }
         
         return Response(response_data, status=status.HTTP_200_OK)
