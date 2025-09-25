@@ -87,9 +87,10 @@ class ProductReviewImagesResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()
     product_id = serializers.IntegerField()
     total_images = serializers.IntegerField()
+    current_page_images = serializers.IntegerField()
     image_urls = serializers.ListField(
-        child=serializers.CharField(),
-        help_text="해당 상품의 모든 리뷰 이미지 URL 목록"
+        child=serializers.DictField(),
+        help_text="현재 페이지의 리뷰 이미지 목록 (ID와 URL 포함)"
     )
 
 class ProductRatingStatsResponseSerializer(serializers.Serializer):
