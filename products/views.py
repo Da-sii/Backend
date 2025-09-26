@@ -75,11 +75,16 @@ class ProductRankingView(generics.ListAPIView):
         if period == "daily":
             start_date = today - timedelta(days=1)
         elif period == "monthly":
+            # 월간: 당일 00시 기준 고정(오늘 제외)
             start_date = today - timedelta(days=30)
         else:
             start_date = today - timedelta(days=30)
 
-        queryset = Product.objects.filter(daily_views__date__gte=start_date)
+        # monthly의 경우 오늘은 제외하여 00시 기준 고정되도록 함
+        if period == "monthly":
+            queryset = Product.objects.filter(daily_views__date__gte=start_date, daily_views__date__lt=today)
+        else:
+            queryset = Product.objects.filter(daily_views__date__gte=start_date)
 
         if category and category != "전체":
             queryset = queryset.filter(category_products__category__category=category)
@@ -91,7 +96,7 @@ class ProductRankingView(generics.ListAPIView):
             prev_start = today - timedelta(days=1)
             prev_end = today
             prev_qs = Product.objects.filter(daily_views__date__gte=prev_start, daily_views__date__lt=prev_end)
-        else:  # monthly
+        else:  # monthly (오늘 제외한 직전 30일 비교)
             prev_start = today - timedelta(days=60)
             prev_end = today - timedelta(days=30)
             prev_qs = Product.objects.filter(daily_views__date__gte=prev_start, daily_views__date__lt=prev_end)
@@ -203,10 +208,14 @@ class ProductListView(generics.ListAPIView):
 
         # default: monthly_rank (최근 30일 조회수 합계 기준)
         # 조회수 없는 상품도 포함(0으로 취급)하여 정렬
+        # 월간 랭킹 기준: 오늘 제외하여 00시 기준 고정
         return (
             qs.annotate(
                 totalViews=Coalesce(
-                    Sum("daily_views__views", filter=Q(daily_views__date__gte=start_date)),
+                    Sum(
+                        "daily_views__views",
+                        filter=Q(daily_views__date__gte=start_date) & Q(daily_views__date__lt=today),
+                    ),
                     0,
                 )
             )
@@ -297,7 +306,10 @@ class ProductSearchView(generics.ListAPIView):
         return (
             qs.annotate(
                 totalViews=Coalesce(
-                    Sum("daily_views__views", filter=Q(daily_views__date__gte=start_date)),
+                    Sum(
+                        "daily_views__views",
+                        filter=Q(daily_views__date__gte=start_date) & Q(daily_views__date__lt=today),
+                    ),
                     0,
                 )
             )
