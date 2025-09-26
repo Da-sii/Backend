@@ -1,33 +1,32 @@
-import requests
-import json
 import os
-from django.conf import settings
+import logging
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
-class SMSService:
+class CoolSMSService:
     """
-    SMS 발송 서비스
-    실제 SMS 발송을 위한 서비스 클래스
+    쿨 SMS 발송 서비스 (Node.js 코드 참고)
+    쿨 SMS Python SDK를 사용한 SMS 발송 서비스 클래스
     """
     
     def __init__(self):
-        # 환경변수에서 SMS 설정 가져오기
-        self.api_key = os.getenv('SMS_API_KEY', '')
-        self.api_url = os.getenv('SMS_API_URL', '')
+        # 환경변수에서 쿨 SMS 설정 가져오기
+        self.api_key = os.getenv('COOL_SMS_API_KEY', '')
+        self.api_secret = os.getenv('COOL_SMS_API_SECRET', '')
         self.sender_number = os.getenv('SMS_SENDER_NUMBER', '')
         self.service_name = os.getenv('SMS_SERVICE_NAME', '다시')
         
-        # 개발/운영 환경 구분 (기본값을 development로 설정)
+        # 개발/운영 환경 구분
         self.is_development = os.getenv('DJANGO_ENV', 'development') == 'development'
         
         # 디버깅을 위한 로그
-        print(f"SMS Service 초기화:")
+        print(f"쿨 SMS Service 초기화:")
         print(f"  - DJANGO_ENV: {os.getenv('DJANGO_ENV', 'development')}")
         print(f"  - is_development: {self.is_development}")
-        print(f"  - SMS_API_KEY: {'설정됨' if self.api_key else '미설정'}")
-        print(f"  - SMS_API_URL: {self.api_url or '미설정'}")
-        print(f"  - SERVICEID: {os.getenv('SERVICEID', '미설정')}")
-        print(f"  - AWS_ACCESS_KEY_ID: {'설정됨' if os.getenv('AWS_ACCESS_KEY_ID') else '미설정'}")
+        print(f"  - COOL_SMS_API_KEY: {'설정됨' if self.api_key else '미설정'}")
+        print(f"  - COOL_SMS_API_SECRET: {'설정됨' if self.api_secret else '미설정'}")
         print(f"  - SMS_SENDER_NUMBER: {self.sender_number or '미설정'}")
     
     def send_verification_sms(self, phone_number, verification_code):
@@ -86,103 +85,86 @@ class SMSService:
         }
     
     def _send_real_sms(self, phone_number, message, verification_code):
-        """운영 환경에서 실제 SMS 발송 (NCP SMS API)"""
-        print(f"NCP SMS 발송 시작:")
+        """운영 환경에서 실제 SMS 발송 (쿨 SMS Python SDK)"""
+        print(f"쿨 SMS 발송 시작:")
         
-        # NCP SMS API 설정 검증
-        service_id = os.getenv('SERVICEID', '')
-        access_key = os.getenv('AWS_ACCESS_KEY_ID', '')
-        secret_key = os.getenv('AWS_SECRET_ACCESS_KEY', '')
-        
-        print(f"  - SERVICEID: {service_id}")
-        print(f"  - ACCESS_KEY: {'설정됨' if access_key else '미설정'}")
-        print(f"  - SECRET_KEY: {'설정됨' if secret_key else '미설정'}")
-        print(f"  - SENDER_NUMBER: {self.sender_number}")
-        
-        if not all([service_id, access_key, secret_key, self.sender_number]):
-            error_msg = 'NCP SMS 서비스 설정이 완료되지 않았습니다. 환경변수를 확인해주세요.'
+        # 쿨 SMS API 설정 검증
+        if not all([self.api_key, self.api_secret, self.sender_number]):
+            error_msg = '쿨 SMS 서비스 설정이 완료되지 않았습니다. 환경변수를 확인해주세요.'
             print(f"  - 오류: {error_msg}")
             return {
                 'success': False,
                 'message': error_msg,
-                'error': 'Missing NCP SMS configuration'
+                'error': 'Missing Cool SMS configuration'
             }
         
         try:
-            # NCP SMS API 호출
-            import hmac
-            import hashlib
-            import base64
-            import json
-            from datetime import datetime
+            # 쿨 SMS Python SDK 사용 (Python 코드 참고)
+            from sdk.api.message import Message
+            from sdk.exceptions import CoolsmsException
             
-            print(f"  - API URL 구성 중...")
+            # 쿨 SMS 클라이언트 초기화
+            cool = Message(self.api_key, self.api_secret)
             
-            # API URL 구성
-            api_url = f"https://sens.apigw.ntruss.com/sms/v2/services/{service_id}/messages"
-            print(f"  - API URL: {api_url}")
-            
-            # 타임스탬프
-            timestamp = str(int(datetime.now().timestamp() * 1000))
-            print(f"  - 타임스탬프: {timestamp}")
-            
-            # 서명 생성
-            method = "POST"
-            uri = f"/sms/v2/services/{service_id}/messages"
-            message_for_sign = f"{method} {uri}\n{timestamp}\n{access_key}"
-            signature = base64.b64encode(
-                hmac.new(secret_key.encode(), message_for_sign.encode(), hashlib.sha256).digest()
-            ).decode()
-            print(f"  - 서명 생성 완료")
-            
-            # 헤더 설정
-            headers = {
-                'Content-Type': 'application/json; charset=utf-8',
-                'x-ncp-apigw-timestamp': timestamp,
-                'x-ncp-iam-access-key': access_key,
-                'x-ncp-apigw-signature-v2': signature
+            # 요청 데이터 (Python 코드와 동일한 구조)
+            params = {
+                'type': 'sms',  # Message type
+                'to': phone_number,  # Recipients Number
+                'from': self.sender_number,  # Sender number
+                'text': message  # Message
             }
-            print(f"  - 헤더 설정 완료")
             
-            # 요청 데이터
-            data = {
-                "type": "SMS",
-                "from": self.sender_number,
-                "to": [phone_number],
-                "content": message
-            }
-            print(f"  - 요청 데이터: {data}")
+            print(f"  - 쿨 SMS 발송 요청:")
+            print(f"    to: {phone_number}")
+            print(f"    from: {self.sender_number}")
+            print(f"    text: {message}")
             
-            print(f"  - API 호출 시작...")
-            response = requests.post(api_url, headers=headers, json=data, timeout=10)
-            print(f"  - 응답 상태코드: {response.status_code}")
-            print(f"  - 응답 내용: {response.text}")
+            # SMS 발송
+            response = cool.send(params)
             
-            if response.status_code == 202:  # NCP SMS는 202가 성공
-                return {
-                    'success': True,
-                    'message': 'SMS가 성공적으로 발송되었습니다.',
-                    'verification_code': verification_code,
-                    'phone_number': phone_number,
-                    'response': response.json()
-                }
-            else:
+            print(f"  - 쿨 SMS 발송 완료:")
+            print(f"    Success Count: {response.get('success_count', 0)}")
+            print(f"    Error Count: {response.get('error_count', 0)}")
+            print(f"    Group ID: {response.get('group_id', 'N/A')}")
+            
+            if "error_list" in response:
+                print(f"    Error List: {response['error_list']}")
                 return {
                     'success': False,
-                    'message': f'SMS 발송 실패: {response.status_code}',
-                    'error': response.text,
-                    'response_data': response.json() if response.content else None
+                    'message': f'SMS 발송 실패: {response["error_list"]}',
+                    'error': response['error_list'],
+                    'response': response
                 }
+            
+            return {
+                'success': True,
+                'message': 'SMS가 성공적으로 발송되었습니다.',
+                'verification_code': verification_code,
+                'phone_number': phone_number,
+                'response': response
+            }
+            
+        except CoolsmsException as e:
+            print(f"  - 쿨 SMS 오류 발생:")
+            print(f"    Error Code: {e.code}")
+            print(f"    Error Message: {e.msg}")
+            
+            return {
+                'success': False,
+                'message': f'쿨 SMS 오류: {e.msg}',
+                'error': f'Code: {e.code}, Message: {e.msg}'
+            }
+            
         except Exception as e:
             import traceback
             error_traceback = traceback.format_exc()
-            print(f"  - NCP SMS API 호출 중 오류 발생:")
+            print(f"  - 쿨 SMS API 호출 중 오류 발생:")
             print(f"    오류: {str(e)}")
             print(f"    상세: {error_traceback}")
             
             return {
                 'success': False,
-                'message': f'NCP SMS API 호출 중 오류가 발생했습니다: {str(e)}',
+                'message': f'쿨 SMS API 호출 중 오류가 발생했습니다: {str(e)}',
                 'error': str(e),
                 'traceback': error_traceback
             }
@@ -193,5 +175,5 @@ class SMSService:
         return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
-# 전역 SMS 서비스 인스턴스
-sms_service = SMSService()
+# 전역 SMS 서비스 인스턴스 (쿨 SMS)
+sms_service = CoolSMSService()
