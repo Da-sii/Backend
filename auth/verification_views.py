@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from drf_spectacular.utils import extend_schema
+from .serializers import PhoneSendRequestSerializer, PhoneVerifyRequestSerializer
 import random
 import threading
 import time
@@ -50,6 +52,46 @@ class PhoneVerificationView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        request=PhoneSendRequestSerializer,
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'success': {'type': 'boolean'},
+                    'original_phone': {'type': 'string'},
+                    'parsed_phone': {'type': 'string'},
+                    'message': {'type': 'string'},
+                    'remaining_requests': {'type': 'integer'},
+                    'sent_at': {'type': 'string'},
+                    'verification_code': {'type': 'string'},
+                }
+            },
+            400: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'}
+                }
+            },
+            429: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'},
+                    'remaining_requests': {'type': 'integer'}
+                }
+            },
+            500: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'},
+                    'details': {'type': 'string'}
+                }
+            }
+        },
+        tags=['전화번호 인증'],
+        summary='전화번호 인증 발송',
+        description='전화번호로 인증번호(6자리)를 발송합니다.'
+    )
     def post(self, request):
         """
         전화번호를 받아서 파싱하고 인증번호를 발송하는 통합 API
@@ -150,6 +192,29 @@ class VerifyCodeView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        request=PhoneVerifyRequestSerializer,
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'success': {'type': 'boolean'},
+                    'message': {'type': 'string'},
+                    'verified_phone': {'type': 'string'},
+                    'verified_at': {'type': 'string'}
+                }
+            },
+            400: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'}
+                }
+            }
+        },
+        tags=['전화번호 인증'],
+        summary='인증번호 검증',
+        description='전화번호와 인증번호를 검증합니다. (유효기간 3분)'
+    )
     def post(self, request):
         """
         인증번호 검증

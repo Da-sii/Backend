@@ -5,16 +5,14 @@ class PhoneVerificationRequestSerializer(serializers.Serializer):
     """전화번호 인증 요청 시리얼라이저"""
     phone_number = serializers.CharField(
         max_length=20,
-        help_text="전화번호 (다양한 형식 지원: 010-1234-5678, 01012345678, +82-10-1234-5678 등)",
-        example="010-2308-6047"
+        help_text="전화번호 (다양한 형식 지원: 010-1234-5678, 01012345678, +82-10-1234-5678 등)"
     )
     verification_code = serializers.CharField(
         max_length=6,
         allow_blank=True,
         required=False,
         default="",
-        help_text="인증번호 (발송 시에는 빈 문자열)",
-        example=""
+        help_text="인증번호 (발송 시에는 빈 문자열)"
     )
     
     def validate_phone_number(self, value):
@@ -33,13 +31,11 @@ class VerifyCodeRequestSerializer(serializers.Serializer):
     """인증번호 검증 요청 시리얼라이저"""
     phone_number = serializers.CharField(
         max_length=20,
-        help_text="전화번호 (다양한 형식 지원: 010-1234-5678, 01012345678, +82-10-1234-5678 등)",
-        example="010-2308-6047"
+        help_text="전화번호 (다양한 형식 지원: 010-1234-5678, 01012345678, +82-10-1234-5678 등)"
     )
     verification_code = serializers.CharField(
         max_length=6,
-        help_text="6자리 인증번호",
-        example="123456"
+        help_text="6자리 인증번호"
     )
     
     def validate_phone_number(self, value):
@@ -64,3 +60,12 @@ class VerifyCodeResponseSerializer(serializers.Serializer):
 class ErrorResponseSerializer(serializers.Serializer):
     """에러 응답 시리얼라이저"""
     error = serializers.CharField()
+
+
+class PhoneSendRequestSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(help_text="전화번호 (예: 01012345678 또는 010-1234-5678)")
+
+
+class PhoneVerifyRequestSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(help_text="전화번호 (예: 01012345678 또는 010-1234-5678)")
+    verification_code = serializers.CharField(max_length=6, help_text="6자리 인증번호")

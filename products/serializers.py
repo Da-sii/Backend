@@ -179,6 +179,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
                 Product.objects.filter(
                     category_products__category_id=category_id,
                     daily_views__date__gte=start_date,
+                    daily_views__date__lt=today,  # 오늘 제외하여 00시 기준 고정
                 )
                 .annotate(totalViews=Sum("daily_views__views"))
                 .order_by("-totalViews", "id")
