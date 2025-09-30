@@ -15,6 +15,9 @@ from .serializers import (
     NicknameUpdateResponseSerializer,
     PasswordChangeRequestSerializer,
     PasswordChangeResponseSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetResponseSerializer,
+    PhoneNumberFindAccountRequestSerializer,
     PhoneNumberFindAccountResponseSerializer,
     MyPageUserInfoResponseSerializer
 )
@@ -601,6 +604,106 @@ class MyPageUserInfoView(GenericAPIView):
         }
         
         response_serializer = MyPageUserInfoResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class PasswordResetView(GenericAPIView):
+    """비밀번호 재설정 API (계정 찾기용)"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = PasswordResetRequestSerializer
+
+    @extend_schema(
+        summary="비밀번호 재설정",
+        description="현재 비밀번호를 확인하고 새로운 비밀번호로 변경합니다. 계정 찾기 후 비밀번호 변경용 API입니다.",
+        request=PasswordResetRequestSerializer,
+        responses={
+            200: OpenApiResponse(
+                response=PasswordResetResponseSerializer,
+                description='비밀번호 재설정 성공',
+                examples=[
+                    OpenApiExample(
+                        '비밀번호 재설정 성공',
+                        value={
+                            "success": True,
+                            "user_id": 1,
+                            "message": "비밀번호가 성공적으로 재설정되었습니다."
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='비밀번호 재설정 실패',
+                examples=[
+                    OpenApiExample(
+                        '현재 비밀번호 불일치',
+                        value={
+                            "current_password": ["현재 비밀번호가 올바르지 않습니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '새 비밀번호 규칙 위반',
+                        value={
+                            "new_password1": ["비밀번호는 영문을 포함해야 합니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '새 비밀번호 불일치',
+                        value={
+                            "non_field_errors": ["새 비밀번호가 일치하지 않습니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '동일한 비밀번호',
+                        value={
+                            "non_field_errors": ["새 비밀번호는 현재 비밀번호와 달라야 합니다."]
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '인증 실패',
+                        value={
+                            "detail": "Authentication credentials were not provided."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['계정 관리']
+    )
+    def post(self, request):
+        """
+        현재 비밀번호를 확인하고 새로운 비밀번호로 변경합니다.
+        """
+        # 요청 데이터 검증
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # 현재 비밀번호 확인
+        current_password = serializer.validated_data['current_password']
+        if not request.user.check_password(current_password):
+            return Response(
+                {"current_password": ["현재 비밀번호가 올바르지 않습니다."]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 새 비밀번호로 변경
+        new_password = serializer.validated_data['new_password1']
+        request.user.set_password(new_password)
+        request.user.save()
+        
+        response_data = {
+            'success': True,
+            'user_id': request.user.id,
+            'message': '비밀번호가 성공적으로 재설정되었습니다.'
+        }
+        
+        response_serializer = PasswordResetResponseSerializer(data=response_data)
         response_serializer.is_valid(raise_exception=True)
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
