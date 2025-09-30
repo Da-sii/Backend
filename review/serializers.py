@@ -4,7 +4,7 @@ from .models import Review, ReviewImage, ReviewReport, ReviewReportReason
 class ReviewImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReviewImage
-        fields = ['url']
+        fields = ['id', 'url']
 
 class ReviewSerializer(serializers.ModelSerializer):
     images = ReviewImageSerializer(many=True, read_only=True)
