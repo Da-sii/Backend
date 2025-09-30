@@ -1,7 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, OpenApiResponse
@@ -221,7 +221,7 @@ class ReviewUpdateView(GenericAPIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ReviewListView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @extend_schema(
         summary="상품 리뷰 페이지네이션 조회",
@@ -669,7 +669,7 @@ class ReviewImageDeleteView(GenericAPIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProductReviewImagesView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @extend_schema(
         summary="상품 리뷰 이미지 URL 목록 조회 (페이지네이션)",
@@ -781,7 +781,7 @@ class ProductReviewImagesView(GenericAPIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ReviewDetailView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @extend_schema(
         summary="리뷰 상세 조회",
@@ -915,7 +915,7 @@ class ReviewDetailView(GenericAPIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProductRatingStatsView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @extend_schema(
         summary="상품 별점 통계 조회",
@@ -1019,7 +1019,7 @@ class ProductRatingStatsView(GenericAPIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ReviewImageDetailView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @extend_schema(
         summary="이미지 ID로 리뷰 정보 조회",
@@ -1371,7 +1371,7 @@ class ReviewReportView(GenericAPIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UserReviewCheckView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @extend_schema(
         summary="사용자 리뷰 작성 여부 확인",
@@ -1433,7 +1433,18 @@ class UserReviewCheckView(GenericAPIView):
         from products.models import Product
         get_object_or_404(Product, id=product_id)
         
-        # 사용자의 리뷰 작성 여부 확인
+        # 인증되지 않은 경우: has_review False로 고정 응답
+        if not request.user or not request.user.is_authenticated:
+            response_data = {
+                'success': True,
+                'product_id': product_id,
+                'user_id': None,
+                'has_review': False,
+                'review_id': None
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # 사용자의 리뷰 작성 여부 확인 (인증된 사용자)
         user_review = Review.objects.filter(
             product_id=product_id,
             user=request.user
