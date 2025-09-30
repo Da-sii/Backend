@@ -174,3 +174,70 @@ class MyPageUserInfoResponseSerializer(serializers.Serializer):
     user_info = serializers.DictField(
         help_text="사용자 정보 (닉네임, 이메일, 로그인 방식, 리뷰 개수)"
     )
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """비밀번호 재설정 요청 시리얼라이저 (계정 찾기용)"""
+    current_password = serializers.CharField(
+        write_only=True,
+        help_text="현재 비밀번호"
+    )
+    new_password1 = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        max_length=20,
+        help_text="새 비밀번호 (8~20자, 영문/숫자/특수문자 포함)"
+    )
+    new_password2 = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        max_length=20,
+        help_text="새 비밀번호 확인"
+    )
+
+    def validate_current_password(self, value):
+        """현재 비밀번호가 비어있지 않은지 확인"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("현재 비밀번호를 입력해주세요.")
+        return value.strip()
+
+    def validate_new_password1(self, value):
+        """새 비밀번호 규칙 검증"""
+        import re
+        if not value or not value.strip():
+            raise serializers.ValidationError("새 비밀번호를 입력해주세요.")
+        
+        value = value.strip()
+        if len(value) < 8 or len(value) > 20:
+            raise serializers.ValidationError("비밀번호는 8~20자여야 합니다.")
+        if not re.search(r"[A-Za-z]", value):
+            raise serializers.ValidationError("비밀번호는 영문을 포함해야 합니다.")
+        if not re.search(r"[0-9]", value):
+            raise serializers.ValidationError("비밀번호는 숫자를 포함해야 합니다.")
+        if not re.search(r"[^A-Za-z0-9]", value):
+            raise serializers.ValidationError("비밀번호는 특수문자를 포함해야 합니다.")
+        return value
+
+    def validate(self, data):
+        """새 비밀번호 일치 확인 및 현재 비밀번호와 다른지 확인"""
+        current_password = data.get("current_password", "").strip()
+        new_password1 = data.get("new_password1", "").strip()
+        new_password2 = data.get("new_password2", "").strip()
+        
+        if not new_password2:
+            raise serializers.ValidationError("새 비밀번호 확인을 입력해주세요.")
+        
+        if new_password1 != new_password2:
+            raise serializers.ValidationError("새 비밀번호가 일치하지 않습니다.")
+        
+        if current_password == new_password1:
+            raise serializers.ValidationError("새 비밀번호는 현재 비밀번호와 달라야 합니다.")
+        
+        return data
+
+
+class PasswordResetResponseSerializer(serializers.Serializer):
+    """비밀번호 재설정 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    user_id = serializers.IntegerField()
+    message = serializers.CharField()
