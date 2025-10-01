@@ -78,6 +78,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/AppleSignin'
           description: ''
+  /auth/delete/:
+    delete:
+      operationId: auth_delete_destroy
+      description: 현재 로그인한 사용자의 계정을 완전히 삭제합니다. 카카오/애플 연동 계정인 경우 해당 서비스에서도 탈퇴 처리합니다.
+      summary: 회원탈퇴
+      tags:
+      - 계정 관리
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDeleteResponse'
+              examples:
+                탈퇴성공:
+                  value:
+                    success: true
+                    message: 회원탈퇴가 완료되었습니다.
+                    deleted_user_id: 1
+                    deleted_email: user@example.com
+                  summary: 탈퇴 성공
+          description: 회원탈퇴 성공
+        '400':
+          description: 회원탈퇴 실패
+        '401':
+          description: 인증되지 않은 사용자
   /auth/email/check/:
     post:
       operationId: auth_email_check_create
@@ -2705,6 +2733,24 @@ components:
           minLength: 1
       required:
       - refresh
+    UserDeleteResponse:
+      type: object
+      description: 회원탈퇴 응답 시리얼라이저
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        deleted_user_id:
+          type: integer
+        deleted_email:
+          type: string
+          format: email
+      required:
+      - deleted_email
+      - deleted_user_id
+      - message
+      - success
     UserReviewCheckResponse:
       type: object
       description: 사용자 리뷰 작성 여부 확인 응답 시리얼라이저

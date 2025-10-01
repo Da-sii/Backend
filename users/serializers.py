@@ -94,6 +94,26 @@ class KakaoLogoutRequestSerializer(serializers.Serializer):
         help_text="카카오에서 발급받은 access_token (선택사항)"
     )
 
+class UserDeleteRequestSerializer(serializers.Serializer):
+    """회원탈퇴 요청 시리얼라이저"""
+    kakao_access_token = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="카카오에서 발급받은 access_token (카카오 사용자인 경우 필요)"
+    )
+    apple_user_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="애플 사용자 ID (애플 사용자인 경우 필요)"
+    )
+
+class UserDeleteResponseSerializer(serializers.Serializer):
+    """회원탈퇴 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+    deleted_user_id = serializers.IntegerField()
+    deleted_email = serializers.EmailField()
+
 class NicknameUpdateRequestSerializer(serializers.Serializer):
     nickname = serializers.CharField(min_length=2, max_length=10)
 
