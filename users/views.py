@@ -4,7 +4,8 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.conf import settings
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from django.db import models
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
 
 from .models import User
 from .serializers import (
@@ -17,8 +18,14 @@ from .serializers import (
     PasswordChangeResponseSerializer,
     PasswordResetRequestSerializer,
     PasswordResetResponseSerializer,
+    EmailCheckRequestSerializer,
+    EmailCheckResponseSerializer,
+    EmailPasswordResetRequestSerializer,
+    EmailPasswordResetResponseSerializer,
     PhoneNumberFindAccountRequestSerializer,
     PhoneNumberFindAccountResponseSerializer,
+    PhoneNumberAccountInfoRequestSerializer,
+    PhoneNumberAccountInfoResponseSerializer,
     MyPageUserInfoResponseSerializer
 )
 from .utils import generate_jwt_tokens_with_metadata, get_token_type_from_token
@@ -412,13 +419,14 @@ class PhoneNumberFindAccountView(GenericAPIView):
         summary="핸드폰번호로 계정 찾기",
         description="핸드폰번호를 쿼리 파라미터로 입력하여 해당 번호로 등록된 계정들을 찾습니다. access token이 없어도 사용 가능합니다.",
         parameters=[
-            {
-                'name': 'phone_number',
-                'in': 'query',
-                'description': '핸드폰번호 (예: 010-1234-5678)',
-                'required': True,
-                'schema': {'type': 'string', 'pattern': '^01[0-9]-?\\d{3,4}-?\\d{4}$'}
-            }
+            OpenApiParameter(
+                name='phone_number',
+                location=OpenApiParameter.QUERY,
+                description='핸드폰번호 (예: 010-1234-5678)',
+                required=True,
+                type=str,
+                pattern=r'^01[0-9]-?\d{3,4}-?\d{4}$'
+            )
         ],
         responses={
             200: OpenApiResponse(
@@ -529,6 +537,130 @@ class PhoneNumberFindAccountView(GenericAPIView):
         }
         
         response_serializer = PhoneNumberFindAccountResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class PhoneNumberAccountInfoView(GenericAPIView):
+    """전화번호로 계정 정보 조회 API"""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    serializer_class = PhoneNumberAccountInfoRequestSerializer
+
+    @extend_schema(
+        summary="전화번호로 계정 정보 조회",
+        description="전화번호를 받아서 해당 번호로 가입된 계정들의 이메일과 가입일을 반환합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='phone_number',
+                location=OpenApiParameter.QUERY,
+                description='전화번호 (다양한 형식 지원: 010-1234-5678, 01012345678, +82-10-1234-5678 등)',
+                required=True,
+                type=str
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=PhoneNumberAccountInfoResponseSerializer,
+                description='계정 정보 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시 - 계정 있음',
+                        value={
+                            "success": True,
+                            "phone_number": "01023086047",
+                            "accounts": [
+                                {
+                                    "email": "user1@example.com",
+                                    "created_at": "2024-01-15T10:30:00Z"
+                                },
+                                {
+                                    "email": "user2@example.com", 
+                                    "created_at": "2024-01-20T15:45:00Z"
+                                }
+                            ],
+                            "message": "총 2개의 계정을 찾았습니다."
+                        }
+                    ),
+                    OpenApiExample(
+                        '성공 예시 - 계정 없음',
+                        value={
+                            "success": True,
+                            "phone_number": "01023086047",
+                            "accounts": [],
+                            "message": "해당 전화번호로 가입된 계정이 없습니다."
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='잘못된 요청 데이터',
+                examples=[
+                    OpenApiExample(
+                        '전화번호 누락',
+                        value={
+                            "error": "전화번호가 필요합니다."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['계정 관리']
+    )
+    def get(self, request):
+        """
+        전화번호를 받아서 해당 번호로 가입된 계정들의 정보를 조회합니다.
+        """
+        from auth.utils import parse_phone_number
+        
+        # 쿼리 파라미터에서 전화번호 추출
+        phone_number = request.query_params.get('phone_number')
+        
+        if not phone_number:
+            return Response(
+                {'error': '전화번호가 필요합니다.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 전화번호 파싱 (다양한 형식 지원)
+        try:
+            parsed_phone = parse_phone_number(phone_number)
+        except Exception as e:
+            return Response(
+                {'error': f'전화번호 형식이 올바르지 않습니다: {str(e)}'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 전화번호에서 '-' 제거한 형태도 생성
+        phone_without_dash = parsed_phone.replace('-', '')
+        phone_with_dash = parsed_phone
+        
+        # 두 가지 형태 모두로 검색 (중복 제거)
+        users = User.objects.filter(
+            models.Q(phone_number=phone_with_dash) | 
+            models.Q(phone_number=phone_without_dash)
+        ).distinct().order_by('id')
+        
+        # 계정 정보 리스트 생성
+        accounts = []
+        for user in users:
+            # date_joined 필드가 있으면 사용, 없으면 None
+            created_at = getattr(user, 'date_joined', None)
+            accounts.append({
+                'email': user.email,
+                'created_at': created_at.isoformat() if created_at else None
+            })
+        
+        # 응답 데이터 생성
+        response_data = {
+            'success': True,
+            'phone_number': parsed_phone,
+            'accounts': accounts,
+            'message': f'총 {len(accounts)}개의 계정을 찾았습니다.' if accounts else '해당 전화번호로 가입된 계정이 없습니다.'
+        }
+        
+        response_serializer = PhoneNumberAccountInfoResponseSerializer(data=response_data)
         response_serializer.is_valid(raise_exception=True)
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -707,3 +839,202 @@ class PasswordResetView(GenericAPIView):
         response_serializer.is_valid(raise_exception=True)
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class EmailCheckView(GenericAPIView):
+    """이메일 존재 여부 확인 API"""
+    permission_classes = [AllowAny]
+    authentication_classes = []  # 인증 없이 사용 가능
+    serializer_class = EmailCheckRequestSerializer
+
+    @extend_schema(
+        summary="이메일 존재 여부 확인",
+        description="입력된 이메일이 시스템에 등록되어 있는지 확인합니다.",
+        request=EmailCheckRequestSerializer,
+        responses={
+            200: OpenApiResponse(
+                response=EmailCheckResponseSerializer,
+                description='이메일 확인 성공',
+                examples=[
+                    OpenApiExample(
+                        '이메일 존재함',
+                        value={
+                            "success": True,
+                            "email": "user@example.com",
+                            "exists": True,
+                            "message": "해당 이메일이 등록되어 있습니다."
+                        }
+                    ),
+                    OpenApiExample(
+                        '이메일 없음',
+                        value={
+                            "success": True,
+                            "email": "nonexistent@example.com",
+                            "exists": False,
+                            "message": "해당 이메일이 등록되어 있지 않습니다."
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='잘못된 요청 데이터',
+                examples=[
+                    OpenApiExample(
+                        '이메일 누락',
+                        value={
+                            "email": ["이메일을 입력해주세요."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '잘못된 이메일 형식',
+                        value={
+                            "email": ["유효한 이메일 주소를 입력하세요."]
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['계정 관리']
+    )
+    def post(self, request):
+        """
+        이메일이 시스템에 등록되어 있는지 확인합니다.
+        """
+        # 요청 데이터 검증
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        
+        # 이메일 존재 여부 확인
+        email_exists = User.objects.filter(email=email).exists()
+        
+        if email_exists:
+            message = "해당 이메일이 등록되어 있습니다."
+        else:
+            message = "해당 이메일이 등록되어 있지 않습니다."
+        
+        response_data = {
+            'success': True,
+            'email': email,
+            'exists': email_exists,
+            'message': message
+        }
+        
+        response_serializer = EmailCheckResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class EmailPasswordResetView(GenericAPIView):
+    """이메일 기반 비밀번호 재설정 API"""
+    permission_classes = [AllowAny]
+    authentication_classes = []  # 인증 없이 사용 가능
+    serializer_class = EmailPasswordResetRequestSerializer
+
+    @extend_schema(
+        summary="이메일 기반 비밀번호 재설정",
+        description="이메일과 새 비밀번호를 받아서 해당 계정의 비밀번호를 변경합니다. 인증번호 검증 토큰이 필요합니다. (비밀번호 찾기/재설정용)",
+        request=EmailPasswordResetRequestSerializer,
+        examples=[
+            OpenApiExample(
+                '요청 예시',
+                value={
+                    "email": "user@example.com",
+                    "new_password1": "newPassword123!",
+                    "new_password2": "newPassword123!",
+                    "verification_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                },
+                request_only=True
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=EmailPasswordResetResponseSerializer,
+                description='비밀번호 재설정 성공',
+                examples=[
+                    OpenApiExample(
+                        '비밀번호 재설정 성공',
+                        value={
+                            "success": True,
+                            "email": "user@example.com",
+                            "user_id": 1,
+                            "message": "비밀번호가 성공적으로 재설정되었습니다."
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='비밀번호 재설정 실패',
+                examples=[
+                    OpenApiExample(
+                        '이메일 없음',
+                        value={
+                            "email": ["해당 이메일로 등록된 계정이 없습니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '새 비밀번호 규칙 위반',
+                        value={
+                            "new_password1": ["비밀번호는 영문을 포함해야 합니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '새 비밀번호 불일치',
+                        value={
+                            "non_field_errors": ["새 비밀번호가 일치하지 않습니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '이메일 형식 오류',
+                        value={
+                            "email": ["유효한 이메일 주소를 입력하세요."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '유효하지 않은 인증 토큰',
+                        value={
+                            "verification_token": ["유효하지 않은 인증 토큰입니다: Token has expired"]
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['계정 관리']
+    )
+    def post(self, request):
+        """
+        이메일과 새 비밀번호를 받아서 해당 계정의 비밀번호를 변경합니다.
+        """
+        # 요청 데이터 검증 (인증 토큰 검증 포함)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        new_password = serializer.validated_data['new_password1']
+        verified_phone = serializer.validated_data.get('verified_phone')  # 인증된 전화번호
+        
+        # 사용자 조회 및 비밀번호 변경
+        try:
+            user = User.objects.get(email=email)
+            user.set_password(new_password)
+            user.save()
+            
+            response_data = {
+                'success': True,
+                'email': email,
+                'user_id': user.id,
+                'message': '비밀번호가 성공적으로 재설정되었습니다.'
+            }
+            
+            response_serializer = EmailPasswordResetResponseSerializer(data=response_data)
+            response_serializer.is_valid(raise_exception=True)
+            
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response(
+                {"email": ["해당 이메일로 등록된 계정이 없습니다."]},
+                status=status.HTTP_400_BAD_REQUEST
+            )

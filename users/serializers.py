@@ -251,3 +251,147 @@ class PasswordResetResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()
     user_id = serializers.IntegerField()
     message = serializers.CharField()
+
+
+class EmailCheckRequestSerializer(serializers.Serializer):
+    """이메일 존재 여부 확인 요청 시리얼라이저"""
+    email = serializers.EmailField(
+        help_text="확인할 이메일 주소"
+    )
+    
+    def validate_email(self, value):
+        """이메일 형식 검증"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("이메일을 입력해주세요.")
+        return value.strip().lower()
+
+
+class EmailCheckResponseSerializer(serializers.Serializer):
+    """이메일 존재 여부 확인 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    email = serializers.EmailField()
+    exists = serializers.BooleanField()
+    message = serializers.CharField()
+
+
+class EmailPasswordResetRequestSerializer(serializers.Serializer):
+    """이메일 기반 비밀번호 재설정 요청 시리얼라이저"""
+    email = serializers.EmailField(
+        help_text="비밀번호를 변경할 이메일 주소"
+    )
+    new_password1 = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        max_length=20,
+        help_text="새 비밀번호 (8~20자, 영문/숫자/특수문자 포함)"
+    )
+    new_password2 = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        max_length=20,
+        help_text="새 비밀번호 확인"
+    )
+    verification_token = serializers.CharField(
+        write_only=True,
+        help_text="인증번호 검증 시 받은 JWT 토큰"
+    )
+
+    def validate_email(self, value):
+        """이메일 형식 검증 및 존재 여부 확인"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("이메일을 입력해주세요.")
+        
+        email = value.strip().lower()
+        
+        # 이메일이 존재하는지 확인
+        if not User.objects.filter(email=email).exists():
+            raise serializers.ValidationError("해당 이메일로 등록된 계정이 없습니다.")
+        
+        return email
+
+    def validate_new_password1(self, value):
+        """새 비밀번호 규칙 검증"""
+        import re
+        if not value or not value.strip():
+            raise serializers.ValidationError("새 비밀번호를 입력해주세요.")
+        
+        value = value.strip()
+        if len(value) < 8 or len(value) > 20:
+            raise serializers.ValidationError("비밀번호는 8~20자여야 합니다.")
+        if not re.search(r"[A-Za-z]", value):
+            raise serializers.ValidationError("비밀번호는 영문을 포함해야 합니다.")
+        if not re.search(r"[0-9]", value):
+            raise serializers.ValidationError("비밀번호는 숫자를 포함해야 합니다.")
+        if not re.search(r"[^A-Za-z0-9]", value):
+            raise serializers.ValidationError("비밀번호는 특수문자를 포함해야 합니다.")
+        return value
+
+    def validate_verification_token(self, value):
+        """인증 토큰 검증"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("인증 토큰이 필요합니다.")
+        return value.strip()
+
+    def validate(self, data):
+        """새 비밀번호 일치 확인 및 인증 토큰 검증"""
+        from auth.token_utils import verify_verification_token
+        
+        new_password1 = data.get("new_password1", "").strip()
+        new_password2 = data.get("new_password2", "").strip()
+        verification_token = data.get("verification_token", "").strip()
+        
+        if not new_password2:
+            raise serializers.ValidationError("새 비밀번호 확인을 입력해주세요.")
+        
+        if new_password1 != new_password2:
+            raise serializers.ValidationError("새 비밀번호가 일치하지 않습니다.")
+        
+        # 인증 토큰 검증
+        token_result = verify_verification_token(verification_token)
+        if not token_result['valid']:
+            raise serializers.ValidationError({
+                "verification_token": [f"유효하지 않은 인증 토큰입니다: {token_result.get('error', '알 수 없는 오류')}"]
+            })
+        
+        # 토큰에서 전화번호 추출하여 저장 (나중에 사용할 수 있도록)
+        data['verified_phone'] = token_result.get('phone_number')
+        
+        return data
+
+
+class EmailPasswordResetResponseSerializer(serializers.Serializer):
+    """이메일 기반 비밀번호 재설정 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    email = serializers.EmailField()
+    user_id = serializers.IntegerField()
+    message = serializers.CharField()
+
+
+class PhoneNumberAccountInfoRequestSerializer(serializers.Serializer):
+    """전화번호로 계정 정보 조회 요청 시리얼라이저"""
+    phone_number = serializers.CharField(
+        max_length=20,
+        help_text="전화번호 (다양한 형식 지원: 010-1234-5678, 01012345678, +82-10-1234-5678 등)"
+    )
+    
+    def validate_phone_number(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("전화번호가 필요합니다.")
+        return value.strip()
+
+
+class PhoneNumberAccountInfoResponseSerializer(serializers.Serializer):
+    """전화번호로 계정 정보 조회 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    phone_number = serializers.CharField()
+    accounts = serializers.ListField(
+        child=serializers.DictField(),
+        help_text="해당 전화번호로 가입된 계정들의 리스트"
+    )
+    message = serializers.CharField()
+
+
+class AccountInfoSerializer(serializers.Serializer):
+    """계정 정보 시리얼라이저"""
+    email = serializers.EmailField()
+    created_at = serializers.DateTimeField()
