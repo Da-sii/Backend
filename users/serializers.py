@@ -86,6 +86,14 @@ class KakaoLoginSerializer(serializers.Serializer):
         required=True
     )
 
+class KakaoLogoutRequestSerializer(serializers.Serializer):
+    """카카오 로그아웃 요청 시리얼라이저"""
+    kakao_access_token = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="카카오에서 발급받은 access_token (선택사항)"
+    )
+
 class NicknameUpdateRequestSerializer(serializers.Serializer):
     nickname = serializers.CharField(min_length=2, max_length=10)
 
