@@ -12,6 +12,7 @@ from .serializers import (
     SignUpSerializer, 
     SignInSerializer, 
     KakaoLoginSerializer,
+    KakaoLogoutRequestSerializer,
     NicknameUpdateRequestSerializer,
     NicknameUpdateResponseSerializer,
     PasswordChangeRequestSerializer,
@@ -252,6 +253,106 @@ class LogoutView(GenericAPIView):
         }, status=status.HTTP_200_OK)
         
         # refresh token 쿠키 삭제 (쿠키가 없어도 에러 없이 처리)
+        response.delete_cookie(
+            'refresh_token',
+            path='/'
+        )
+        
+        return response
+
+class KakaoLogoutView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = KakaoLogoutRequestSerializer
+    
+    @extend_schema(
+        summary="카카오 로그아웃",
+        description="카카오 계정 사용자의 서버 로그아웃을 처리합니다. 카카오 로그아웃은 프론트엔드에서 window.Kakao.Auth.logout()으로 처리해주세요.",
+        request=KakaoLogoutRequestSerializer,
+        examples=[
+            OpenApiExample(
+                '요청 예시 (body 없음)',
+                value={},
+                request_only=True
+            ),
+            OpenApiExample(
+                '요청 예시 (카카오 토큰 포함)',
+                value={
+                    "kakao_access_token": "카카오에서_발급받은_access_token"
+                },
+                request_only=True
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                description='카카오 로그아웃 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            'success': True,
+                            'message': '카카오 로그아웃이 완료되었습니다.'
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='카카오 로그아웃 실패',
+                examples=[
+                    OpenApiExample(
+                        '카카오 계정이 아닌 경우',
+                        value={
+                            'error': '카카오 계정이 아닙니다.'
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '토큰 없음',
+                        value={
+                            'detail': 'Authentication credentials were not provided.'
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['인증']
+    )
+    def post(self, request):
+        """
+        카카오 계정 로그아웃과 서버 로그아웃을 처리합니다.
+        """
+        user = request.user
+        
+        # 카카오 사용자인지 확인
+        if not user.kakao:
+            return Response({
+                'error': '카카오 계정이 아닙니다.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 카카오 access_token이 제공된 경우 카카오 로그아웃 API 호출
+        kakao_access_token = request.data.get('kakao_access_token')
+        if kakao_access_token:
+            try:
+                kakao_logout_response = requests.post(
+                    "https://kapi.kakao.com/v1/user/logout",
+                    headers={"Authorization": f"Bearer {kakao_access_token}"},
+                    timeout=5,
+                )
+                if kakao_logout_response.status_code != 200:
+                    print(f"카카오 로그아웃 API 오류: {kakao_logout_response.text}")
+            except Exception as e:
+                print(f"카카오 로그아웃 처리 중 오류: {str(e)}")
+        
+        # 서버 로그아웃 처리 (refresh token 쿠키 삭제)
+        response = Response({
+            "success": True, 
+            "message": "카카오 로그아웃이 완료되었습니다."
+        }, status=status.HTTP_200_OK)
+        
+        # refresh token 쿠키 삭제
         response.delete_cookie(
             'refresh_token',
             path='/'

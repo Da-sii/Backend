@@ -169,6 +169,42 @@ paths:
           description: 비밀번호 재설정 성공
         '400':
           description: 비밀번호 재설정 실패
+  /auth/kakao/logout/:
+    post:
+      operationId: auth_kakao_logout_create
+      description: 카카오 계정 사용자의 서버 로그아웃을 처리합니다. 카카오 로그아웃은 프론트엔드에서 window.Kakao.Auth.logout()으로
+        처리해주세요.
+      summary: 카카오 로그아웃
+      tags:
+      - 인증
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KakaoLogoutRequestRequest'
+            examples:
+              요청예시(body없음):
+                value: {}
+                summary: 요청 예시 (body 없음)
+              요청예시(카카오토큰포함):
+                value:
+                  kakao_access_token: 카카오에서_발급받은_access_token
+                summary: 요청 예시 (카카오 토큰 포함)
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/KakaoLogoutRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/KakaoLogoutRequestRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: 카카오 로그아웃 성공
+        '400':
+          description: 카카오 로그아웃 실패
+        '401':
+          description: 인증되지 않은 사용자
   /auth/kakao/token/:
     post:
       operationId: auth_kakao_token_create
@@ -1656,6 +1692,13 @@ components:
           description: 카카오 로그인 후 받은 authorization code
       required:
       - code
+    KakaoLogoutRequestRequest:
+      type: object
+      description: 카카오 로그아웃 요청 시리얼라이저
+      properties:
+        kakao_access_token:
+          type: string
+          description: 카카오에서 발급받은 access_token (선택사항)
     MyPageUserInfoResponse:
       type: object
       description: 마이페이지 사용자 정보 응답 시리얼라이저
@@ -2615,6 +2658,8 @@ components:
         email:
           type: string
           format: email
+        phoneNumber:
+          type: string
       required:
       - email
       - id
@@ -2633,6 +2678,9 @@ components:
         password2:
           type: string
           writeOnly: true
+          minLength: 1
+        phoneNumber:
+          type: string
           minLength: 1
       required:
       - email
