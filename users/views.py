@@ -1,10 +1,8 @@
 import requests
-import uuid
 from rest_framework import generics, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
 from django.db import models
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
@@ -54,6 +52,7 @@ class SignUpView(generics.CreateAPIView):
                 "id": user.id,
                 "email": user.email,
                 "nickname": user.nickname,
+                "phoneNumber": user.phone_number,
             },
             "access": tokens['access'],
             },
@@ -92,6 +91,7 @@ class SignInView(GenericAPIView):
                     "id": user.id,
                     "email": user.email,
                     "nickname": user.nickname,
+                    "phoneNumber": user.phone_number,
                 },
                 "access": tokens['access'],
             },

@@ -1,4 +1,4 @@
-import uuid
+import re
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -10,22 +10,28 @@ class SignUpSerializer(serializers.ModelSerializer):
         validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 이메일입니다.")]
     )
     password2 = serializers.CharField(write_only=True)
+    phoneNumber = serializers.CharField(required=False)
 
     class Meta:
         model = User
-        fields = ["id", "email", "password", "password2"]
+        fields = ["id", "email", "password", "password2", "phoneNumber"]
         extra_kwargs = {
             "password": {"write_only": True}
         }
 
     def validate_password(self, data):
         # 비밀번호 규칙 검사(8~20자, 영문/숫자/특수문자 포함)
-        import re
         if len(data) < 8 or len(data) > 20:
             raise serializers.ValidationError("비밀번호는 8~20자여야 합니다.")
         if not re.search(r"[A-Za-z]", data) or not re.search(r"[0-9]", data) or not re.search(r"[^A-Za-z0-9]", data):
             raise serializers.ValidationError("비밀번호는 영문,숫자,특수문자를 모두 포함해야 합니다.")
 
+        return data
+
+    def validate_phoneNumber(self, data):
+        if data:
+            if not re.match(r'^01[0-9]-?\d{3,4}-?\d{4}$', data):
+                raise serializers.ValidationError("올바른 핸드폰번호 형식이 아닙니다. (예: 010-1234-5678)")
         return data
 
     def validate(self, data):
@@ -37,6 +43,10 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop("password2") # DB에는 password2 저장 X
+        
+        # phoneNumber를 phone_number로 매핑
+        if 'phoneNumber' in validated_data:
+            validated_data['phone_number'] = validated_data.pop('phoneNumber')
 
         return User.objects.create_user(**validated_data)
 
