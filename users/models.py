@@ -38,6 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     kakao = models.BooleanField(default=False)
     google = models.BooleanField(default=False)
     apple = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)  # 가입일 추가
     # Django 기본 인증 시스템을 위한 필드
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
