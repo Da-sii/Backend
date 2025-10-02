@@ -158,11 +158,20 @@ class PhoneNumberFindAccountRequestSerializer(serializers.Serializer):
         return value
 
 
+class AccountInfoSerializer(serializers.Serializer):
+    """계정 정보 시리얼라이저"""
+    id = serializers.IntegerField()
+    email = serializers.EmailField()
+    nickname = serializers.CharField()
+    login_type = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+
 class PhoneNumberFindAccountResponseSerializer(serializers.Serializer):
     """핸드폰번호로 계정 찾기 응답 시리얼라이저"""
     success = serializers.BooleanField()
     accounts = serializers.ListField(
-        child=serializers.DictField(),
+        child=AccountInfoSerializer(),
         help_text="해당 핸드폰번호로 등록된 계정 목록"
     )
     message = serializers.CharField()
