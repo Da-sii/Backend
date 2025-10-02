@@ -55,6 +55,9 @@ class VerifyCodeResponseSerializer(serializers.Serializer):
     """인증번호 검증 응답 시리얼라이저"""
     success = serializers.BooleanField()
     message = serializers.CharField()
+    verification_token = serializers.CharField(help_text="5분 유효한 인증용 JWT 토큰")
+    expires_at = serializers.CharField(help_text="토큰 만료 시간")
+    expires_in_seconds = serializers.IntegerField(help_text="토큰 만료까지 남은 시간(초)")
 
 
 class ErrorResponseSerializer(serializers.Serializer):

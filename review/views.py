@@ -1344,25 +1344,43 @@ class ReviewReportView(GenericAPIView):
 
         reason = serializer.validated_data['reason']
 
-        # 중복 신고 방지
+        # 중복 신고 방지 - 데이터베이스 제약조건을 활용한 안전한 처리
+        from django.db import IntegrityError
+        
+        # 먼저 중복 검사 (성능 최적화)
         if ReviewReport.objects.filter(review=review, reporter=request.user).exists():
             return Response({
                 'success': False,
                 'message': '이미 신고한 리뷰입니다.'
             }, status=status.HTTP_400_BAD_REQUEST)
-
-        report = ReviewReport.objects.create(
-            review=review,
-            reporter=request.user,
-            reason=reason,
-        )
+        
+        # 데이터베이스 레벨에서 중복 방지
+        try:
+            report = ReviewReport.objects.create(
+                review=review,
+                reporter=request.user,
+                reason=reason,
+            )
+        except IntegrityError:
+            # 동시성 문제로 인한 중복 발생 시 처리
+            return Response({
+                'success': False,
+                'message': '이미 신고한 리뷰입니다.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': '신고 처리 중 오류가 발생했습니다.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         response_data = {
             'success': True,
             'message': '신고가 접수되었습니다.',
+            'report_id': report.id,
             'review_id': review.id,
             'reporter_id': request.user.id,
             'reason': report.reason,
+            'created_at': report.created_at,
         }
 
         response_serializer = ReviewReportResponseSerializer(data=response_data)
