@@ -13,6 +13,7 @@ urlpatterns = [
     path("nickname/", NicknameUpdateView.as_view(), name="nickname_update"),
     path("password/", PasswordChangeView.as_view(), name="password_change"),
     path("password/reset/", PasswordResetView.as_view(), name="password_reset"),
+    path("phone/account-info/", PhoneNumberFindAccountView.as_view(), name="find_account"),
     path("email/check/", EmailCheckView.as_view(), name="email_check"),
     path("email/password/reset/", EmailPasswordResetView.as_view(), name="email_password_reset"),
     path("account/", PhoneNumberFindAccountView.as_view(), name="find_account"),

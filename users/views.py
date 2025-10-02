@@ -27,6 +27,7 @@ from .serializers import (
     EmailPasswordResetResponseSerializer,
     PhoneNumberFindAccountRequestSerializer,
     PhoneNumberFindAccountResponseSerializer,
+    AccountInfoSerializer,
     PhoneNumberAccountInfoRequestSerializer,
     PhoneNumberAccountInfoResponseSerializer,
     MyPageUserInfoResponseSerializer
@@ -710,13 +711,15 @@ class PhoneNumberFindAccountView(GenericAPIView):
                                     "id": 1,
                                     "email": "user@example.com",
                                     "nickname": "user123456",
-                                    "login_type": "email"
+                                    "login_type": "email",
+                                    "created_at": "2024-01-15T10:30:00Z"
                                 },
                                 {
                                     "id": 2,
                                     "email": "kakao@example.com",
                                     "nickname": "kakao_user",
-                                    "login_type": "kakao"
+                                    "login_type": "kakao",
+                                    "created_at": "2024-01-20T14:45:00Z"
                                 }
                             ],
                             "message": "해당 핸드폰번호로 등록된 계정을 찾았습니다."
@@ -777,7 +780,10 @@ class PhoneNumberFindAccountView(GenericAPIView):
         accounts = []
         for user in users:
             # 로그인 타입 결정
-            if user.kakao:
+            if user.kakao and user.apple:
+                # kakao와 apple 둘 다 True인 경우
+                login_type = "kakao_apple"
+            elif user.kakao:
                 login_type = "kakao"
             elif user.google:
                 login_type = "google"
@@ -790,7 +796,8 @@ class PhoneNumberFindAccountView(GenericAPIView):
                 "id": user.id,
                 "email": user.email,
                 "nickname": user.nickname,
-                "login_type": login_type
+                "login_type": login_type,
+                "created_at": user.created_at
             })
         
         if accounts:
