@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timedelta
 from .verification_service import sms_service
 from .utils import parse_phone_number
+from .token_utils import generate_verification_token
 
 # 메모리에 저장할 객체
 # { phoneNumber: { count: number, lastRequest: Date, verification_code: string, sent_at: Date } }
@@ -200,8 +201,9 @@ class VerifyCodeView(APIView):
                 'properties': {
                     'success': {'type': 'boolean'},
                     'message': {'type': 'string'},
-                    'verified_phone': {'type': 'string'},
-                    'verified_at': {'type': 'string'}
+                    'verification_token': {'type': 'string', 'description': '5분 유효한 인증용 JWT 토큰'},
+                    'expires_at': {'type': 'string', 'description': '토큰 만료 시간'},
+                    'expires_in_seconds': {'type': 'integer', 'description': '토큰 만료까지 남은 시간(초)'}
                 }
             },
             400: {
@@ -268,11 +270,16 @@ class VerifyCodeView(APIView):
         if stored_code == verification_code:
             # 인증 성공 시 인증번호 삭제
             phone_requests[parsed_phone]['verification_code'] = None
+            
+            # 5분 유효한 JWT 토큰 생성
+            token_data = generate_verification_token(parsed_phone)
+            
             return Response({
                 'success': True,
                 'message': '인증번호가 확인되었습니다.',
-                'verified_phone': parsed_phone,
-                'verified_at': current_time.strftime('%Y-%m-%d %H:%M:%S')
+                'verification_token': token_data['token'],
+                'expires_at': token_data['expires_at'],
+                'expires_in_seconds': token_data['expires_in_seconds']
             }, status=status.HTTP_200_OK)
         else:
             return Response(
