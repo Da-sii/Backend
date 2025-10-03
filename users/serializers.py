@@ -32,6 +32,11 @@ class SignUpSerializer(serializers.ModelSerializer):
         if data:
             if not re.match(r'^01[0-9]-?\d{3,4}-?\d{4}$', data):
                 raise serializers.ValidationError("올바른 핸드폰번호 형식이 아닙니다. (예: 010-1234-5678)")
+            
+            # 중복 검사
+            if User.objects.filter(phone_number=data).exists():
+                raise serializers.ValidationError("이미 사용 중인 핸드폰번호입니다.")
+                
         return data
 
     def validate(self, data):
