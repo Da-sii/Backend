@@ -1,6 +1,22 @@
 from django.urls import path
-from users.views import SignUpView, SignInView, KakaoLoginView, LogoutView, KakaoLogoutView, UserDeleteView, NicknameUpdateView, PasswordChangeView, PasswordResetView, EmailCheckView, EmailPasswordResetView, PhoneNumberFindAccountView, PhoneNumberAccountInfoView, MyPageUserInfoView
-from rest_framework_simplejwt.views import TokenRefreshView
+from users.views import (
+    SignUpView, 
+    SignInView, 
+    KakaoLoginView, 
+    LogoutView, 
+    TokenRefreshView,
+    KakaoLogoutView, 
+    UserDeleteView, 
+    NicknameUpdateView,
+    PasswordVerifyView,
+    PasswordChangeView, 
+    PasswordResetView, 
+    EmailCheckView, 
+    EmailPasswordResetView, 
+    PhoneNumberFindAccountView, 
+    PhoneNumberAccountInfoView, 
+    MyPageUserInfoView
+)
 
 urlpatterns = [
     path("signup/", SignUpView.as_view(), name="signup"),
@@ -11,6 +27,7 @@ urlpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("kakao/token/", KakaoLoginView.as_view(), name="kakao_token"),
     path("nickname/", NicknameUpdateView.as_view(), name="nickname_update"),
+    path("password/verify/", PasswordVerifyView.as_view(), name="password_verify"),
     path("password/", PasswordChangeView.as_view(), name="password_change"),
     path("password/reset/", PasswordResetView.as_view(), name="password_reset"),
     path("phone/account-info/", PhoneNumberFindAccountView.as_view(), name="find_account"),
