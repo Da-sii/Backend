@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from django.conf import settings
 from django.db import models
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
 from .models import User
 from .serializers import (
@@ -17,6 +19,8 @@ from .serializers import (
     UserDeleteResponseSerializer,
     NicknameUpdateRequestSerializer,
     NicknameUpdateResponseSerializer,
+    PasswordVerifyRequestSerializer,
+    PasswordVerifyResponseSerializer,
     PasswordChangeRequestSerializer,
     PasswordChangeResponseSerializer,
     PasswordResetRequestSerializer,
@@ -41,6 +45,67 @@ class SignUpView(generics.CreateAPIView):
     permission_classes = [AllowAny] # 인증 필요 없음 (누구나 회원가입 가능)
     authentication_classes = []  # 인증 클래스를 비워서 토큰 검증을 완전히 비활성화
 
+    @extend_schema(
+        summary="회원가입",
+        description="이메일과 비밀번호로 회원가입합니다. 회원가입 시 자동으로 로그인되며 access 토큰과 refresh 토큰(쿠키)이 발급됩니다.",
+        request=SignUpSerializer,
+        examples=[
+            OpenApiExample(
+                '회원가입 요청',
+                value={
+                    "email": "user@example.com",
+                    "password": "Test1234!",
+                    "password2": "Test1234!",
+                    "phoneNumber": "010-1234-5678"
+                },
+                request_only=True
+            )
+        ],
+        responses={
+            201: OpenApiResponse(
+                description='회원가입 성공',
+                examples=[
+                    OpenApiExample(
+                        '회원가입 성공',
+                        value={
+                            "success": True,
+                            "user": {
+                                "id": 1,
+                                "email": "user@example.com",
+                                "nickname": "user123456",
+                                "phoneNumber": "010-1234-5678"
+                            },
+                            "access": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='회원가입 실패',
+                examples=[
+                    OpenApiExample(
+                        '이메일 중복',
+                        value={
+                            "email": ["이미 사용 중인 이메일입니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '비밀번호 불일치',
+                        value={
+                            "non_field_errors": ["비밀번호가 일치하지 않습니다."]
+                        }
+                    ),
+                    OpenApiExample(
+                        '비밀번호 규칙 위반',
+                        value={
+                            "password": ["비밀번호는 영문,숫자,특수문자를 모두 포함해야 합니다."]
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['인증']
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True) # serializer 안의 validate_* 메서드들이 실행됨
@@ -80,6 +145,53 @@ class SignInView(GenericAPIView):
     serializer_class = SignInSerializer
     authentication_classes = []  # 인증 클래스를 비워서 토큰 검증을 완전히 비활성화
 
+    @extend_schema(
+        summary="로그인",
+        description="이메일과 비밀번호로 로그인합니다. 성공 시 access 토큰과 refresh 토큰(쿠키)이 발급됩니다.",
+        request=SignInSerializer,
+        examples=[
+            OpenApiExample(
+                '로그인 요청',
+                value={
+                    "email": "user@example.com",
+                    "password": "Test1234!"
+                },
+                request_only=True
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                description='로그인 성공',
+                examples=[
+                    OpenApiExample(
+                        '로그인 성공',
+                        value={
+                            "success": True,
+                            "user": {
+                                "id": 1,
+                                "email": "user@example.com",
+                                "nickname": "user123456",
+                                "phoneNumber": "010-1234-5678"
+                            },
+                            "access": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='로그인 실패',
+                examples=[
+                    OpenApiExample(
+                        '이메일 또는 비밀번호 오류',
+                        value={
+                            "non_field_errors": ["이메일 또는 비밀번호가 올바르지 않습니다."]
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['인증']
+    )
     def post(self, request):
         serializer = SignInSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -119,6 +231,75 @@ class KakaoLoginView(GenericAPIView):
     serializer_class = KakaoLoginSerializer
     authentication_classes = []  # 인증 클래스를 비워서 토큰 검증을 완전히 비활성화
 
+    @extend_schema(
+        summary="카카오 로그인",
+        description="카카오 OAuth 인증 코드로 로그인합니다. 이메일이 없으면 실패하며, 신규 사용자는 자동으로 가입됩니다.",
+        request=KakaoLoginSerializer,
+        examples=[
+            OpenApiExample(
+                '카카오 로그인 요청',
+                value={
+                    "code": "KAKAO_AUTHORIZATION_CODE"
+                },
+                request_only=True
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                description='카카오 로그인 성공',
+                examples=[
+                    OpenApiExample(
+                        '기존 사용자 로그인',
+                        value={
+                            "success": True,
+                            "user": {
+                                "id": 1,
+                                "nickname": "카카오사용자",
+                                "email": "kakao@example.com",
+                                "kakao": True
+                            },
+                            "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+                            "message": "Login successful"
+                        }
+                    ),
+                    OpenApiExample(
+                        '신규 사용자 가입 및 로그인',
+                        value={
+                            "success": True,
+                            "user": {
+                                "id": 2,
+                                "nickname": "kakao_123456789",
+                                "email": "newuser@kakao.com",
+                                "kakao": True
+                            },
+                            "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+                            "message": "User created and logged in"
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='카카오 로그인 실패',
+                examples=[
+                    OpenApiExample(
+                        '이메일 동의 필요',
+                        value={
+                            "error": "Email consent required",
+                            "detail": {
+                                "message": "카카오 동의항목에서 이메일을 선택(또는 필수)로 설정하고, 기존 연결을 해제한 뒤 다시 로그인해야 합니다.",
+                                "tips": [
+                                    "개발자 콘솔 > 카카오 로그인 > 동의항목에서 '카카오계정(이메일)' 활성화",
+                                    "테스트 계정을 '팀원'으로 추가 후 재로그인",
+                                    "기존 연결 해제(https://developers.kakao.com/tool/unlink) 후 다시 시도"
+                                ]
+                            }
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['인증']
+    )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -262,6 +443,107 @@ class LogoutView(GenericAPIView):
         )
         
         return response
+
+class TokenRefreshView(GenericAPIView):
+    """쿠키 기반 토큰 리프레시"""
+    permission_classes = [AllowAny]
+    authentication_classes = []  # 인증 없이 사용 가능
+
+    @extend_schema(
+        summary="Access 토큰 재발급",
+        description="쿠키에 저장된 refresh 토큰을 사용하여 새로운 access 토큰을 발급합니다. body 없이 쿠키만으로 처리됩니다.",
+        request=None,  # body 없음
+        responses={
+            200: OpenApiResponse(
+                description='토큰 재발급 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            'success': True,
+                            'access': 'eyJ0eXAiOiJKV1QiLCJhbGc...'
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='토큰 재발급 실패',
+                examples=[
+                    OpenApiExample(
+                        'refresh 토큰 없음',
+                        value={
+                            'error': 'refresh 토큰이 제공되지 않았습니다.'
+                        }
+                    ),
+                    OpenApiExample(
+                        '유효하지 않은 토큰',
+                        value={
+                            'error': '유효하지 않거나 만료된 refresh 토큰입니다.'
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='사용자를 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '사용자 없음',
+                        value={
+                            'error': '토큰에 해당하는 사용자를 찾을 수 없습니다.'
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['인증']
+    )
+    def post(self, request):
+        """
+        쿠키에서 refresh 토큰을 가져와 새로운 access 토큰을 발급합니다.
+        """
+        # 쿠키에서 refresh 토큰 가져오기
+        refresh_token = request.COOKIES.get('refresh_token')
+        
+        if not refresh_token:
+            return Response(
+                {'error': 'refresh 토큰이 제공되지 않았습니다.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # refresh 토큰 검증 및 새 access 토큰 생성
+            refresh = RefreshToken(refresh_token)
+            
+            # 토큰에서 사용자 ID 추출
+            user_id = refresh.get('user_id')
+            
+            # 사용자 존재 여부 확인
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response(
+                    {'error': '토큰에 해당하는 사용자를 찾을 수 없습니다.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # 새로운 access 토큰 발급
+            access_token = str(refresh.access_token)
+            
+            return Response({
+                'success': True,
+                'access': access_token
+            }, status=status.HTTP_200_OK)
+            
+        except TokenError as e:
+            return Response(
+                {'error': f'유효하지 않거나 만료된 refresh 토큰입니다: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'토큰 재발급 중 오류가 발생했습니다: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class KakaoLogoutView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -560,6 +842,79 @@ class NicknameUpdateView(GenericAPIView):
         response_serializer = NicknameUpdateResponseSerializer(data=response_data)
         response_serializer.is_valid(raise_exception=True)
 
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class PasswordVerifyView(GenericAPIView):
+    """현재 비밀번호 확인 API"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = PasswordVerifyRequestSerializer
+
+    @extend_schema(
+        summary="현재 비밀번호 확인",
+        description="현재 로그인한 사용자의 비밀번호가 올바른지 확인합니다.",
+        request=PasswordVerifyRequestSerializer,
+        responses={
+            200: OpenApiResponse(
+                response=PasswordVerifyResponseSerializer,
+                description='비밀번호 확인 완료',
+                examples=[
+                    OpenApiExample(
+                        '비밀번호 일치',
+                        value={
+                            "success": True,
+                            "valid": True,
+                            "message": "비밀번호가 일치합니다."
+                        }
+                    ),
+                    OpenApiExample(
+                        '비밀번호 불일치',
+                        value={
+                            "success": True,
+                            "valid": False,
+                            "message": "비밀번호가 일치하지 않습니다."
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='잘못된 요청',
+                examples=[
+                    OpenApiExample(
+                        '비밀번호 누락',
+                        value={
+                            "current_password": ["현재 비밀번호를 입력해주세요."]
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자'
+            )
+        },
+        tags=['사용자 관리']
+    )
+    def post(self, request):
+        """
+        현재 사용자의 비밀번호가 올바른지 확인합니다.
+        """
+        # 요청 데이터 검증
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # 비밀번호 확인
+        current_password = serializer.validated_data['current_password']
+        is_valid = request.user.check_password(current_password)
+        
+        response_data = {
+            'success': True,
+            'valid': is_valid,
+            'message': '비밀번호가 일치합니다.' if is_valid else '비밀번호가 일치하지 않습니다.'
+        }
+        
+        response_serializer = PasswordVerifyResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
+        
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
 
@@ -943,20 +1298,21 @@ class PhoneNumberAccountInfoView(GenericAPIView):
 
 class MyPageUserInfoView(GenericAPIView):
     """마이페이지 사용자 정보 조회"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @extend_schema(
         summary="마이페이지 사용자 정보 조회",
-        description="현재 로그인한 사용자의 마이페이지 정보를 조회합니다. 닉네임, 이메일, 로그인 방식, 리뷰 개수를 반환합니다.",
+        description="현재 로그인한 사용자의 마이페이지 정보를 조회합니다. 인증되지 않은 경우에도 200을 반환하며 authenticated: false로 표시됩니다.",
         responses={
             200: OpenApiResponse(
                 response=MyPageUserInfoResponseSerializer,
-                description='마이페이지 사용자 정보 조회 성공',
+                description='마이페이지 사용자 정보 조회',
                 examples=[
                     OpenApiExample(
-                        '성공 예시',
+                        '인증된 사용자',
                         value={
                             "success": True,
+                            "authenticated": True,
                             "user_info": {
                                 "nickname": "사용자123",
                                 "email": "user@example.com",
@@ -964,16 +1320,13 @@ class MyPageUserInfoView(GenericAPIView):
                                 "review_count": 5
                             }
                         }
-                    )
-                ]
-            ),
-            401: OpenApiResponse(
-                description='인증되지 않은 사용자',
-                examples=[
+                    ),
                     OpenApiExample(
-                        '인증 실패',
+                        '인증되지 않은 사용자',
                         value={
-                            "detail": "Authentication credentials were not provided."
+                            "success": True,
+                            "authenticated": False,
+                            "message": "로그인이 필요합니다."
                         }
                     )
                 ]
@@ -985,6 +1338,17 @@ class MyPageUserInfoView(GenericAPIView):
         """마이페이지 사용자 정보를 조회합니다."""
         from .utils import get_token_type_from_token
         from review.models import Review
+        
+        # 사용자 인증 여부 확인
+        if not request.user.is_authenticated:
+            return Response(
+                {
+                    'success': True,
+                    'authenticated': False,
+                    'message': '로그인이 필요합니다.'
+                },
+                status=status.HTTP_200_OK
+            )
         
         # JWT 토큰에서 로그인 방식 추출
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
@@ -1007,13 +1371,11 @@ class MyPageUserInfoView(GenericAPIView):
         
         response_data = {
             'success': True,
+            'authenticated': True,
             'user_info': user_info
         }
         
-        response_serializer = MyPageUserInfoResponseSerializer(data=response_data)
-        response_serializer.is_valid(raise_exception=True)
-        
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class PasswordResetView(GenericAPIView):
