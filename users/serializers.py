@@ -140,6 +140,30 @@ class NicknameUpdateResponseSerializer(serializers.Serializer):
     nickname = serializers.CharField()
 
 
+class PasswordVerifyRequestSerializer(serializers.Serializer):
+    """현재 비밀번호 확인 요청 시리얼라이저"""
+    current_password = serializers.CharField(
+        write_only=True,
+        min_length=1,
+        help_text="확인할 현재 비밀번호"
+    )
+
+    def validate_current_password(self, value):
+        """현재 비밀번호가 비어있지 않은지 확인"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("현재 비밀번호를 입력해주세요.")
+        return value.strip()
+
+
+class PasswordVerifyResponseSerializer(serializers.Serializer):
+    """현재 비밀번호 확인 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    valid = serializers.BooleanField(
+        help_text="비밀번호 일치 여부"
+    )
+    message = serializers.CharField()
+
+
 class PasswordChangeRequestSerializer(serializers.Serializer):
     """비밀번호 변경 요청 시리얼라이저"""
     current_password = serializers.CharField(write_only=True, min_length=1)
