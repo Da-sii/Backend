@@ -7,8 +7,7 @@ from django.conf import settings
 from django.db import models
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
-from .utils import get_token_type_from_token
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
 from .models import User
 from .serializers import (
@@ -30,7 +29,9 @@ from .serializers import (
     EmailCheckResponseSerializer,
     EmailPasswordResetRequestSerializer,
     EmailPasswordResetResponseSerializer,
+    PhoneNumberFindAccountRequestSerializer,
     PhoneNumberFindAccountResponseSerializer,
+    AccountInfoSerializer,
     PhoneNumberAccountInfoRequestSerializer,
     PhoneNumberAccountInfoResponseSerializer,
     MyPageUserInfoResponseSerializer
@@ -833,22 +834,10 @@ class NicknameUpdateView(GenericAPIView):
         request.user.nickname = serializer.validated_data['nickname']
         request.user.save(update_fields=['nickname'])
 
-        # 기존 토큰에서 로그인 타입 추출
-        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-        if auth_header.startswith('Bearer '):
-            token = auth_header.split(' ')[1]
-            login_type = get_token_type_from_token(token) or 'email'
-        else:
-            login_type = 'email'
-        
-        # 새로운 액세스 토큰 발급 (닉네임이 포함된)
-        tokens = generate_jwt_tokens_with_metadata(request.user, login_type)
-
         response_data = {
             'success': True,
             'user_id': request.user.id,
-            'nickname': request.user.nickname,
-            'access_token': tokens['access']
+            'nickname': request.user.nickname
         }
         response_serializer = NicknameUpdateResponseSerializer(data=response_data)
         response_serializer.is_valid(raise_exception=True)
