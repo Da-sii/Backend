@@ -18,9 +18,7 @@ def generate_jwt_tokens_with_metadata(user, token_type):
     
     # JWT 토큰에 메타데이터 추가 (refresh와 access 토큰 모두에)
     refresh['tokenType'] = token_type
-    refresh['nickname'] = user.nickname
     refresh.access_token['tokenType'] = token_type
-    refresh.access_token['nickname'] = user.nickname
     
     access = str(refresh.access_token)
     refresh_token = str(refresh)
