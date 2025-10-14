@@ -143,10 +143,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     ranking = serializers.SerializerMethodField()
     reviewCount = serializers.SerializerMethodField()
     reviewAvg = serializers.SerializerMethodField()
+    isMyReview = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "reviewCount", "reviewAvg", "ranking", "images", "ingredientsCount", "ingredients")
+        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "ingredientsCount", "ingredients")
 
     def get_reviewCount(self, obj):
         return obj.reviews.count()
@@ -194,6 +195,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             results.append({"bigCategory": big_name, "smallCategory": small_name, "monthlyRank": rank})
 
         return results
+
+    def get_isMyReview(self, obj):
+        """로그인한 사용자가 해당 제품에 리뷰를 작성했는지 확인"""
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            return obj.reviews.filter(user=request.user).exists()
+        return False
 
 class ProductRankingSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
