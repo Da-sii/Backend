@@ -17,26 +17,35 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
         child=serializers.ImageField(), required=False, allow_empty=True
     )
-    # 문자열(JSON)로 받음
-    ingredients = serializers.CharField(required=False)
+    # 문자열(JSON) 또는 배열로 받음
+    ingredients = serializers.JSONField(required=False)
 
     class Meta:
         model = Product
         fields = ("name", "company", "price", "unit", "piece", "productType", "images", "ingredients")
 
-    def validate_ingredients(self, value: str) -> List[Dict[str, Any]]:
+    def validate_ingredients(self, value) -> List[Dict[str, Any]]:
         if not value:
             return []
 
-        try:
-            data = json.loads(value)  # 문자열 → JSON 변환
-        except json.JSONDecodeError:
-            raise serializers.ValidationError("ingredients는 JSON 형식이어야 합니다.")
+        # 이미 리스트인 경우 (JSON 요청)
+        if isinstance(value, list):
+            return value
+        
+        # 문자열인 경우 (form-data 요청)
+        if isinstance(value, str):
+            try:
+                data = json.loads(value)  # 문자열 → JSON 변환
+            except json.JSONDecodeError:
+                raise serializers.ValidationError("ingredients는 JSON 형식이어야 합니다.")
 
-        if not isinstance(data, list):
-            raise serializers.ValidationError("ingredients는 배열이어야 합니다.")
+            if not isinstance(data, list):
+                raise serializers.ValidationError("ingredients는 배열이어야 합니다.")
 
-        return data
+            return data
+        
+        raise serializers.ValidationError("ingredients는 배열 또는 JSON 문자열이어야 합니다.")
+
 
     @transaction.atomic
     def create(self, validated_data: Dict[str, Any]) -> Product:
