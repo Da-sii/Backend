@@ -197,7 +197,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         return results
 
     def get_isMyReview(self, obj):
-        """로그인한 사용자가 해당 제품에 리뷰를 작성했는지 확인"""
+        # 로그인한 사용자가 해당 제품에 리뷰를 작성했는지 확인
         request = self.context.get('request')
         if request and request.user and request.user.is_authenticated:
             return obj.reviews.filter(user=request.user).exists()
