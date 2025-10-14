@@ -53,7 +53,9 @@ class ProductDetailView(generics.RetrieveAPIView):
         product = self.get_object()
         record_view(product)
 
-        return self.retrieve(request, *args, **kwargs)
+        # serializer에 request 컨텍스트 전달
+        serializer = self.get_serializer(product, context={'request': request})
+        return Response(serializer.data)
 
 # 랭킹
 class ProductRankingView(generics.ListAPIView):
