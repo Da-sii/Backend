@@ -146,7 +146,8 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
             return "적정"
 
 class ProductDetailSerializer(serializers.ModelSerializer):
-    images = serializers.SerializerMethodField()
+    images = ProductImageSerializer(many=True, read_only=True)
+    reviewImages = serializers.SerializerMethodField()
     ingredients = ProductIngredientDetailSerializer(many=True, read_only=True)
     ingredientsCount = serializers.SerializerMethodField()
     ranking = serializers.SerializerMethodField()
@@ -156,12 +157,15 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "ingredientsCount", "ingredients")
+        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients")
 
-    def get_images(self, obj):
-        # 해당 product_id를 외래키로 가진 이미지 최신순 6개 반환
-        images = ProductImage.objects.filter(product=obj).order_by('-id')[:6]
-        return ProductImageSerializer(images, many=True).data
+    def get_reviewImages(self, obj):
+        # 해당 제품의 리뷰 이미지를 최신순 6개 반환
+        from review.models import ReviewImage
+        review_images = ReviewImage.objects.filter(
+            review__product=obj
+        ).order_by('-id')[:6]
+        return [{'url': img.url} for img in review_images]
 
     def get_reviewCount(self, obj):
         return obj.reviews.count()
