@@ -1484,11 +1484,11 @@ class UserReviewCheckView(GenericAPIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class RandomProductsView(GenericAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     
     @extend_schema(
         summary="리뷰 작성 완료",
-        description="리뷰 작성 완료 후 추천할 랜덤 제품 3개를 조회합니다. 제품 사진, 회사명, 제품명을 포함합니다.",
+        description="리뷰 작성 완료 후 추천할 랜덤 제품 3개를 조회합니다. 현재 사용자가 리뷰를 작성하지 않은 제품만 반환합니다.",
         responses={
             200: OpenApiResponse(
                 description='랜덤 제품 목록 조회 성공',
@@ -1526,18 +1526,25 @@ class RandomProductsView(GenericAPIView):
     )
     def get(self, request):
         """
-        랜덤 제품 3개를 조회합니다.
+        현재 로그인한 사용자가 리뷰를 작성하지 않은 제품 중 랜덤 3개를 조회합니다.
         """
-        # 제품 이미지와 함께 랜덤 제품 3개 조회
         from products.models import Product
+        from review.models import Review
         import random
         
-        # 모든 제품 중에서 랜덤하게 3개 선택 (이미지 유무 관계없이)
-        all_products = Product.objects.all().prefetch_related('images')
+        # 현재 사용자가 리뷰를 작성한 제품 ID 목록
+        reviewed_product_ids = Review.objects.filter(
+            user=request.user
+        ).values_list('product_id', flat=True)
+        
+        # 사용자가 리뷰를 작성하지 않은 제품만 필터링
+        unreviewed_products = Product.objects.exclude(
+            id__in=reviewed_product_ids
+        ).prefetch_related('images')
         
         # 제품이 없는 경우 처리
-        total_products = all_products.count()
-        print(f"DEBUG: 총 제품 수: {total_products}")
+        total_products = unreviewed_products.count()
+        print(f"DEBUG: 리뷰 작성 안한 제품 수: {total_products}")
         
         if total_products == 0:
             response_data = {
@@ -1549,7 +1556,7 @@ class RandomProductsView(GenericAPIView):
         # 랜덤하게 3개 선택 (제품 수가 3개 미만이면 전체 선택)
         sample_size = min(3, total_products)
         print(f"DEBUG: 선택할 제품 수: {sample_size}")
-        random_products = random.sample(list(all_products), sample_size)
+        random_products = random.sample(list(unreviewed_products), sample_size)
         
         # 응답 데이터 구성
         response_data = {
