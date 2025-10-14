@@ -75,6 +75,14 @@ class PostView(GenericAPIView):
                             'rate': ['별점은 1~5 사이여야 합니다.'],
                             'review': ['리뷰는 최소 20자 이상 최대 1000자 이하로 작성해주세요.']
                         }
+                    ),
+                    OpenApiExample(
+                        '중복 리뷰 작성 시도',
+                        value={
+                            'error': '이미 해당 제품에 리뷰를 작성하셨습니다.',
+                            'detail': '한 제품당 하나의 리뷰만 작성할 수 있습니다.',
+                            'existing_review_id': 123
+                        }
                     )
                 ]
             ),
@@ -93,6 +101,22 @@ class PostView(GenericAPIView):
         tags=['리뷰']
     )
     def post(self, request, product_id):
+        # 중복 리뷰 체크
+        existing_review = Review.objects.filter(
+            user=request.user,
+            product_id=product_id
+        ).first()
+        
+        if existing_review:
+            return Response(
+                {
+                    'error': '이미 해당 제품에 리뷰를 작성하셨습니다.',
+                    'detail': '한 제품당 하나의 리뷰만 작성할 수 있습니다.',
+                    'existing_review_id': existing_review.id
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
