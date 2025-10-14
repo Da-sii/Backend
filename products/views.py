@@ -1,6 +1,6 @@
 from rest_framework import generics, parsers
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
@@ -18,7 +18,7 @@ from products.utils import record_view
 class ProductCreateView(generics.CreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductCreateSerializer
-    permission_classes = [IsAuthenticated] # 접근 권한 확인
+    permission_classes = [AllowAny]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
 
     def create(self, request, *args, **kwargs):
