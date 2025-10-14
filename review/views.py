@@ -1481,3 +1481,102 @@ class UserReviewCheckView(GenericAPIView):
         }
         
         return Response(response_data, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class RandomProductsView(GenericAPIView):
+    permission_classes = [AllowAny]
+    
+    @extend_schema(
+        summary="리뷰 작성 완료",
+        description="리뷰 작성 완료 후 추천할 랜덤 제품 3개를 조회합니다. 제품 사진, 회사명, 제품명을 포함합니다.",
+        responses={
+            200: OpenApiResponse(
+                description='랜덤 제품 목록 조회 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "products": [
+                                {
+                                    "id": 15,
+                                    "name": "제품명제품명제품명제품명 제품명 제품...",
+                                    "company": "희세명",
+                                    "image": "https://s3.amazonaws.com/bucket/product15.jpg"
+                                },
+                                {
+                                    "id": 42,
+                                    "name": "포도포도맛 쉐이크",
+                                    "company": "(주)포도포도",
+                                    "image": "https://s3.amazonaws.com/bucket/product42.jpg"
+                                },
+                                {
+                                    "id": 73,
+                                    "name": "[체지방 감소 인기대란] 포도컷",
+                                    "company": "오늘부터다시",
+                                    "image": "https://s3.amazonaws.com/bucket/product73.jpg"
+                                }
+                            ]
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰']
+    )
+    def get(self, request):
+        """
+        랜덤 제품 3개를 조회합니다.
+        """
+        # 제품 이미지와 함께 랜덤 제품 3개 조회
+        from products.models import Product
+        import random
+        
+        # 모든 제품 중에서 랜덤하게 3개 선택 (이미지 유무 관계없이)
+        all_products = Product.objects.all().prefetch_related('images')
+        
+        # 제품이 없는 경우 처리
+        total_products = all_products.count()
+        print(f"DEBUG: 총 제품 수: {total_products}")
+        
+        if total_products == 0:
+            response_data = {
+                'success': True,
+                'products': []
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        # 랜덤하게 3개 선택 (제품 수가 3개 미만이면 전체 선택)
+        sample_size = min(3, total_products)
+        print(f"DEBUG: 선택할 제품 수: {sample_size}")
+        random_products = random.sample(list(all_products), sample_size)
+        
+        # 응답 데이터 구성
+        response_data = {
+            'success': True,
+            'products': []
+        }
+        
+        for product in random_products:
+            first_image = product.images.first()
+            product_data = {
+                'id': product.id,
+                'name': product.name,
+                'company': product.company,
+                'image': first_image.url if first_image else ''
+            }
+            response_data['products'].append(product_data)
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ReviewCompleteView(GenericAPIView):
+    permission_classes = [AllowAny]
+    
+    @extend_schema(
+        summary="리뷰 작성 완료",
+        description="리뷰 작성 완료 확인",
+    )
+    def get(self, request):
+        return Response({'success': True}, status=status.HTTP_200_OK)
