@@ -44,9 +44,9 @@ DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 SECRET_KEY = "django-insecure-qh4(yxhfzw-@f+9^5-0m&izs@o9g#*#7&*4!-m#dhu11j*xr2k"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["dasii.kr", "www.dasii.kr", "127.0.0.1", "localhost"]
 
 
 # Application definition
@@ -221,6 +221,10 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://dasii.kr",
+    "https://dasii.kr",
+    "http://www.dasii.kr",
+    "https://www.dasii.kr",
 ]
 
 # API 요청에서 CSRF 토큰 비활성화
