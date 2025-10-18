@@ -11,4 +11,7 @@ urlpatterns = [
     
     # 인증 토큰 검증 API
     path('token/verify/', verification_token_views.VerificationTokenView.as_view(), name='verify-token'),
+    
+    # 계정 삭제 정보 HTML 페이지 (구글 배포 규정)
+    path('delete-info/', verification_views.DeleteInfoView.as_view(), name='delete-info'),
 ]

@@ -3,6 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema
+from django.http import HttpResponse
+from django.template.loader import get_template
+from django.template import Context
+import os
 from .serializers import PhoneSendRequestSerializer, PhoneVerifyRequestSerializer
 import random
 import threading
@@ -285,4 +289,38 @@ class VerifyCodeView(APIView):
             return Response(
                 {'error': '인증번호가 일치하지 않습니다.'}, 
                 status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class DeleteInfoView(APIView):
+    """
+    계정 삭제 정보 HTML 페이지를 제공하는 뷰
+    구글 배포 규정에 따라 /auth/delete-info/ 경로에서 HTML을 서빙
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        """
+        delete_info.html 파일을 읽어서 HTML 응답으로 반환
+        """
+        try:
+            # auth 앱 디렉토리의 절대 경로
+            auth_dir = os.path.dirname(os.path.abspath(__file__))
+            html_file_path = os.path.join(auth_dir, 'delete_info.html')
+            
+            # HTML 파일 읽기
+            with open(html_file_path, 'r', encoding='utf-8') as file:
+                html_content = file.read()
+            
+            return HttpResponse(html_content, content_type='text/html; charset=utf-8')
+        
+        except FileNotFoundError:
+            return HttpResponse(
+                '<h1>페이지를 찾을 수 없습니다.</h1>', 
+                status=404
+            )
+        except Exception as e:
+            return HttpResponse(
+                f'<h1>서버 오류가 발생했습니다: {str(e)}</h1>', 
+                status=500
             )
