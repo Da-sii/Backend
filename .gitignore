@@ -174,3 +174,8 @@ yarn-error.log*
 *.tmp
 *.temp
 .env.*
+
+# Apple private keys (보안상 중요)
+keys/
+*.p8
+AuthKey_*.p8
