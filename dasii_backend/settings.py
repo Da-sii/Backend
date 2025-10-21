@@ -36,6 +36,11 @@ SMS_SENDER_NUMBER = os.getenv("SMS_SENDER_NUMBER", "")
 SMS_SERVICE_NAME = os.getenv("SMS_SERVICE_NAME", "다시")
 DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 
+# Apple Sign-In environment variables
+APPLE_CLIENT_ID = os.getenv("APPLE_CLIENT_ID", "com.podostore.dasii")
+APPLE_TEAM_ID = os.getenv("APPLE_TEAM_ID", "AGQJU3FNWG")
+APPLE_KEY_ID = os.getenv("APPLE_KEY_ID", "J3MCT3RYAZ")
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
