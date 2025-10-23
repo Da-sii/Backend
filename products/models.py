@@ -29,7 +29,7 @@ class Product(models.Model):
     company = models.TextField(verbose_name="회사 이름")
     price = models.IntegerField(verbose_name="가격")
     unit = models.TextField(verbose_name="단위")
-    piece = models.IntegerField(verbose_name="개수")
+    piece = models.TextField(verbose_name="개수")
     productType = models.TextField(verbose_name="식품의 유형")
     viewCount = models.IntegerField(verbose_name="조회수", default=0)
 
@@ -96,7 +96,7 @@ class Ingredient(models.Model):
     minRecommended = models.CharField(max_length=50, verbose_name="최소권장량")
     maxRecommended = models.CharField(max_length=50, verbose_name="최대권장량")
     effect = models.TextField(verbose_name="효과")
-    sideEffect = models.TextField(verbose_name="부작용")
+    sideEffect = models.TextField(verbose_name="부작용", null=True, blank=True)
 
     class Meta:
         db_table = "ingredients"
