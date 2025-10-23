@@ -1,6 +1,8 @@
 import jwt
 import requests
 from django.conf import settings
+from django.core.mail import send_mail
+from django.utils.html import strip_tags
 import json
 import logging
 
@@ -80,4 +82,108 @@ def verify_identity_token_debug(identity_token):
         options={"verify_signature": False, "verify_exp": False},
         algorithms=["HS256", "RS256"],
     )
+
+
+def send_advertisement_inquiry_email(inquiry_data):
+    """광고/제휴 문의 이메일 전송"""
+    try:
+        from datetime import datetime
+        
+        # 문의 유형 표시명 매핑
+        inquiry_type_display = {
+            'domestic': '국내 광고 문의',
+            'global': '글로벌 광고 문의',
+            'other': '기타 문의 (제휴 등)',
+        }
+        
+        # 출시 여부 표시명 매핑
+        launch_status_display = {
+            'launched': '출시 완료',
+            'within_1_month': '미출시 (1개월 내 출시 예정)',
+            'within_3_months': '미출시 (3개월 내 출시 예정)',
+            'over_3_months': '미출시 (3개월 이상 소요 예정)',
+        }
+        
+        # 이메일 제목
+        subject = f"[다시] 광고/제휴 문의 - {inquiry_data['brand_name']} ({inquiry_type_display[inquiry_data['inquiry_type']]})"
+        
+        # 현재 시간
+        current_time = datetime.now().strftime('%Y년 %m월 %d일 %H:%M')
+        
+        # 이메일 내용 (HTML)
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                    광고/제휴 문의가 접수되었습니다
+                </h2>
+                
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #495057; margin-top: 0;">문의 정보</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold; width: 120px;">문의 유형:</td>
+                            <td style="padding: 8px 0;">{inquiry_type_display[inquiry_data['inquiry_type']]}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">브랜드명:</td>
+                            <td style="padding: 8px 0;">{inquiry_data['brand_name']}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">출시 여부:</td>
+                            <td style="padding: 8px 0;">{launch_status_display[inquiry_data['launch_status']]}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">성함:</td>
+                            <td style="padding: 8px 0;">{inquiry_data['name']}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">연락처:</td>
+                            <td style="padding: 8px 0;">{inquiry_data['contact_number']}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">이메일:</td>
+                            <td style="padding: 8px 0;">{inquiry_data['email']}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">접수일시:</td>
+                            <td style="padding: 8px 0;">{current_time}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">문의 내용:</td>
+                            <td style="padding: 8px 0;">{inquiry_data['inquiry_content']}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # 텍스트 버전 (HTML 태그 제거)
+        text_content = strip_tags(html_content)
+        
+        # 발신자 이메일 (설정에서 가져오거나 기본값 사용)
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@dasii.kr')
+        
+        # 수신자 이메일 (관리자 이메일)
+        recipient_list = [getattr(settings, 'ADMIN_EMAIL', 'admin@dasii.kr')]
+        
+        # 이메일 전송
+        send_mail(
+            subject=subject,
+            message=text_content,
+            from_email=from_email,
+            recipient_list=recipient_list,
+            html_message=html_content,
+            fail_silently=False,
+        )
+        
+        logger.info(f"광고/제휴 문의 이메일 전송 완료 - 브랜드: {inquiry_data['brand_name']}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"광고/제휴 문의 이메일 전송 실패 - 브랜드: {inquiry_data.get('brand_name', 'Unknown')}, 오류: {str(e)}")
+        return False
 
