@@ -8,3 +8,6 @@ python-decouple==3.8
 sqlparse==0.5.3
 tzdata==2025.2
 boto3
+PyJWT>=2.0.0
+cryptography>=3.0.0
+requests>=2.25.0
