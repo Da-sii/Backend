@@ -22,14 +22,33 @@ def get_apple_public_key(kid):
         if not key:
             raise ValueError(f"Apple 공개키 조회 실패: kid {kid}를 찾을 수 없습니다")
         
-        # JWK를 RSA 공개키로 변환 (PyJWT 2.0+ 방식)
+        # JWK를 RSA 공개키로 변환
         try:
+            # PyJWT 2.0+ 방식
             from jwt.algorithms import RSAAlgorithm
             return RSAAlgorithm.from_jwk(json.dumps(key))
-        except ImportError:
-            # PyJWT 2.0+에서는 다른 방식 사용
-            import jwt.algorithms as algorithms
-            return algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
+        except (ImportError, AttributeError):
+            try:
+                # PyJWT 1.x 방식
+                import jwt.algorithms as algorithms
+                return algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
+            except (ImportError, AttributeError):
+                # 최신 PyJWT 방식
+                from cryptography.hazmat.primitives import serialization
+                from cryptography.hazmat.primitives.asymmetric import rsa
+                import base64
+                
+                # JWK에서 RSA 공개키 구성 요소 추출
+                n = base64.urlsafe_b64decode(key['n'] + '==')
+                e = base64.urlsafe_b64decode(key['e'] + '==')
+                
+                # RSA 공개키 생성
+                public_key = rsa.RSAPublicNumbers(
+                    int.from_bytes(e, 'big'),
+                    int.from_bytes(n, 'big')
+                ).public_key()
+                
+                return public_key
     except Exception as e:
         raise ValueError(f"Apple 공개키 조회 중 오류 발생: {str(e)}")
 
