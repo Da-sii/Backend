@@ -2,7 +2,6 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
 import logging
 from drf_spectacular.utils import extend_schema, OpenApiExample
@@ -10,8 +9,8 @@ from drf_spectacular.openapi import OpenApiResponse
 
 from users.models import User
 from users.utils import generate_jwt_tokens_with_metadata
-from socials.serializers import AppleSigninSerializer
-from socials.utils import verify_identity_token
+from socials.serializers import AppleSigninSerializer, AdvertisementInquirySerializer
+from socials.utils import verify_identity_token, send_advertisement_inquiry_email
 
 logger = logging.getLogger(__name__)
 
@@ -153,3 +152,89 @@ class AppleSigninView(GenericAPIView):
         
         logger.info(f"Apple 로그인 완료 - 사용자: {user.email}, 새 사용자: {created}")
         return response
+
+
+class AdvertisementInquiryView(GenericAPIView):
+    """광고/제휴 문의 API"""
+    serializer_class = AdvertisementInquirySerializer
+    permission_classes = [AllowAny]  # 인증 없이 접근 가능
+    
+    @extend_schema(
+        summary="광고/제휴 문의 접수",
+        description="광고 및 제휴 문의를 접수하고 관리자에게 이메일을 전송합니다.",
+        tags=["문의"],
+        request=AdvertisementInquirySerializer,
+        examples=[
+            OpenApiExample(
+                '광고 문의 접수',
+                value={
+                    "inquiry_type": "domestic",
+                    "brand_name": "샘플 브랜드",
+                    "launch_status": "launched",
+                    "inquiry_content": "다시 앱에 광고를 진행하고 싶습니다. 제품 소개 및 마케팅 전략에 대해 상담하고 싶습니다.",
+                    "name": "홍길동",
+                    "contact_number": "010-1234-5678",
+                    "email": "hong@example.com"
+                },
+                request_only=True
+            )
+        ],
+        responses={
+            201: OpenApiResponse(
+                description='문의 접수 성공',
+                examples=[
+                    OpenApiExample(
+                        '문의 접수 성공',
+                        value={
+                            "success": True,
+                            "message": "문의가 성공적으로 접수되었습니다. 담당자가 확인 후 1영업일 내에 연락드릴 예정입니다.",
+                            "inquiry_id": 1
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(
+                description='입력 데이터 오류',
+                examples=[
+                    OpenApiExample(
+                        '유효성 검사 실패',
+                        value={
+                            "success": False,
+                            "message": "입력 데이터를 확인해주세요.",
+                            "errors": {
+                                "inquiry_content": ["문의 내용은 최소 20자 이상 입력해주세요."]
+                            }
+                        }
+                    )
+                ]
+            )
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            # 유효한 데이터를 딕셔너리로 가져오기
+            inquiry_data = serializer.validated_data
+            
+            # 이메일 전송
+            email_sent = send_advertisement_inquiry_email(inquiry_data)
+            
+            if email_sent:
+                logger.info(f"광고/제휴 문의 접수 완료 - 브랜드: {inquiry_data['brand_name']}")
+                return Response({
+                    "success": True,
+                    "message": "문의가 성공적으로 접수되었습니다. 담당자가 확인 후 1영업일 내에 연락드릴 예정입니다."
+                }, status=status.HTTP_200_OK)
+            else:
+                logger.warning(f"광고/제휴 문의 이메일 전송 실패 - 브랜드: {inquiry_data['brand_name']}")
+                return Response({
+                    "success": False,
+                    "message": "이메일 전송에 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({
+                "success": False,
+                "message": "입력 데이터를 확인해주세요.",
+                "errors": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
