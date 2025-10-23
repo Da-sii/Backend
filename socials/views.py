@@ -162,7 +162,7 @@ class AdvertisementInquiryView(GenericAPIView):
     @extend_schema(
         summary="광고/제휴 문의 접수",
         description="광고 및 제휴 문의를 접수하고 관리자에게 이메일을 전송합니다.",
-        tags=["문의"],
+        tags=["광고/제휴 문의"],
         request=AdvertisementInquirySerializer,
         examples=[
             OpenApiExample(
@@ -176,7 +176,19 @@ class AdvertisementInquiryView(GenericAPIView):
                     "contact_number": "010-1234-5678",
                     "email": "hong@example.com"
                 },
-                request_only=True
+                request_only=True,
+                description=(
+                    "inquiry_type:\n"
+                    "  - domestic (국내 광고 문의)\n"
+                    "  - global (글로벌 광고 문의)\n"
+                    "  - other (기타 문의)\n"
+                    "\n"
+                    "launch_status:\n"
+                    "  - launched (출시 완료)\n"
+                    "  - within_1_month (미출시 1개월 내)\n"
+                    "  - within_3_months (미출시 3개월 내)\n"
+                    "  - over_3_months (미출시 3개월 이상)"
+                )
             )
         ],
         responses={
