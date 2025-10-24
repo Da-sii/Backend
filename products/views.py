@@ -160,7 +160,7 @@ class ProductListView(generics.ListAPIView):
                 name="bigCategory",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="대분류 카테고리 이름(예: 다이어트 약, 다이어트 식품 등). 기본: 다이어트 약",
+                description="대분류 카테고리 이름(예: 다이어트 약, 다이어트 보조제, 다이어트 식품 등). 미제공시 모든 제품 조회",
                 required=False,
             ),
             OpenApiParameter(
@@ -185,18 +185,20 @@ class ProductListView(generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
     def get_queryset(self):
-        bigCategory = self.request.query_params.get("bigCategory", "다이어트 약")
+        bigCategory = self.request.query_params.get("bigCategory")
         smallCategory = self.request.query_params.get("smallCategory")
         sort = self.request.query_params.get("sort", "monthly_rank")
         today = timezone.now().date()
         start_date = today - timedelta(days=30)
 
         qs = Product.objects.all()
+        
+        # bigCategory가 제공된 경우에만 필터링
         if bigCategory:
-            qs = qs.filter(category_products__category__bigCategory__category=bigCategory)
+            qs = qs.filter(category_products__category__bigCategory__category=bigCategory).distinct()
 
         if smallCategory and smallCategory != "전체":
-            qs = qs.filter(category_products__category__category=smallCategory)
+            qs = qs.filter(category_products__category__category=smallCategory).distinct()
 
         if sort == "price_asc":
             return qs.order_by("price", "id")
@@ -291,7 +293,7 @@ class ProductSearchView(generics.ListAPIView):
                 Q(name__icontains=query) |
                 Q(company__icontains=query) |
                 Q(id__in=Subquery(ingredient_product_ids))
-            )
+            ).distinct()
 
         if sort == "price_asc":
             return qs.order_by("price", "id")
