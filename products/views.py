@@ -3,16 +3,17 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.exceptions import NotFound, ValidationError
 from django.utils import timezone
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Sum, Count, Q, Subquery
 from django.db.models.functions import Coalesce
-from products.models import Product, BigCategory, ProductIngredient
+from products.models import Product, BigCategory, ProductIngredient, ProductImage
 from products.serializers import ProductCreateSerializer, ProductReadSerializer, ProductDetailSerializer, ProductRankingSerializer
 from products.serializers import ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer
-from products.utils import record_view
+from products.utils import record_view, upload_images_to_s3
 
 # 제품 등록
 class ProductCreateView(generics.CreateAPIView):
@@ -370,3 +371,30 @@ class MainView(APIView):
             "topSmallCategories": categories_payload,
             "topProductsToday": serializer.data,
         })
+
+# 제품 이미지 등록
+class UploadProductImageView(APIView):
+    permission_classes = [AllowAny]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+
+    @extend_schema(
+        summary="제품 이미지 등록",
+        tags=["제품"]
+    )
+    def post(self, request, id):
+        try:
+            product = Product.objects.get(id=id)
+        except Product.DoesNotExist:
+            raise NotFound("제품을 찾을 수 없습니다.")
+        
+        # 여러 이미지 파일 받기
+        images = request.FILES.getlist('images')
+        
+        if not images:
+            raise ValidationError("이미지 파일이 필요합니다.")
+        
+        # S3 업로드 및 ProductImage 저장
+        uploaded_images = upload_images_to_s3(product, images)
+        ProductImage.objects.bulk_create(uploaded_images)
+        
+        return Response({"success": True, "message": f"{len(uploaded_images)}개의 이미지가 등록되었습니다."}, status=201)
