@@ -1,4 +1,4 @@
-import json, boto3, uuid
+import json
 from typing import List, Dict, Any
 from datetime import timedelta
 from django.utils import timezone
@@ -8,6 +8,7 @@ from rest_framework import serializers
 from django.conf import settings
 
 from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory
+from products.utils import upload_images_to_s3
 class ProductIngredientInputSerializer(serializers.Serializer):
     ingredientId = serializers.IntegerField()
     amount = serializers.CharField()
@@ -55,24 +56,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
         # --- S3 업로드 ---
         if images:
-            s3 = boto3.client(
-                "s3",
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                region_name=settings.AWS_S3_REGION_NAME,
-            )
-            uploaded_images = []
-            for img in images:
-                filename = f"products/{uuid.uuid4()}_{img.name}"
-                s3.upload_fileobj(
-                    img,
-                    settings.AWS_STORAGE_BUCKET_NAME,
-                    filename,
-                    ExtraArgs={"ContentType": img.content_type},
-                )
-                url = f"{settings.CLOUDFRONT_DOMAIN}/{filename}"
-                uploaded_images.append(ProductImage(product=product, url=url))
-
+            uploaded_images = upload_images_to_s3(product, images)
             ProductImage.objects.bulk_create(uploaded_images)
 
         # --- Ingredients 저장 ---
