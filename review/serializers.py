@@ -186,3 +186,11 @@ class UserReviewCheckResponseSerializer(serializers.Serializer):
     user_id = serializers.IntegerField(allow_null=True, required=False)
     has_review = serializers.BooleanField()
     review_id = serializers.IntegerField(required=False, allow_null=True)
+
+class BlockUserReviewsResponseSerializer(serializers.Serializer):
+    """사용자 리뷰 차단 응답 시리얼라이저"""
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+    user_id = serializers.IntegerField()
+    blocked_review_count = serializers.IntegerField()
+    blocked_review_ids = serializers.ListField(child=serializers.IntegerField())
