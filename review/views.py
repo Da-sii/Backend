@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, OpenApiResponse
 from drf_spectacular.types import OpenApiTypes
 from products.models import ProductImage
@@ -23,9 +24,10 @@ from .serializers import (
     ReviewReportRequestSerializer,
     ReviewReportResponseSerializer,
     ReviewDetailResponseSerializer,
-    UserReviewCheckResponseSerializer
+    UserReviewCheckResponseSerializer,
+    BlockUserReviewsResponseSerializer
 )
-from .models import Review, ReviewImage, ReviewReport, ReviewReportReason
+from .models import Review, ReviewImage, ReviewReport, ReviewReportReason, BlockedReview, BlockedUser
 from django.shortcuts import get_object_or_404
 from .utils import S3Uploader
 from django.db.models import Prefetch
@@ -249,7 +251,7 @@ class ReviewListView(GenericAPIView):
     
     @extend_schema(
         summary="상품 리뷰 페이지네이션 조회",
-        description="특정 상품의 리뷰를 페이지네이션으로 조회합니다. 특정 리뷰 ID부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.",
+        description="특정 상품의 리뷰를 페이지네이션으로 조회합니다. 특정 리뷰 ID부터 20개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다. 로그인한 사용자는 차단한 리뷰가 제외됩니다.",
         parameters=[
             OpenApiParameter(
                 name='product_id',
@@ -323,7 +325,8 @@ class ReviewListView(GenericAPIView):
     def get(self, request, product_id, review_id):
         """
         상품의 리뷰를 페이지네이션으로 조회합니다.
-        특정 review_id부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
+        특정 review_id부터 20개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
+        로그인한 사용자는 차단한 리뷰가 제외됩니다.
         """
         # 상품 존재 확인 및 이미지 prefetch
         from products.models import Product
@@ -346,10 +349,20 @@ class ReviewListView(GenericAPIView):
             Prefetch('images', queryset=ReviewImage.objects.all())
         ).order_by(*order_by)
         
+        # JWT 인증 상태 확인 및 차단된 리뷰 필터링
+        if request.user.is_authenticated:
+            # 로그인한 사용자의 경우, 차단된 리뷰 제외
+            blocked_review_ids = BlockedReview.objects.filter(
+                user_id=request.user.id
+            ).values_list('blocked_review_id', flat=True)
+            
+            if blocked_review_ids:
+                reviews_query = reviews_query.exclude(id__in=blocked_review_ids)
+        
         # review_id가 0이면 처음 요청으로 판단
         if review_id == 0:
-            # 처음부터 21개 조회
-            reviews = list(reviews_query[:21])
+            # 처음부터 20개 조회
+            reviews = list(reviews_query[:20])
         else:
             # 정렬된 쿼리셋을 리스트로 변환
             all_reviews = list(reviews_query)
@@ -362,8 +375,8 @@ class ReviewListView(GenericAPIView):
                     break
             
             if target_index is not None:
-                # 해당 review_id 다음부터 21개 조회 (해당 ID 포함하지 않음)
-                reviews = all_reviews[target_index + 1:target_index + 22]
+                # 해당 review_id 다음부터 20개 조회 (해당 ID 포함하지 않음)
+                reviews = all_reviews[target_index + 1:target_index + 21]
             else:
                 # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
                 closest_index = None
@@ -781,10 +794,10 @@ class ProductReviewImagesView(GenericAPIView):
         # 3. 페이지네이션 로직
         if image_id == 0:
             # 첫 페이지: 최신순으로 21개
-            images = list(images_query[:21])
+            images = list(images_query[:20])
         else:
             # 해당 ID 다음으로 21개
-            images = list(images_query.filter(id__lt=image_id)[:21])
+            images = list(images_query.filter(id__lt=image_id)[:20])
         
         # 4. 이미지 데이터 구성 (ID와 URL 포함)
         image_data = [{'id': image.id, 'url': image.url} for image in images]
@@ -1206,8 +1219,8 @@ class UserReviewsView(GenericAPIView):
         
         # review_id가 0이면 처음 요청으로 판단
         if review_id == 0:
-            # 처음부터 21개 조회
-            reviews = list(reviews_query[:21])
+            # 처음부터 20개 조회
+            reviews = list(reviews_query[:20])
         else:
             # 정렬된 쿼리셋을 리스트로 변환
             all_reviews = list(reviews_query)
@@ -1220,8 +1233,8 @@ class UserReviewsView(GenericAPIView):
                     break
             
             if target_index is not None:
-                # 해당 review_id 다음부터 21개 조회 (해당 ID 포함하지 않음)
-                reviews = all_reviews[target_index + 1:target_index + 22]
+                # 해당 review_id 다음부터 20개 조회 (해당 ID 포함하지 않음)
+                reviews = all_reviews[target_index + 1:target_index + 21]
             else:
                 # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
                 closest_index = None
@@ -1611,3 +1624,156 @@ class ReviewCompleteView(GenericAPIView):
     )
     def get(self, request):
         return Response({'success': True}, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class BlockUserReviewsView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BlockUserReviewsResponseSerializer
+
+    @extend_schema(
+        summary="사용자 리뷰 차단",
+        description="""
+        특정 리뷰 ID를 받아서 해당 리뷰를 작성한 사용자의 모든 리뷰를 차단합니다.
+        
+        **동작 과정:**
+        1. JWT 토큰에서 사용자 ID를 파싱
+        2. 해당 리뷰를 작성한 사용자의 모든 리뷰 ID를 조회
+        3. 차단한 사용자 ID와 차단된 리뷰 ID를 blocked_reviews 테이블에 저장
+        4. 중복 차단 방지를 위해 이미 차단된 리뷰는 제외
+        
+        **사용 사례:**
+        - 부적절한 리뷰를 작성한 사용자의 모든 리뷰를 차단
+        - 스팸 리뷰 작성자를 차단
+        """,
+        parameters=[
+            OpenApiParameter(
+                name='review_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='차단할 리뷰 ID'
+            )
+        ],
+        responses={
+            201: OpenApiResponse(
+                response=BlockUserReviewsResponseSerializer,
+                description='사용자 리뷰 차단 성공',
+                examples=[
+                    OpenApiExample(
+                        '성공 예시',
+                        value={
+                            "success": True,
+                            "message": "사용자의 모든 리뷰가 차단되었습니다.",
+                            "user_id": 1,
+                            "blocked_review_count": 3,
+                            "blocked_review_ids": [10, 15, 20]
+                        }
+                    )
+                ]
+            ),
+            401: OpenApiResponse(
+                description='인증되지 않은 사용자',
+                examples=[
+                    OpenApiExample(
+                        '인증 실패',
+                        value={
+                            "detail": "Authentication credentials were not provided."
+                        }
+                    )
+                ]
+            ),
+            404: OpenApiResponse(
+                description='리뷰를 찾을 수 없음',
+                examples=[
+                    OpenApiExample(
+                        '리뷰 없음',
+                        value={
+                            "detail": "Not found."
+                        }
+                    )
+                ]
+            )
+        },
+        tags=['리뷰 차단']
+    )
+    def post(self, request, review_id):
+        """
+        특정 리뷰 ID를 받아서 해당 리뷰를 작성한 사용자의 모든 리뷰를 차단합니다.
+        JWT에서 파싱한 userId와 차단된 reviewId를 저장합니다.
+        """
+        try:
+            # 리뷰 존재 확인
+            try:
+                review = Review.objects.get(id=review_id)
+            except Review.DoesNotExist:
+                return Response({
+                    'error': '존재하지 않는 리뷰입니다.',
+                    'review_id': review_id
+                }, status=status.HTTP_404_NOT_FOUND)
+        
+            # JWT에서 파싱한 사용자 ID (요청한 사용자)
+            user_id = request.user.id
+            
+            # 해당 리뷰를 작성한 사용자가 작성한 모든 리뷰 ID 가져오기
+            review_author_id = review.user.id
+            user_reviews = Review.objects.filter(user_id=review_author_id)
+            blocked_review_ids = list(user_reviews.values_list('id', flat=True))
+            
+            # 이미 차단된 리뷰가 있는지 확인
+            existing_blocked = BlockedReview.objects.filter(
+                user_id=user_id,
+                blocked_review_id__in=blocked_review_ids
+            )
+            
+            # 이미 차단된 리뷰 ID들
+            already_blocked_ids = list(existing_blocked.values_list('blocked_review_id', flat=True))
+            
+            # 새로 차단할 리뷰 ID들 (이미 차단된 것 제외)
+            new_blocked_ids = [rid for rid in blocked_review_ids if rid not in already_blocked_ids]
+            
+            # 새로 차단할 리뷰들을 BlockedReview 테이블에 저장
+            blocked_reviews_to_create = []
+            for review_id_to_block in new_blocked_ids:
+                review_to_block = Review.objects.get(id=review_id_to_block)
+                blocked_reviews_to_create.append(
+                    BlockedReview(
+                        user_id=user_id,
+                        blocked_review=review_to_block
+                    )
+                )
+            
+            # 대량 삽입으로 성능 최적화
+            if blocked_reviews_to_create:
+                BlockedReview.objects.bulk_create(blocked_reviews_to_create)
+            
+            # BlockedUser 테이블에도 저장 (차단한 사용자 - 차단당한 사용자 관계)
+            blocked_user_id = review.user.id  # 리뷰 작성자 ID
+            blocked_user, created = BlockedUser.objects.get_or_create(
+                blocker_user_id=user_id,
+                blocked_user_id=blocked_user_id,
+                defaults={'created_at': timezone.now()}
+            )
+            
+            # 응답 데이터 구성
+            response_data = {
+                'success': True,
+                'message': '사용자의 모든 리뷰가 차단되었습니다.',
+                'user_id': user_id,
+                'blocked_review_count': len(blocked_review_ids),
+                'blocked_review_ids': blocked_review_ids
+            }
+            
+            # Serializer로 유효성 검사
+            response_serializer = BlockUserReviewsResponseSerializer(data=response_data)
+            response_serializer.is_valid(raise_exception=True)
+            
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            import traceback
+            print(f"BlockUserReviewsView 오류: {str(e)}")
+            print(f"상세 오류: {traceback.format_exc()}")
+            return Response({
+                'error': '서버 내부 오류가 발생했습니다.',
+                'detail': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
