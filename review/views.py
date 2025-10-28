@@ -250,7 +250,7 @@ class ReviewListView(GenericAPIView):
     
     @extend_schema(
         summary="상품 리뷰 페이지네이션 조회",
-        description="특정 상품의 리뷰를 페이지네이션으로 조회합니다. 특정 리뷰 ID부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.",
+        description="특정 상품의 리뷰를 페이지네이션으로 조회합니다. 특정 리뷰 ID부터 20개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다. 로그인한 사용자는 차단한 리뷰가 제외됩니다.",
         parameters=[
             OpenApiParameter(
                 name='product_id',
@@ -324,7 +324,8 @@ class ReviewListView(GenericAPIView):
     def get(self, request, product_id, review_id):
         """
         상품의 리뷰를 페이지네이션으로 조회합니다.
-        특정 review_id부터 21개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
+        특정 review_id부터 20개씩 반환하며, 해당 ID가 없으면 가장 가까운 리뷰부터 반환합니다.
+        로그인한 사용자는 차단한 리뷰가 제외됩니다.
         """
         # 상품 존재 확인 및 이미지 prefetch
         from products.models import Product
@@ -347,10 +348,20 @@ class ReviewListView(GenericAPIView):
             Prefetch('images', queryset=ReviewImage.objects.all())
         ).order_by(*order_by)
         
+        # JWT 인증 상태 확인 및 차단된 리뷰 필터링
+        if request.user.is_authenticated:
+            # 로그인한 사용자의 경우, 차단된 리뷰 제외
+            blocked_review_ids = BlockedReview.objects.filter(
+                user_id=request.user.id
+            ).values_list('blocked_review_id', flat=True)
+            
+            if blocked_review_ids:
+                reviews_query = reviews_query.exclude(id__in=blocked_review_ids)
+        
         # review_id가 0이면 처음 요청으로 판단
         if review_id == 0:
-            # 처음부터 21개 조회
-            reviews = list(reviews_query[:21])
+            # 처음부터 20개 조회
+            reviews = list(reviews_query[:20])
         else:
             # 정렬된 쿼리셋을 리스트로 변환
             all_reviews = list(reviews_query)
@@ -363,8 +374,8 @@ class ReviewListView(GenericAPIView):
                     break
             
             if target_index is not None:
-                # 해당 review_id 다음부터 21개 조회 (해당 ID 포함하지 않음)
-                reviews = all_reviews[target_index + 1:target_index + 22]
+                # 해당 review_id 다음부터 20개 조회 (해당 ID 포함하지 않음)
+                reviews = all_reviews[target_index + 1:target_index + 21]
             else:
                 # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
                 closest_index = None
@@ -782,10 +793,10 @@ class ProductReviewImagesView(GenericAPIView):
         # 3. 페이지네이션 로직
         if image_id == 0:
             # 첫 페이지: 최신순으로 21개
-            images = list(images_query[:21])
+            images = list(images_query[:20])
         else:
             # 해당 ID 다음으로 21개
-            images = list(images_query.filter(id__lt=image_id)[:21])
+            images = list(images_query.filter(id__lt=image_id)[:20])
         
         # 4. 이미지 데이터 구성 (ID와 URL 포함)
         image_data = [{'id': image.id, 'url': image.url} for image in images]
@@ -1207,8 +1218,8 @@ class UserReviewsView(GenericAPIView):
         
         # review_id가 0이면 처음 요청으로 판단
         if review_id == 0:
-            # 처음부터 21개 조회
-            reviews = list(reviews_query[:21])
+            # 처음부터 20개 조회
+            reviews = list(reviews_query[:20])
         else:
             # 정렬된 쿼리셋을 리스트로 변환
             all_reviews = list(reviews_query)
@@ -1221,8 +1232,8 @@ class UserReviewsView(GenericAPIView):
                     break
             
             if target_index is not None:
-                # 해당 review_id 다음부터 21개 조회 (해당 ID 포함하지 않음)
-                reviews = all_reviews[target_index + 1:target_index + 22]
+                # 해당 review_id 다음부터 20개 조회 (해당 ID 포함하지 않음)
+                reviews = all_reviews[target_index + 1:target_index + 21]
             else:
                 # 해당 review_id가 없으면, review_id보다 큰 리뷰 중 가장 작은 ID를 가진 리뷰 찾기
                 closest_index = None
