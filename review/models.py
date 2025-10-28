@@ -101,3 +101,22 @@ class BlockedReview(models.Model):
 
     def __str__(self):
         return f"User {self.user_id} blocked Review {self.blocked_review.id}"
+
+
+class BlockedUser(models.Model):
+    """
+    사용자 차단 모델
+    차단한 사용자와 차단당한 사용자의 관계를 저장
+    """
+    blocker_user_id = models.IntegerField(verbose_name="차단한 사용자 ID")
+    blocked_user_id = models.IntegerField(verbose_name="차단당한 사용자 ID")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="차단 일시")
+
+    class Meta:
+        db_table = "blocked_users"
+        constraints = [
+            models.UniqueConstraint(fields=["blocker_user_id", "blocked_user_id"], name="unique_blocked_user_relationship")
+        ]
+
+    def __str__(self):
+        return f"User {self.blocker_user_id} blocked User {self.blocked_user_id}"

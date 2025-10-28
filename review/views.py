@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, OpenApiResponse
 from drf_spectacular.types import OpenApiTypes
 from products.models import ProductImage
@@ -26,7 +27,7 @@ from .serializers import (
     UserReviewCheckResponseSerializer,
     BlockUserReviewsResponseSerializer
 )
-from .models import Review, ReviewImage, ReviewReport, ReviewReportReason, BlockedReview
+from .models import Review, ReviewImage, ReviewReport, ReviewReportReason, BlockedReview, BlockedUser
 from django.shortcuts import get_object_or_404
 from .utils import S3Uploader
 from django.db.models import Prefetch
@@ -1744,6 +1745,14 @@ class BlockUserReviewsView(GenericAPIView):
             # 대량 삽입으로 성능 최적화
             if blocked_reviews_to_create:
                 BlockedReview.objects.bulk_create(blocked_reviews_to_create)
+            
+            # BlockedUser 테이블에도 저장 (차단한 사용자 - 차단당한 사용자 관계)
+            blocked_user_id = review.user.id  # 리뷰 작성자 ID
+            blocked_user, created = BlockedUser.objects.get_or_create(
+                blocker_user_id=user_id,
+                blocked_user_id=blocked_user_id,
+                defaults={'created_at': timezone.now()}
+            )
             
             # 응답 데이터 구성
             response_data = {
