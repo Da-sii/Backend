@@ -195,8 +195,8 @@ class PasswordChangeRequestSerializer(serializers.Serializer):
             raise serializers.ValidationError("새 비밀번호가 일치하지 않습니다.")
         
         # 현재 비밀번호와 새 비밀번호가 같은지 확인
-        if data["current_password"] == data["new_password1"]:
-            raise serializers.ValidationError("새 비밀번호는 현재 비밀번호와 달라야 합니다.")
+        # if data["current_password"] == data["new_password1"]:
+        #     raise serializers.ValidationError("새 비밀번호는 현재 비밀번호와 달라야 합니다.")
         
         return data
 
