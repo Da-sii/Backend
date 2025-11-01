@@ -352,9 +352,16 @@ class ReviewListView(GenericAPIView):
         # JWT 인증 상태 확인 및 차단된 리뷰 필터링
         if request.user.is_authenticated:
             # 로그인한 사용자의 경우, 차단된 리뷰 제외
+            # 단, 본인이 작성한 리뷰는 차단되지 않음
             blocked_review_ids = BlockedReview.objects.filter(
                 user_id=request.user.id
             ).values_list('blocked_review_id', flat=True)
+            
+            # 본인이 작성한 리뷰 ID 목록
+            my_review_ids = Review.objects.filter(user_id=request.user.id).values_list('id', flat=True)
+            
+            # 차단된 리뷰 중 본인이 작성한 리뷰 제외
+            blocked_review_ids = [rid for rid in blocked_review_ids if rid not in my_review_ids]
             
             if blocked_review_ids:
                 reviews_query = reviews_query.exclude(id__in=blocked_review_ids)
@@ -1671,6 +1678,19 @@ class BlockUserReviewsView(GenericAPIView):
                     )
                 ]
             ),
+            400: OpenApiResponse(
+                description='자신의 리뷰를 차단하려고 시도',
+                examples=[
+                    OpenApiExample(
+                        '자신의 리뷰 차단 시도',
+                        value={
+                            "success": False,
+                            "message": "자신의 리뷰는 차단할 수 없습니다.",
+                            "review_id": 1
+                        }
+                    )
+                ]
+            ),
             401: OpenApiResponse(
                 description='인증되지 않은 사용자',
                 examples=[
@@ -1714,10 +1734,22 @@ class BlockUserReviewsView(GenericAPIView):
             # JWT에서 파싱한 사용자 ID (요청한 사용자)
             user_id = request.user.id
             
-            # 해당 리뷰를 작성한 사용자가 작성한 모든 리뷰 ID 가져오기
+            # 본인이 작성한 리뷰를 차단하려고 하는지 확인
             review_author_id = review.user.id
+            if review_author_id == user_id:
+                return Response({
+                    'success': False,
+                    'message': '자신의 리뷰는 차단할 수 없습니다.',
+                    'review_id': review_id
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 해당 리뷰를 작성한 사용자가 작성한 모든 리뷰 ID 가져오기
             user_reviews = Review.objects.filter(user_id=review_author_id)
             blocked_review_ids = list(user_reviews.values_list('id', flat=True))
+            
+            # 본인이 작성한 리뷰는 차단 대상에서 제외
+            my_review_ids = Review.objects.filter(user_id=user_id).values_list('id', flat=True)
+            blocked_review_ids = [rid for rid in blocked_review_ids if rid not in my_review_ids]
             
             # 이미 차단된 리뷰가 있는지 확인
             existing_blocked = BlockedReview.objects.filter(
@@ -1754,7 +1786,7 @@ class BlockUserReviewsView(GenericAPIView):
                 defaults={'created_at': timezone.now()}
             )
             
-            # 응답 데이터 구성
+            # 응답 데이터 구성 (본인이 작성한 리뷰 제외한 개수)
             response_data = {
                 'success': True,
                 'message': '사용자의 모든 리뷰가 차단되었습니다.',
