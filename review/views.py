@@ -717,7 +717,7 @@ class ProductReviewImagesView(GenericAPIView):
     
     @extend_schema(
         summary="상품 리뷰 이미지 URL 목록 조회 (페이지네이션)",
-        description="특정 상품의 리뷰 이미지 URL을 페이지네이션으로 조회합니다. image_id가 0이면 최신순으로 21개, 그 외에는 해당 ID 다음으로 21개 반환합니다.",
+        description="특정 상품의 리뷰 이미지 URL을 페이지네이션으로 조회합니다. image_id가 0이면 최신순으로 21개, 그 외에는 해당 ID 다음으로 21개 반환합니다. JWT가 있으면 차단된 리뷰의 이미지가 제외되고, 없으면 모든 이미지가 제공됩니다.",
         parameters=[
             OpenApiParameter(
                 name='product_id',
@@ -785,6 +785,7 @@ class ProductReviewImagesView(GenericAPIView):
         """
         특정 상품의 리뷰 이미지 URL을 페이지네이션으로 조회합니다.
         image_id가 0이면 최신순으로 21개, 그 외에는 해당 ID 다음으로 21개 반환합니다.
+        JWT가 있으면 차단된 리뷰의 이미지를 제외하고, 없으면 모든 이미지를 제공합니다.
         """
         # 상품 존재 확인
         from products.models import Product
@@ -797,6 +798,24 @@ class ProductReviewImagesView(GenericAPIView):
         images_query = ReviewImage.objects.filter(
             review_id__in=review_ids
         ).order_by('-id')
+        
+        # JWT 인증 상태 확인 및 차단된 리뷰 이미지 필터링
+        if request.user.is_authenticated:
+            # 로그인한 사용자의 경우, 차단된 리뷰의 이미지 제외
+            # 단, 본인이 작성한 리뷰는 차단되지 않음
+            blocked_review_ids = BlockedReview.objects.filter(
+                user_id=request.user.id
+            ).values_list('blocked_review_id', flat=True)
+            
+            # 본인이 작성한 리뷰 ID 목록
+            my_review_ids = Review.objects.filter(user_id=request.user.id).values_list('id', flat=True)
+            
+            # 차단된 리뷰 중 본인이 작성한 리뷰 제외
+            blocked_review_ids = [rid for rid in blocked_review_ids if rid not in my_review_ids]
+            
+            if blocked_review_ids:
+                # 차단된 리뷰에 해당하는 이미지 제외
+                images_query = images_query.exclude(review_id__in=blocked_review_ids)
         
         # 3. 페이지네이션 로직
         if image_id == 0:
