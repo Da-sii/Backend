@@ -4,50 +4,19 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema
 from django.http import HttpResponse
-from django.template.loader import get_template
-from django.template import Context
+from django.core.cache import cache
+from django.utils import timezone
 import os
 from .serializers import PhoneSendRequestSerializer, PhoneVerifyRequestSerializer
 import random
-import threading
-import time
 from datetime import datetime, timedelta
 from .verification_service import sms_service
 from .utils import parse_phone_number
 from .token_utils import generate_verification_token
 
-# 메모리에 저장할 객체
-# { phoneNumber: { count: number, lastRequest: Date, verification_code: string, sent_at: Date } }
-phone_requests = {}
 DAILY_LIMIT = 10
-
-# 하루 단위 초기화 함수
-def cleanup_old_requests():
-    """하루가 지난 요청 기록을 삭제"""
-    current_time = datetime.now()
-    phones_to_delete = []
-    
-    for phone in phone_requests:
-        last_request = phone_requests[phone]['lastRequest']
-        if current_time - last_request > timedelta(days=1):
-            phones_to_delete.append(phone)
-    
-    for phone in phones_to_delete:
-        del phone_requests[phone]
-    
-    if phones_to_delete:
-        print(f"하루 단위 요청 기록 초기화: {len(phones_to_delete)}개 번호 삭제")
-
-# 백그라운드에서 주기적으로 실행되는 정리 함수
-def periodic_cleanup():
-    """24시간마다 실행되는 정리 함수"""
-    while True:
-        time.sleep(24 * 60 * 60)  # 24시간 대기
-        cleanup_old_requests()
-
-# 백그라운드 스레드 시작
-cleanup_thread = threading.Thread(target=periodic_cleanup, daemon=True)
-cleanup_thread.start()
+VERIFICATION_TIMEOUT = 180  # 3분 (초)
+CACHE_PREFIX = 'phone_verification:'
 
 
 class PhoneVerificationView(APIView):
@@ -119,40 +88,70 @@ class PhoneVerificationView(APIView):
             )
         
         # 2. 하루 제한 확인
-        current_time = datetime.now()
+        current_time = timezone.now()
+        cache_key = f"{CACHE_PREFIX}{parsed_phone}"
         
-        # 기존 요청 기록이 있는지 확인
-        if parsed_phone in phone_requests:
-            request_data = phone_requests[parsed_phone]
-            last_request = request_data['lastRequest']
-            
-            # 하루가 지났으면 카운트 리셋
-            if current_time - last_request > timedelta(days=1):
-                phone_requests[parsed_phone] = {
-                    'count': 1,
-                    'lastRequest': current_time,
-                    'verification_code': None,
-                    'sent_at': None
-                }
-            else:
-                # 하루 내 요청이면 카운트 증가
-                request_data['count'] += 1
-                request_data['lastRequest'] = current_time
-                
-                # 하루 제한 초과 확인
-                if request_data['count'] > DAILY_LIMIT:
-                    return Response(
-                        {
-                            'error': f'하루 최대 {DAILY_LIMIT}회까지만 요청 가능합니다. 내일 다시 시도해주세요.',
-                            'remaining_requests': 0
-                        }, 
-                        status=status.HTTP_429_TOO_MANY_REQUESTS
-                    )
+        # 캐시에서 기존 요청 기록 확인 (에러 발생 시 새로 시작)
+        try:
+            request_data = cache.get(cache_key)
+        except Exception:
+            # 캐시 테이블이 없거나 다른 에러 발생 시 새로 시작
+            request_data = None
+        
+        if request_data:
+            last_request_str = request_data.get('lastRequest')
+            if last_request_str:
+                try:
+                    # datetime 문자열을 datetime 객체로 변환
+                    if isinstance(last_request_str, str):
+                        # ISO 형식 파싱 시도
+                        try:
+                            last_request = datetime.fromisoformat(last_request_str.replace('Z', '+00:00'))
+                        except ValueError:
+                            # 다른 형식 시도 (문자열 형식이 다를 수 있음)
+                            last_request = datetime.fromisoformat(last_request_str)
+                        
+                        # naive datetime을 timezone-aware로 변환
+                        if last_request.tzinfo is None:
+                            last_request = timezone.make_aware(last_request)
+                    else:
+                        last_request = last_request_str
+                    
+                    # 하루가 지났으면 카운트 리셋
+                    if current_time - last_request > timedelta(days=1):
+                        request_data = {
+                            'count': 1,
+                            'lastRequest': current_time.isoformat(),
+                            'verification_code': None,
+                            'sent_at': None
+                        }
+                    else:
+                        # 하루 내 요청이면 카운트 증가
+                        request_data['count'] = request_data.get('count', 0) + 1
+                        request_data['lastRequest'] = current_time.isoformat()
+                        
+                        # 하루 제한 초과 확인
+                        if request_data['count'] > DAILY_LIMIT:
+                            return Response(
+                                {
+                                    'error': f'하루 최대 {DAILY_LIMIT}회까지만 요청 가능합니다. 내일 다시 시도해주세요.',
+                                    'remaining_requests': 0
+                                }, 
+                                status=status.HTTP_429_TOO_MANY_REQUESTS
+                            )
+                except Exception:
+                    # 파싱 에러 발생 시 새로 시작
+                    request_data = {
+                        'count': 1,
+                        'lastRequest': current_time.isoformat(),
+                        'verification_code': None,
+                        'sent_at': None
+                    }
         else:
             # 새로운 전화번호면 초기화
-            phone_requests[parsed_phone] = {
+            request_data = {
                 'count': 1,
-                'lastRequest': current_time,
+                'lastRequest': current_time.isoformat(),
                 'verification_code': None,
                 'sent_at': None
             }
@@ -172,12 +171,23 @@ class PhoneVerificationView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-        # 5. 메모리에 인증번호와 발송 시간 저장
-        phone_requests[parsed_phone]['verification_code'] = verification_code
-        phone_requests[parsed_phone]['sent_at'] = current_time
+        # 5. 캐시에 인증번호와 발송 시간 저장 (24시간 유지)
+        request_data['verification_code'] = verification_code
+        request_data['sent_at'] = current_time.isoformat()
+        try:
+            cache.set(cache_key, request_data, timeout=24 * 60 * 60)  # 24시간 캐시
+        except Exception as e:
+            # 캐시 저장 실패 시 에러 반환
+            return Response(
+                {
+                    'error': '인증번호 저장에 실패했습니다. 잠시 후 다시 시도해주세요.',
+                    'details': str(e) if str(e) else '알 수 없는 오류'
+                }, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
         # 6. 남은 요청 횟수 계산
-        remaining_requests = DAILY_LIMIT - phone_requests[parsed_phone]['count']
+        remaining_requests = DAILY_LIMIT - request_data['count']
         
         return Response({
             'success': True,
@@ -243,16 +253,24 @@ class VerifyCodeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # 메모리에서 인증번호 확인
-        if parsed_phone not in phone_requests:
+        # 캐시에서 인증번호 확인
+        cache_key = f"{CACHE_PREFIX}{parsed_phone}"
+        try:
+            stored_data = cache.get(cache_key)
+        except Exception:
+            return Response(
+                {'error': '인증번호 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        if not stored_data:
             return Response(
                 {'error': '인증번호를 먼저 발송해주세요.'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        stored_data = phone_requests[parsed_phone]
         stored_code = stored_data.get('verification_code')
-        sent_at = stored_data.get('sent_at')
+        sent_at_str = stored_data.get('sent_at')
         
         if not stored_code:
             return Response(
@@ -261,19 +279,45 @@ class VerifyCodeView(APIView):
             )
         
         # 3분(180초) 만료 확인
-        current_time = datetime.now()
-        if sent_at and (current_time - sent_at).seconds > 180:
-            # 만료된 인증번호 삭제
-            phone_requests[parsed_phone]['verification_code'] = None
-            return Response(
-                {'error': '인증번호가 만료되었습니다. (3분 초과)'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        current_time = timezone.now()
+        if sent_at_str:
+            try:
+                # datetime 문자열을 datetime 객체로 변환
+                if isinstance(sent_at_str, str):
+                    try:
+                        sent_at = datetime.fromisoformat(sent_at_str.replace('Z', '+00:00'))
+                    except ValueError:
+                        sent_at = datetime.fromisoformat(sent_at_str)
+                    # naive datetime을 timezone-aware로 변환
+                    if sent_at.tzinfo is None:
+                        sent_at = timezone.make_aware(sent_at)
+                else:
+                    sent_at = sent_at_str
+                
+                time_diff = current_time - sent_at
+                if time_diff.total_seconds() > VERIFICATION_TIMEOUT:
+                    # 만료된 인증번호 삭제
+                    stored_data['verification_code'] = None
+                    try:
+                        cache.set(cache_key, stored_data, timeout=24 * 60 * 60)
+                    except Exception:
+                        pass  # 캐시 저장 실패해도 에러는 반환하지 않음
+                    return Response(
+                        {'error': '인증번호가 만료되었습니다. (3분 초과)'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            except Exception:
+                # 시간 파싱 에러 시 만료 처리하지 않음 (다른 검증으로 넘어감)
+                pass
         
         # 인증번호 검증
         if stored_code == verification_code:
             # 인증 성공 시 인증번호 삭제
-            phone_requests[parsed_phone]['verification_code'] = None
+            stored_data['verification_code'] = None
+            try:
+                cache.set(cache_key, stored_data, timeout=24 * 60 * 60)
+            except Exception:
+                pass  # 캐시 저장 실패해도 성공 처리
             
             # 5분 유효한 JWT 토큰 생성
             token_data = generate_verification_token(parsed_phone)
