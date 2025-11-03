@@ -58,6 +58,44 @@ class ProductDetailView(generics.RetrieveAPIView):
         serializer = self.get_serializer(product, context={'request': request})
         return Response(serializer.data)
 
+# 랭킹 카테고리 (메인의 인기 카테고리와 동일 순서)
+class ProductRankingCategoryView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="랭킹 카테고리",
+        tags=["제품"]
+    )
+    def get(self, request, *args, **kwargs):
+        # 소분류별 지난 30일 조회수 합계 순 상위 소분류 목록
+        today = timezone.now().date()
+        start_date = today - timedelta(days=30)
+
+        from products.models import SmallCategory
+        small_with_views = (
+            SmallCategory.objects
+            .exclude(category="전체")
+            .annotate(
+                totalViews=Coalesce(
+                    Sum(
+                        "category_products__product__daily_views__views",
+                        filter=Q(category_products__product__daily_views__date__gte=start_date)
+                    ),
+                    0,
+                )
+            )
+            .order_by("-totalViews", "id")
+        )
+
+        categories_payload = [
+            {"smallCategory": sc.category, "bigCategory": sc.bigCategory.category}
+            for sc in small_with_views
+        ]
+
+        return Response({
+            "topSmallCategories": categories_payload
+        })
+
 # 랭킹
 class ProductRankingView(generics.ListAPIView):
     serializer_class = ProductRankingSerializer
