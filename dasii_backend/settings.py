@@ -133,6 +133,14 @@ DATABASES = {
     }
 }
 
+# Cache configuration - 멀티 워커 환경에서 인증번호 공유를 위해 데이터베이스 캐시 사용
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    }
+}
+
 # AWS Settings
 AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
