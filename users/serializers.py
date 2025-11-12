@@ -128,8 +128,16 @@ class NicknameUpdateRequestSerializer(serializers.Serializer):
         if not re.fullmatch(r"[A-Za-z0-9가-힣]+", value):
             raise serializers.ValidationError("닉네임은 한글, 영문, 숫자만 사용할 수 있습니다.")
 
-        if User.objects.filter(nickname=value).exists():
-            raise serializers.ValidationError("이미 사용 중인 닉네임입니다.")
+        # 현재 사용자 정보 가져오기 (context에서 request를 통해 접근)
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            # 현재 사용자를 제외하고 중복 체크
+            if User.objects.filter(nickname=value).exclude(id=request.user.id).exists():
+                raise serializers.ValidationError("이미 사용 중인 닉네임입니다.")
+        else:
+            # 인증되지 않은 경우 (일반적으로 발생하지 않지만 안전장치)
+            if User.objects.filter(nickname=value).exists():
+                raise serializers.ValidationError("이미 사용 중인 닉네임입니다.")
             
         return value
 
