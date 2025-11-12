@@ -828,7 +828,7 @@ class NicknameUpdateView(GenericAPIView):
         },
     )
     def patch(self, request):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
         request.user.nickname = serializer.validated_data['nickname']
