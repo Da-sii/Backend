@@ -109,9 +109,9 @@
 <body>
     <div class="container">
         <div class="back-link">
-            <a href="{% url 'big_category_form' %}">대분류 카테고리</a>
-            <a href="{% url 'product_form' %}">제품</a>
-            <a href="{% url 'ingredient_form' %}">성분</a>
+            <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+            <a href="{% url 'admin_product_form' %}">제품</a>
+            <a href="{% url 'admin_ingredient_form' %}">성분</a>
         </div>
         
         <h1>소분류 카테고리 추가</h1>
@@ -152,6 +152,7 @@
                     <strong>ID {{ small_category.id }}:</strong> 
                     <span class="big-category-name">[{{ small_category.bigCategory.category }}]</span>
                     {{ small_category.category }}
+                    <a href="{% url 'admin_small_category_delete' small_category.id %}" style="color: #f44336; text-decoration: none; margin-left: 15px; font-size: 0.9em;" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
                 </div>
                 {% endfor %}
             {% else %}

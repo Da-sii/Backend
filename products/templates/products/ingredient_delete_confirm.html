@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>성분 삭제 확인 - {{ ingredient.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .warning strong {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .ingredient-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .ingredient-info strong {
+            color: #333;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-delete:hover {
+            background-color: #da190b;
+        }
+        .btn-cancel {
+            background-color: #757575;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background-color: #616161;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            color: #2196f3;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="{% url 'admin_ingredient_form' %}">← 성분 목록으로</a>
+        </div>
+
+        <h1>성분 삭제 확인</h1>
+
+        <div class="warning">
+            <strong>⚠️ 경고</strong>
+            이 작업은 되돌릴 수 없습니다. 성분을 삭제하면 연결된 제품-성분 관계도 함께 삭제됩니다.
+        </div>
+
+        <div class="ingredient-info">
+            <strong>삭제할 성분 정보:</strong><br />
+            ID: {{ ingredient.id }}<br />
+            성분 이름: {{ ingredient.name }}<br />
+            영어 이름: {{ ingredient.englishIngredient }}
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="button-group">
+                <a href="{% url 'admin_ingredient_form' %}" class="btn-cancel" style="text-decoration: none;">취소</a>
+                <button type="submit" class="btn-delete">삭제하기</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+
