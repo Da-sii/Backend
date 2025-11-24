@@ -26,7 +26,8 @@ urlpatterns = [
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 
-    path("admin/", admin.site.urls),
+    path("admin/", include("products.admin_urls")),  # 관리자 페이지 (인증 필요) - 먼저 매칭
+    path("django-admin/", admin.site.urls),  # Django 기본 admin (다른 경로로 이동)
     path("auth/", include("auth.urls")), # auth 앱 라우팅
     path("auth/", include("users.urls")), # users 앱 라우팅
     path("auth/", include("socials.urls")), # socials 앱 라우팅

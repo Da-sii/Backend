@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>대분류 삭제 확인 - {{ category.category }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .warning strong {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .category-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .category-info strong {
+            color: #333;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-delete:hover {
+            background-color: #da190b;
+        }
+        .btn-cancel {
+            background-color: #757575;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background-color: #616161;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            color: #2196f3;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="{% url 'admin_big_category_form' %}">← 대분류 목록으로</a>
+        </div>
+
+        <h1>대분류 삭제 확인</h1>
+
+        <div class="warning">
+            <strong>⚠️ 경고</strong>
+            이 작업은 되돌릴 수 없습니다. 대분류를 삭제하면 연결된 모든 소분류도 함께 삭제됩니다.
+        </div>
+
+        <div class="category-info">
+            <strong>삭제할 대분류 정보:</strong><br />
+            ID: {{ category.id }}<br />
+            카테고리: {{ category.category }}
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="button-group">
+                <a href="{% url 'admin_big_category_form' %}" class="btn-cancel" style="text-decoration: none;">취소</a>
+                <button type="submit" class="btn-delete">삭제하기</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+
