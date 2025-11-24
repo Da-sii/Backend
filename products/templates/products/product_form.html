@@ -225,9 +225,9 @@
 <body>
     <div class="container">
         <div class="nav-links">
-            <a href="{% url 'big_category_form' %}">대분류 카테고리</a>
-            <a href="{% url 'small_category_form' %}">소분류 카테고리</a>
-            <a href="{% url 'ingredient_form' %}">성분</a>
+            <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+            <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
+            <a href="{% url 'admin_ingredient_form' %}">성분</a>
         </div>
 
         <h1>제품 추가</h1>
@@ -398,8 +398,9 @@
                     </div>
                     {% endif %}
                     
-                    <div style="margin-top: 15px; text-align: right;">
-                        <a href="{% url 'product_edit' product.id %}" style="background-color: #2196f3; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;">수정하기</a>
+                    <div style="margin-top: 15px; text-align: right; display: flex; gap: 10px; justify-content: flex-end;">
+                        <a href="{% url 'admin_product_edit' product.id %}" style="background-color: #2196f3; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;">수정하기</a>
+                        <a href="{% url 'admin_product_delete' product.id %}" style="background-color: #f44336; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;" onclick="return confirm('정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');">삭제하기</a>
                     </div>
                 </div>
                 {% endfor %}

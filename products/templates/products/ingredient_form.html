@@ -117,9 +117,9 @@
 <body>
     <div class="container">
         <div class="nav-links">
-            <a href="{% url 'big_category_form' %}">대분류 카테고리</a>
-            <a href="{% url 'small_category_form' %}">소분류 카테고리</a>
-            <a href="{% url 'product_form' %}">제품</a>
+            <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+            <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
+            <a href="{% url 'admin_product_form' %}">제품</a>
         </div>
 
         <h1>성분 추가</h1>
@@ -166,14 +166,19 @@
             {% if ingredients %}
                 {% for ingredient in ingredients %}
                 <div class="ingredient-item">
-                    <strong>ID {{ ingredient.id }}:</strong> {{ ingredient.name }}
-                    <span class="english-name">({{ ingredient.englishIngredient }})</span>
-                    <div class="details">
-                        <strong>권장량:</strong> {{ ingredient.minRecommended }} ~ {{ ingredient.maxRecommended }}<br />
-                        <strong>효과:</strong> {{ ingredient.effect|truncatewords:20 }}
-                        {% if ingredient.sideEffect %}
-                        <br /><strong>부작용:</strong> {{ ingredient.sideEffect|truncatewords:20 }}
-                        {% endif %}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <strong>ID {{ ingredient.id }}:</strong> {{ ingredient.name }}
+                            <span class="english-name">({{ ingredient.englishIngredient }})</span>
+                            <div class="details">
+                                <strong>권장량:</strong> {{ ingredient.minRecommended }} ~ {{ ingredient.maxRecommended }}<br />
+                                <strong>효과:</strong> {{ ingredient.effect|truncatewords:20 }}
+                                {% if ingredient.sideEffect %}
+                                <br /><strong>부작용:</strong> {{ ingredient.sideEffect|truncatewords:20 }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="{% url 'admin_ingredient_delete' ingredient.id %}" style="color: #f44336; text-decoration: none; margin-left: 15px; font-size: 0.9em; white-space: nowrap;" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
                     </div>
                 </div>
                 {% endfor %}

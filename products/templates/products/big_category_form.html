@@ -92,14 +92,16 @@
         <div class="container">
             <div style="margin-bottom: 20px">
                 <a
-                    href="{% url 'small_category_form' %}"
+                    href="{% url 'admin_small_category_form' %}"
                     style="color: #2196f3; text-decoration: none; margin-right: 15px"
                     >소분류 카테고리</a
                 >
-                <a href="{% url 'product_form' %}" style="color: #2196f3; text-decoration: none; margin-right: 15px"
+                <a
+                    href="{% url 'admin_product_form' %}"
+                    style="color: #2196f3; text-decoration: none; margin-right: 15px"
                     >제품</a
                 >
-                <a href="{% url 'ingredient_form' %}" style="color: #2196f3; text-decoration: none">성분</a>
+                <a href="{% url 'admin_ingredient_form' %}" style="color: #2196f3; text-decoration: none">성분</a>
             </div>
 
             <h1>대분류 카테고리 추가</h1>
@@ -124,7 +126,15 @@
             <div class="category-list">
                 <h2>등록된 카테고리 목록</h2>
                 {% if categories %} {% for category in categories %}
-                <div class="category-item"><strong>ID {{ category.id }}:</strong> {{ category.category }}</div>
+                <div class="category-item">
+                    <strong>ID {{ category.id }}:</strong> {{ category.category }}
+                    <a
+                        href="{% url 'admin_big_category_delete' category.id %}"
+                        style="color: #f44336; text-decoration: none; margin-left: 15px; font-size: 0.9em"
+                        onclick="return confirm('정말 삭제하시겠습니까? 연결된 소분류도 함께 삭제됩니다.');"
+                        >삭제</a
+                    >
+                </div>
                 {% endfor %} {% else %}
                 <p>등록된 카테고리가 없습니다.</p>
                 {% endif %}

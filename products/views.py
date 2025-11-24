@@ -20,6 +20,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf import settings
 from django.http import HttpResponseForbidden
+from products.admin_auth import admin_auth_required
 
 # 제품 등록
 class ProductCreateView(generics.CreateAPIView):
@@ -212,10 +213,7 @@ class UploadProductImageView(APIView):
 
 # BigCategory 입력 화면 (템플릿 기반)
 def big_category_form(request):
-    """BigCategory 데이터 입력 화면 - 개발 환경에서만 접근 가능"""
-    # 운영 환경에서는 접근 차단
-    if settings.DJANGO_ENV == 'production':
-        return HttpResponseForbidden("이 페이지는 개발 환경에서만 접근 가능합니다.")
+    """BigCategory 데이터 입력 화면"""
     
     if request.method == 'POST':
         category = request.POST.get('category', '').strip()
@@ -223,7 +221,7 @@ def big_category_form(request):
         if category:
             BigCategory.objects.create(category=category)
             messages.success(request, f'"{category}" 카테고리가 성공적으로 추가되었습니다.')
-            return redirect('big_category_form')
+            return redirect('admin_big_category_form')
         else:
             messages.error(request, '카테고리 이름을 입력해주세요.')
     
@@ -236,10 +234,7 @@ def big_category_form(request):
 
 # SmallCategory 입력 화면 (템플릿 기반)
 def small_category_form(request):
-    """SmallCategory 데이터 입력 화면 - 개발 환경에서만 접근 가능"""
-    # 운영 환경에서는 접근 차단
-    if settings.DJANGO_ENV == 'production':
-        return HttpResponseForbidden("이 페이지는 개발 환경에서만 접근 가능합니다.")
+    """SmallCategory 데이터 입력 화면"""
     
     if request.method == 'POST':
         big_category_id = request.POST.get('bigCategory', '').strip()
@@ -257,7 +252,7 @@ def small_category_form(request):
                     category=category
                 )
                 messages.success(request, f'"{big_category.category} - {category}" 소분류가 성공적으로 추가되었습니다.')
-                return redirect('small_category_form')
+                return redirect('admin_small_category_form')
             except BigCategory.DoesNotExist:
                 messages.error(request, '선택한 대분류를 찾을 수 없습니다.')
     
@@ -272,10 +267,7 @@ def small_category_form(request):
 
 # Product 입력 화면 (템플릿 기반)
 def product_form(request):
-    """Product 데이터 입력 화면 - 개발 환경에서만 접근 가능"""
-    # 운영 환경에서는 접근 차단
-    if settings.DJANGO_ENV == 'production':
-        return HttpResponseForbidden("이 페이지는 개발 환경에서만 접근 가능합니다.")
+    """Product 데이터 입력 화면"""
     
     if request.method == 'POST':
         # 기본 정보
@@ -340,7 +332,7 @@ def product_form(request):
                             pass
                 
                 messages.success(request, f'"{name}" 제품이 성공적으로 추가되었습니다.')
-                return redirect('product_form')
+                return redirect('admin_product_form')
             except ValueError:
                 messages.error(request, '가격은 숫자로 입력해주세요.')
             except Exception as e:
@@ -367,10 +359,7 @@ def product_form(request):
 
 # Ingredient 입력 화면 (템플릿 기반)
 def ingredient_form(request):
-    """Ingredient 데이터 입력 화면 - 개발 환경에서만 접근 가능"""
-    # 운영 환경에서는 접근 차단
-    if settings.DJANGO_ENV == 'production':
-        return HttpResponseForbidden("이 페이지는 개발 환경에서만 접근 가능합니다.")
+    """Ingredient 데이터 입력 화면"""
     
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
@@ -393,7 +382,7 @@ def ingredient_form(request):
                 sideEffect=side_effect if side_effect else None
             )
             messages.success(request, f'"{name}" 성분이 성공적으로 추가되었습니다.')
-            return redirect('ingredient_form')
+            return redirect('admin_ingredient_form')
     
     # 기존 성분 목록 가져오기
     ingredients = Ingredient.objects.all().order_by('name')
@@ -402,12 +391,77 @@ def ingredient_form(request):
         'ingredients': ingredients
     })
 
+# BigCategory 삭제
+def big_category_delete(request, category_id):
+    """BigCategory 삭제"""
+    try:
+        category = BigCategory.objects.get(id=category_id)
+    except BigCategory.DoesNotExist:
+        messages.error(request, '대분류를 찾을 수 없습니다.')
+        return redirect('admin_big_category_form')
+    
+    if request.method == 'POST':
+        category_name = category.category
+        # 연결된 SmallCategory의 CategoryProduct 먼저 삭제
+        small_categories = category.smallCategories.all()
+        for small_cat in small_categories:
+            CategoryProduct.objects.filter(category=small_cat).delete()
+        # BigCategory 삭제 (CASCADE로 SmallCategory도 자동 삭제됨)
+        category.delete()
+        messages.success(request, f'"{category_name}" 대분류가 성공적으로 삭제되었습니다.')
+        return redirect('admin_big_category_form')
+    
+    return render(request, 'products/big_category_delete_confirm.html', {
+        'category': category
+    })
+
+# SmallCategory 삭제
+def small_category_delete(request, category_id):
+    """SmallCategory 삭제"""
+    try:
+        category = SmallCategory.objects.get(id=category_id)
+    except SmallCategory.DoesNotExist:
+        messages.error(request, '소분류를 찾을 수 없습니다.')
+        return redirect('admin_small_category_form')
+    
+    if request.method == 'POST':
+        category_name = category.category
+        # PROTECT된 CategoryProduct 먼저 삭제
+        CategoryProduct.objects.filter(category=category).delete()
+        # SmallCategory 삭제
+        category.delete()
+        messages.success(request, f'"{category_name}" 소분류가 성공적으로 삭제되었습니다.')
+        return redirect('admin_small_category_form')
+    
+    return render(request, 'products/small_category_delete_confirm.html', {
+        'category': category
+    })
+
+# Ingredient 삭제
+def ingredient_delete(request, ingredient_id):
+    """Ingredient 삭제"""
+    try:
+        ingredient = Ingredient.objects.get(id=ingredient_id)
+    except Ingredient.DoesNotExist:
+        messages.error(request, '성분을 찾을 수 없습니다.')
+        return redirect('admin_ingredient_form')
+    
+    if request.method == 'POST':
+        ingredient_name = ingredient.name
+        # PROTECT된 ProductIngredient 먼저 삭제
+        ProductIngredient.objects.filter(ingredient=ingredient).delete()
+        # Ingredient 삭제
+        ingredient.delete()
+        messages.success(request, f'"{ingredient_name}" 성분이 성공적으로 삭제되었습니다.')
+        return redirect('admin_ingredient_form')
+    
+    return render(request, 'products/ingredient_delete_confirm.html', {
+        'ingredient': ingredient
+    })
+
 # Product 수정 화면 (템플릿 기반)
 def product_edit(request, product_id):
-    """Product 데이터 수정 화면 - 개발 환경에서만 접근 가능"""
-    # 운영 환경에서는 접근 차단
-    if settings.DJANGO_ENV == 'production':
-        return HttpResponseForbidden("이 페이지는 개발 환경에서만 접근 가능합니다.")
+    """Product 데이터 수정 화면"""
     
     try:
         product = Product.objects.prefetch_related(
@@ -513,7 +567,7 @@ def product_edit(request, product_id):
                         pass
             
             messages.success(request, f'"{product.name}" 제품이 성공적으로 수정되었습니다.')
-            return redirect('product_form')
+            return redirect('admin_product_form')
     
     # 기존 데이터 가져오기
     ingredients = Ingredient.objects.all().order_by('name')
@@ -523,4 +577,30 @@ def product_edit(request, product_id):
         'product': product,
         'ingredients': ingredients,
         'small_categories': small_categories
+    })
+
+# Product 삭제
+def product_delete(request, product_id):
+    """Product 삭제"""
+    
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        messages.error(request, '제품을 찾을 수 없습니다.')
+        return redirect('product_form')
+    
+    if request.method == 'POST':
+        product_name = product.name
+        
+        # PROTECT로 설정된 CategoryProduct를 먼저 삭제
+        CategoryProduct.objects.filter(product=product).delete()
+        
+        # 이제 제품 삭제 가능
+        product.delete()
+        messages.success(request, f'"{product_name}" 제품이 성공적으로 삭제되었습니다.')
+        return redirect('admin_product_form')
+    
+    # GET 요청 시 확인 페이지 표시
+    return render(request, 'products/product_delete_confirm.html', {
+        'product': product
     })

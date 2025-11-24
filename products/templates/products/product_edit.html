@@ -162,10 +162,10 @@
 <body>
     <div class="container">
         <div class="nav-links">
-            <a href="{% url 'product_form' %}">← 제품 목록으로</a>
-            <a href="{% url 'big_category_form' %}">대분류 카테고리</a>
-            <a href="{% url 'small_category_form' %}">소분류 카테고리</a>
-            <a href="{% url 'ingredient_form' %}">성분</a>
+            <a href="{% url 'admin_product_form' %}">← 제품 목록으로</a>
+            <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+            <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
+            <a href="{% url 'admin_ingredient_form' %}">성분</a>
         </div>
 
         <h1>제품 수정 - {{ product.name }}</h1>
@@ -326,7 +326,7 @@
             </div>
 
             <button type="submit">수정 저장</button>
-            <a href="{% url 'product_form' %}" class="btn-cancel" style="text-decoration: none; display: inline-block;">취소</a>
+            <a href="{% url 'admin_product_form' %}" class="btn-cancel" style="text-decoration: none; display: inline-block;">취소</a>
         </form>
     </div>
 
