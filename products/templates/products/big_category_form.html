@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>대분류 카테고리 추가</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 50px auto;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
+            .container {
+                background-color: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                color: #333;
+                margin-bottom: 30px;
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+                color: #555;
+            }
+            input[type='text'] {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 16px;
+                box-sizing: border-box;
+            }
+            button {
+                background-color: #4caf50;
+                color: white;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            button:hover {
+                background-color: #45a049;
+            }
+            .messages {
+                margin-bottom: 20px;
+            }
+            .message {
+                padding: 10px;
+                border-radius: 4px;
+                margin-bottom: 10px;
+            }
+            .success {
+                background-color: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+            }
+            .error {
+                background-color: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+            .category-list {
+                margin-top: 40px;
+            }
+            .category-list h2 {
+                color: #333;
+                margin-bottom: 15px;
+            }
+            .category-item {
+                padding: 10px;
+                background-color: #f9f9f9;
+                border-left: 3px solid #4caf50;
+                margin-bottom: 10px;
+                border-radius: 4px;
+            }
+            .category-item strong {
+                color: #4caf50;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div style="margin-bottom: 20px">
+                <a
+                    href="{% url 'small_category_form' %}"
+                    style="color: #2196f3; text-decoration: none; margin-right: 15px"
+                    >소분류 카테고리</a
+                >
+                <a href="{% url 'product_form' %}" style="color: #2196f3; text-decoration: none; margin-right: 15px"
+                    >제품</a
+                >
+                <a href="{% url 'ingredient_form' %}" style="color: #2196f3; text-decoration: none">성분</a>
+            </div>
+
+            <h1>대분류 카테고리 추가</h1>
+
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="category">카테고리 이름:</label>
+                    <input type="text" id="category" name="category" required placeholder="예: 건강식품, 영양제 등" />
+                </div>
+                <button type="submit">추가하기</button>
+            </form>
+
+            <div class="category-list">
+                <h2>등록된 카테고리 목록</h2>
+                {% if categories %} {% for category in categories %}
+                <div class="category-item"><strong>ID {{ category.id }}:</strong> {{ category.category }}</div>
+                {% endfor %} {% else %}
+                <p>등록된 카테고리가 없습니다.</p>
+                {% endif %}
+            </div>
+        </div>
+    </body>
+</html>
