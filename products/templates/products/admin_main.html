@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>관리자 페이지</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .menu-item {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            border: 2px solid #ddd;
+            transition: all 0.3s;
+        }
+        .menu-item:hover {
+            border-color: #4caf50;
+            background-color: #f0f8f0;
+            transform: translateY(-2px);
+        }
+        .menu-item h3 {
+            margin: 0 0 10px 0;
+            color: #4caf50;
+        }
+        .menu-item p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .logout-btn {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .logout-btn a {
+            color: #f44336;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .logout-btn a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logout-btn">
+            <a href="{% url 'admin_logout' %}">로그아웃</a>
+        </div>
+        
+        <h1>관리자 페이지</h1>
+        
+        <div class="menu-grid">
+            <a href="{% url 'admin_big_category_form' %}" class="menu-item">
+                <h3>대분류 입력</h3>
+                <p>대분류 카테고리 추가/관리</p>
+            </a>
+            
+            <a href="{% url 'admin_small_category_form' %}" class="menu-item">
+                <h3>소분류 입력</h3>
+                <p>소분류 카테고리 추가/관리</p>
+            </a>
+            
+            <a href="{% url 'admin_product_form' %}" class="menu-item">
+                <h3>제품 입력</h3>
+                <p>제품 추가/수정/삭제</p>
+            </a>
+            
+            <a href="{% url 'admin_ingredient_form' %}" class="menu-item">
+                <h3>성분 입력</h3>
+                <p>성분 추가/관리</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+
