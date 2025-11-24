@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>소분류 카테고리 추가</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        select {
+            background-color: white;
+            cursor: pointer;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .messages {
+            margin-bottom: 20px;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .category-list {
+            margin-top: 40px;
+        }
+        .category-list h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .category-item {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-left: 3px solid #2196F3;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .category-item strong {
+            color: #2196F3;
+        }
+        .big-category-name {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .back-link {
+            margin-bottom: 20px;
+        }
+        .back-link a {
+            color: #2196F3;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="back-link">
+            <a href="{% url 'big_category_form' %}">대분류 카테고리</a>
+            <a href="{% url 'product_form' %}">제품</a>
+            <a href="{% url 'ingredient_form' %}">성분</a>
+        </div>
+        
+        <h1>소분류 카테고리 추가</h1>
+        
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="bigCategory">대분류 선택:</label>
+                <select id="bigCategory" name="bigCategory" required>
+                    <option value="">-- 대분류를 선택하세요 --</option>
+                    {% for big_category in big_categories %}
+                    <option value="{{ big_category.id }}">{{ big_category.category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="category">소분류 이름:</label>
+                <input type="text" id="category" name="category" required placeholder="예: 비타민C, 오메가3 등">
+            </div>
+            <button type="submit">추가하기</button>
+        </form>
+        
+        <div class="category-list">
+            <h2>등록된 소분류 목록</h2>
+            {% if small_categories %}
+                {% for small_category in small_categories %}
+                <div class="category-item">
+                    <strong>ID {{ small_category.id }}:</strong> 
+                    <span class="big-category-name">[{{ small_category.bigCategory.category }}]</span>
+                    {{ small_category.category }}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>등록된 소분류가 없습니다.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+
