@@ -363,7 +363,7 @@
                             성분: <span class="stat-value">{{ product.ingredient_count }}개</span>
                         </div>
                         <div class="stat-item">
-                            카테고리: <span class="stat-value">{{ product.category_products.count }}개</span>
+                            카테고리: <span class="stat-value">{{ product.category_count }}개</span>
                         </div>
                     </div>
                     
@@ -389,9 +389,9 @@
                                 {{ product_ingredient.ingredient.name }} ({{ product_ingredient.amount }})
                             </span>
                             {% endfor %}
-                            {% if product.ingredients.count > 5 %}
+                            {% if product.ingredient_count > 5 %}
                             <span class="category-tag" style="background-color: #f5f5f5; color: #666;">
-                                +{{ product.ingredients.count|add:"-5" }}개 더
+                                +{{ product.ingredient_count|add:"-5" }}개 더
                             </span>
                             {% endif %}
                         </div>
@@ -400,7 +400,7 @@
                     
                     <div style="margin-top: 15px; text-align: right; display: flex; gap: 10px; justify-content: flex-end;">
                         <a href="{% url 'admin_product_edit' product.id %}" style="background-color: #2196f3; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;">수정하기</a>
-                        <a href="{% url 'admin_product_delete' product.id %}" style="background-color: #f44336; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;" onclick="return confirm('정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');">삭제하기</a>
+                        <a href="{% url 'admin_product_edit' product.id %}?action=delete" style="background-color: #f44336; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;">삭제하기</a>
                     </div>
                 </div>
                 {% endfor %}
