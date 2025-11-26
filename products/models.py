@@ -32,6 +32,7 @@ class Product(models.Model):
     piece = models.TextField(verbose_name="개수")
     productType = models.TextField(verbose_name="식품의 유형")
     viewCount = models.IntegerField(verbose_name="조회수", default=0)
+    coupang = models.TextField(verbose_name="쿠팡 링크", null=True, blank=True)
 
     class Meta:
         db_table = "products"
