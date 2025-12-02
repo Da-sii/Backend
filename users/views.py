@@ -320,6 +320,7 @@ class KakaoLoginView(GenericAPIView):
         )
         token_json = token_response.json()
         access_token = token_json.get("access_token")
+        refresh_token = token_json.get("refresh_token")
         if not access_token:
             return Response(
                 {"error": "Failed to get access token", "detail": token_json}, 
@@ -374,7 +375,12 @@ class KakaoLoginView(GenericAPIView):
             created = True
 
         # 4) JWT 토큰 발급 (kakao 타입으로 메타데이터 추가)
-        tokens = generate_jwt_tokens_with_metadata(user, 'kakao')
+        tokens = generate_jwt_tokens_with_metadata(
+            user,
+            'kakao',
+            kakao_access_token=access_token,
+            kakao_refresh_token=refresh_token,
+        )
 
         response = Response({
             "success": True,
@@ -738,10 +744,35 @@ class UserDeleteView(GenericAPIView):
         
         # 카카오 사용자인 경우 카카오 탈퇴 처리
         if user.kakao:
+            # 1순위: 요청 바디의 kakao_access_token
             kakao_access_token = request.data.get('kakao_access_token')
+
+            # 2순위: 클라이언트가 보내온 refresh/access JWT 안에 들어 있는 kakao 토큰 사용
+            # 프론트가 회원탈퇴 요청 시, 본인이 갖고 있는 refresh 토큰을 같이 보내준다고 가정
+            if not kakao_access_token:
+                from .utils import get_kakao_tokens_from_token
+
+                # 요청 바디에서 refresh 토큰 우선 사용
+                refresh_token_string = request.data.get('refresh')
+
+                # 바디에 refresh가 없다면, Authorization 헤더(access 토큰)에서도 시도
+                token_string = None
+                if refresh_token_string:
+                    token_string = refresh_token_string
+                else:
+                    auth_header = request.headers.get('Authorization')
+                    if auth_header and auth_header.startswith('Bearer '):
+                        token_string = auth_header.split(' ', 1)[1]
+
+                if token_string:
+                    kakao_tokens = get_kakao_tokens_from_token(token_string)
+                    if kakao_tokens and kakao_tokens.get('kakao_access_token'):
+                        kakao_access_token = kakao_tokens['kakao_access_token']
+
+            # 위 과정까지 했는데도 카카오 토큰이 없으면 오류 반환
             if not kakao_access_token:
                 return Response({
-                    'error': '카카오 사용자는 kakao_access_token이 필요합니다.'
+                    'error': '카카오 사용자는 kakao_access_token 또는 JWT(access/refresh)에 포함된 카카오 토큰이 필요합니다.'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             try:
