@@ -1,3 +1,4 @@
+from tabnanny import verbose
 from django.db import models
 from django.utils import timezone
 class BigCategory(models.Model):
@@ -93,6 +94,7 @@ class ProductDailyView(models.Model):
 
 class Ingredient(models.Model):
     name = models.TextField(verbose_name="성분 이름")
+    mainIngredient = models.TextField(max_length=100, verbose_name="주성분이름", null=True, blank=True)
     englishIngredient = models.CharField(max_length=100, verbose_name="영어이름")
     minRecommended = models.CharField(max_length=50, verbose_name="최소권장량")
     maxRecommended = models.CharField(max_length=50, verbose_name="최대권장량")
