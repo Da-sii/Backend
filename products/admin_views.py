@@ -25,6 +25,29 @@ def big_category_form(request):
         'categories': categories
     })
 
+def big_category_edit(request, category_id):
+    """BigCategory 수정 화면"""
+    try:
+        category = BigCategory.objects.get(id=category_id)
+    except BigCategory.DoesNotExist:
+        messages.error(request, '대분류를 찾을 수 없습니다.')
+        return redirect('admin_big_category_form')
+
+    if request.method == 'POST':
+        category_name = request.POST.get('category', '').strip()
+        
+        if not category_name:
+            messages.error(request, '카테고리 이름을 입력해주세요.')
+        else:
+            category.category = category_name
+            category.save()
+            messages.success(request, f'"{category_name}" 대분류가 성공적으로 수정되었습니다.')
+            return redirect('admin_big_category_form')
+
+    return render(request, 'products/big_category_edit.html', {
+        'category': category
+    })
+
 # SmallCategory 입력 화면 (템플릿 기반)
 def small_category_form(request):
     """SmallCategory 데이터 입력 화면"""
@@ -56,6 +79,40 @@ def small_category_form(request):
     return render(request, 'products/small_category_form.html', {
         'big_categories': big_categories,
         'small_categories': small_categories
+    })
+
+def small_category_edit(request, category_id):
+    """SmallCategory 수정 화면"""
+    try:
+        small_category = SmallCategory.objects.get(id=category_id)
+    except SmallCategory.DoesNotExist:
+        messages.error(request, '소분류를 찾을 수 없습니다.')
+        return redirect('admin_small_category_form')
+
+    if request.method == 'POST':
+        big_category_id = request.POST.get('bigCategory', '').strip()
+        category_name = request.POST.get('category', '').strip()
+        
+        if not big_category_id:
+            messages.error(request, '대분류를 선택해주세요.')
+        elif not category_name:
+            messages.error(request, '소분류 이름을 입력해주세요.')
+        else:
+            try:
+                big_category = BigCategory.objects.get(id=big_category_id)
+                small_category.bigCategory = big_category
+                small_category.category = category_name
+                small_category.save()
+                messages.success(request, f'"{big_category.category} - {category_name}" 소분류가 성공적으로 수정되었습니다.')
+                return redirect('admin_small_category_form')
+            except BigCategory.DoesNotExist:
+                messages.error(request, '선택한 대분류를 찾을 수 없습니다.')
+
+    big_categories = BigCategory.objects.all().order_by('id')
+    
+    return render(request, 'products/small_category_edit.html', {
+        'small_category': small_category,
+        'big_categories': big_categories
     })
 
 # Product 입력 화면 (템플릿 기반)
@@ -143,7 +200,7 @@ def product_form(request):
         'images',
         'ingredients',
         'category_products__category__bigCategory'
-    ).order_by('-id')[:20]  # 최근 20개만 표시
+    ).order_by('-id')  # 전체 제품 표시
     
     return render(request, 'products/product_form.html', {
         'ingredients': ingredients,
@@ -185,6 +242,40 @@ def ingredient_form(request):
     
     return render(request, 'products/ingredient_form.html', {
         'ingredients': ingredients
+    })
+
+def ingredient_edit(request, ingredient_id):
+    """Ingredient 수정 화면"""
+    try:
+        ingredient = Ingredient.objects.get(id=ingredient_id)
+    except Ingredient.DoesNotExist:
+        messages.error(request, '성분을 찾을 수 없습니다.')
+        return redirect('admin_ingredient_form')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        english_ingredient = request.POST.get('englishIngredient', '').strip()
+        min_recommended = request.POST.get('minRecommended', '').strip()
+        max_recommended = request.POST.get('maxRecommended', '').strip()
+        effect = request.POST.get('effect', '').strip()
+        side_effect = request.POST.get('sideEffect', '').strip()
+
+        if not all([name, english_ingredient, min_recommended, max_recommended, effect]):
+            messages.error(request, '필수 항목을 모두 입력해주세요.')
+        else:
+            ingredient.name = name
+            ingredient.englishIngredient = english_ingredient
+            ingredient.minRecommended = min_recommended
+            ingredient.maxRecommended = max_recommended
+            ingredient.effect = effect
+            ingredient.sideEffect = side_effect if side_effect else None
+            ingredient.save()
+
+            messages.success(request, f'"{ingredient.name}" 성분이 성공적으로 수정되었습니다.')
+            return redirect('admin_ingredient_form')
+
+    return render(request, 'products/ingredient_edit.html', {
+        'ingredient': ingredient
     })
 
 # BigCategory 삭제

@@ -104,7 +104,12 @@ class UserDeleteRequestSerializer(serializers.Serializer):
     kakao_access_token = serializers.CharField(
         required=False,
         allow_blank=True,
-        help_text="카카오에서 발급받은 access_token (카카오 사용자인 경우 필요)"
+        help_text="카카오에서 발급받은 access_token (카카오 사용자인 경우 필요, refresh 토큰에 포함된 경우 생략 가능)"
+    )
+    refresh = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="우리 서비스에서 발급한 JWT refresh 토큰 (여기에 포함된 kakao_access_token을 사용)"
     )
     apple_user_id = serializers.CharField(
         required=False,
