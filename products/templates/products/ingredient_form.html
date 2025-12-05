@@ -204,8 +204,8 @@
                             <strong>ID {{ ingredient.id }}:</strong> {{ ingredient.name }}
                             <span class="english-name">({{ ingredient.englishIngredient }})</span>
                             <div class="details">
-                                <strong>권장량:</strong> {{ ingredient.minRecommended }} ~ {{ ingredient.maxRecommended
-                                }}<br />
+                                <strong>권장량:</strong> {{ ingredient.minRecommended }} ~
+                                {{ingredient.maxRecommended}}<br />
                                 <strong>효과:</strong> {{ ingredient.effect }} {% if ingredient.sideEffect %}
                                 <br /><strong>부작용:</strong> {{ ingredient.sideEffect }} {% endif %}
                             </div>

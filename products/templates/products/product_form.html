@@ -400,8 +400,8 @@
                         <div class="categories-list">
                             {% for category_product in product.category_products.all %}
                             <span class="category-tag">
-                                [{{ category_product.category.bigCategory.category }}] {{
-                                category_product.category.category }}
+                                [{{ category_product.category.bigCategory.category }}]
+                                {{category_product.category.category }}
                             </span>
                             {% endfor %}
                         </div>
