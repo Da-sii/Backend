@@ -17,6 +17,8 @@
                 padding: 30px;
                 border-radius: 8px;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }
             h1 {
                 color: #333;
@@ -87,6 +89,9 @@
                 border-left: 3px solid #ff9800;
                 margin-bottom: 10px;
                 border-radius: 4px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
             }
             .ingredient-item strong {
                 color: #ff9800;
@@ -100,6 +105,9 @@
                 margin-top: 10px;
                 font-size: 0.9em;
                 color: #555;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
             }
             .nav-links {
                 margin-bottom: 20px;
@@ -184,7 +192,15 @@
                 {% if ingredients %} {% for ingredient in ingredients %}
                 <div class="ingredient-item">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start">
-                        <div style="flex: 1">
+                        <div
+                            style="
+                                flex: 1;
+                                word-wrap: break-word;
+                                overflow-wrap: break-word;
+                                word-break: break-word;
+                                min-width: 0;
+                            "
+                        >
                             <strong>ID {{ ingredient.id }}:</strong> {{ ingredient.name }}
                             <span class="english-name">({{ ingredient.englishIngredient }})</span>
                             <div class="details">
