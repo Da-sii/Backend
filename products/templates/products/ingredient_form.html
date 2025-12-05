@@ -204,6 +204,60 @@
         <button type="submit">추가하기</button>
       </form>
 
+            <div class="ingredient-list">
+                <h2>등록된 성분 목록</h2>
+                {% if ingredients %} {% for ingredient in ingredients %}
+                <div class="ingredient-item">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start">
+                        <div
+                            style="
+                                flex: 1;
+                                word-wrap: break-word;
+                                overflow-wrap: break-word;
+                                word-break: break-word;
+                                min-width: 0;
+                            "
+                        >
+                            <strong>ID {{ ingredient.id }}:</strong> {{ ingredient.name }}
+                            <span class="english-name">({{ ingredient.englishIngredient }})</span>
+                            <div class="details">
+                                <strong>권장량:</strong> {{ ingredient.minRecommended }} ~
+                                {{ingredient.maxRecommended}}<br />
+                                <strong>효과:</strong> {{ ingredient.effect }} {% if ingredient.sideEffect %}
+                                <br /><strong>부작용:</strong> {{ ingredient.sideEffect }} {% endif %}
+                            </div>
+                        </div>
+                        <div
+                            style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: flex-end;
+                                gap: 4px;
+                                margin-left: 15px;
+                                font-size: 0.9em;
+                                white-space: nowrap;
+                            "
+                        >
+                            <a
+                                href="{% url 'admin_ingredient_edit' ingredient.id %}"
+                                style="color: #2196f3; text-decoration: none"
+                                >수정</a
+                            >
+                            <a
+                                href="{% url 'admin_ingredient_delete' ingredient.id %}"
+                                style="color: #f44336; text-decoration: none"
+                                onclick="return confirm('정말 삭제하시겠습니까?');"
+                                >삭제</a
+                            >
+                        </div>
+                    </div>
+                </div>
+                {% endfor %} {% else %}
+                <p>등록된 성분이 없습니다.</p>
+                {% endif %}
+            </div>
+        </div>
+    </body>
       <div class="ingredient-list">
         <h2>등록된 성분 목록</h2>
         {% if ingredients %} {% for ingredient in ingredients %}
