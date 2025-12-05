@@ -152,7 +152,10 @@
                     <strong>ID {{ small_category.id }}:</strong> 
                     <span class="big-category-name">[{{ small_category.bigCategory.category }}]</span>
                     {{ small_category.category }}
-                    <a href="{% url 'admin_small_category_delete' small_category.id %}" style="color: #f44336; text-decoration: none; margin-left: 15px; font-size: 0.9em;" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+                    <div style="display: inline-block; margin-left: 15px; font-size: 0.9em;">
+                        <a href="{% url 'admin_small_category_edit' small_category.id %}" style="color: #2196f3; text-decoration: none; margin-right: 10px;">수정</a>
+                        <a href="{% url 'admin_small_category_delete' small_category.id %}" style="color: #f44336; text-decoration: none;" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+                    </div>
                 </div>
                 {% endfor %}
             {% else %}

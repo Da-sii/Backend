@@ -13,6 +13,16 @@ class IngredientAdmin(admin.ModelAdmin):
         "englishIngredient",
         "minRecommended",
         "maxRecommended",
+        "effect",
+        "sideEffect",
+    )
+    list_editable = (
+        "name",
+        "englishIngredient",
+        "minRecommended",
+        "maxRecommended",
+        "effect",
+        "sideEffect",
     )
     search_fields = ("name", "englishIngredient", "effect", "sideEffect")
     list_filter = ()
