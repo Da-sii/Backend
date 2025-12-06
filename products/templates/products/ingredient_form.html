@@ -221,6 +221,7 @@
                             <strong>ID {{ ingredient.id }}:</strong> {{ ingredient.name }}
                             <span class="english-name">({{ ingredient.englishIngredient }})</span>
                             <div class="details">
+                                <strong>주성분:</strong> {{ ingredient.mainIngredient }} <br />
                                 <strong>권장량:</strong> {{ ingredient.minRecommended }} ~
                                 {{ingredient.maxRecommended}}<br />
                                 <strong>효과:</strong> {{ ingredient.effect }} {% if ingredient.sideEffect %}
