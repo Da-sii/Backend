@@ -230,9 +230,9 @@
               <div class="details">
                 <strong>주성분:</strong> {{ ingredient.mainIngredient|default:"None" }}<br />
                 <strong>권장량:</strong> {{ ingredient.minRecommended }} ~ {{ ingredient.maxRecommended }}<br />
-                <strong>효과:</strong> {{ ingredient.effect|truncatewords:20 }}
+                <strong>효과:</strong> {{ ingredient.effect }}
                 {% if ingredient.sideEffect %}
-                <br /><strong>부작용:</strong> {{ ingredient.sideEffect|truncatewords:20 }}
+                <br /><strong>부작용:</strong> {{ ingredient.sideEffect }}
                 {% endif %}
               </div>
             </div>
