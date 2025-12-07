@@ -189,7 +189,7 @@ def product_form(request):
                 messages.error(request, f'오류가 발생했습니다: {str(e)}')
     
     # 기존 데이터 가져오기
-    ingredients = Ingredient.objects.all().order_by('name')
+    ingredients = Ingredient.objects.all().order_by('id')
     small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
     # 제품 정보를 더 자세히 가져오기 (이미지, 성분, 카테고리 개수 포함)
     products = Product.objects.annotate(
@@ -200,7 +200,7 @@ def product_form(request):
         'images',
         'ingredients',
         'category_products__category__bigCategory'
-    ).order_by('-id')  # 전체 제품 표시
+    ).order_by('id')  # 전체 제품 표시 (ID 오름차순)
     
     return render(request, 'products/product_form.html', {
         'ingredients': ingredients,
@@ -238,7 +238,7 @@ def ingredient_form(request):
             return redirect('admin_ingredient_form')
     
     # 기존 성분 목록 가져오기
-    ingredients = Ingredient.objects.all().order_by('name')
+    ingredients = Ingredient.objects.all().order_by('id')
     
     return render(request, 'products/ingredient_form.html', {
         'ingredients': ingredients
@@ -473,7 +473,7 @@ def product_edit(request, product_id):
             return redirect('admin_product_form')
     
     # 기존 데이터 가져오기
-    ingredients = Ingredient.objects.all().order_by('name')
+    ingredients = Ingredient.objects.all().order_by('id')
     small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
     
     return render(request, 'products/product_edit.html', {

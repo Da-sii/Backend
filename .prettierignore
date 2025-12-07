@@ -1,0 +1,10 @@
+# Django 템플릿 파일
+**/templates/**/*.html
+
+# 기타 무시할 파일
+**/migrations/**
+**/__pycache__/**
+*.pyc
+*.pyo
+*.pyd
+
