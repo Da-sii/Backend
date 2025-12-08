@@ -89,7 +89,7 @@ class AppleSigninView(GenericAPIView):
         try:
             # Apple 토큰 검증
             payload = verify_identity_token(identity_token)
-            logger.info(f"Apple 토큰 검증 성공 - apple_id: {payload.get('sub')}")
+            logger.info(f"Apple 토큰 검증 성공 - apple_sub: {payload.get('sub')}")
                 
         except Exception as e:
             logger.error(f"Apple 토큰 검증 실패: {str(e)}")
@@ -102,26 +102,36 @@ class AppleSigninView(GenericAPIView):
             )
 
         # Apple ID 및 이메일 추출
-        apple_id = payload["sub"]
+        apple_sub = payload["sub"]
         email = payload.get("email")
         
         # 이메일이 없으면 Apple ID로 생성
         if not email:
-            email = f"{apple_id}@apple.privaterelay.appleid.com"
+            email = f"{apple_sub}@apple.privaterelay.appleid.com"
         
-        # 사용자 생성 또는 조회
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "apple": True,
-                "nickname": User.objects.generate_nickname(),
-            },
-        )
-        
-        # 기존 사용자라면 Apple 로그인 플래그 업데이트
-        if not created and not user.apple:
-            user.apple = True
+        # 사용자 생성 또는 조회(기준: apple_sub)
+        user = User.objects.filter(apple_sub=apple_sub).first()
+
+        if user:
+            created = False
+
+            # email이 비어있고 payload에 email이 있으면 업데이트
+            if not user.email and email:
+                user.email = email
+            
+            if not user.apple:
+                user.apple = True
+
             user.save()
+        else:
+            # 신규 생성
+            user = User.objects.create(
+                email=email,
+                apple=True,
+                apple_sub = apple_sub,
+                nickname = User.objects.generate_nickname(),
+            )
+            created = True
 
         # JWT 토큰 발급 (apple 타입으로 메타데이터 추가)
         tokens = generate_jwt_tokens_with_metadata(user, 'apple')
