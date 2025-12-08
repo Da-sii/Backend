@@ -6,10 +6,11 @@ from django.conf import settings
 import logging
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from drf_spectacular.openapi import OpenApiResponse
+from rest_framework.views import APIView
 
 from users.models import User
 from users.utils import generate_jwt_tokens_with_metadata
-from socials.serializers import AppleSigninSerializer, AdvertisementInquirySerializer
+from socials.serializers import AppleSigninSerializer, AdvertisementInquirySerializer, SocialPreLoginSerializer
 from socials.utils import verify_identity_token, send_advertisement_inquiry_email
 
 logger = logging.getLogger(__name__)
@@ -163,7 +164,6 @@ class AppleSigninView(GenericAPIView):
         logger.info(f"Apple 로그인 완료 - 사용자: {user.email}, 새 사용자: {created}")
         return response
 
-
 class AdvertisementInquiryView(GenericAPIView):
     """광고/제휴 문의 API"""
     serializer_class = AdvertisementInquirySerializer
@@ -260,3 +260,73 @@ class AdvertisementInquiryView(GenericAPIView):
                 "message": "입력 데이터를 확인해주세요.",
                 "errors": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
+
+class SocialPreLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="소셜 로그인 prelogin (약관 필요 여부 조회)",
+        description=(
+            "소셜 로그인 진행 전, 사용자 존재 여부 및 약관 동의 필요 여부를 조회합니다.(is_new_user가 True면 약관동의 필요)\n\n"
+            "- Apple: apple_sub로 조회 (항상 존재하는 고유 ID)\n"
+            "- Kakao: email로 조회 (SDK에서 제공)\n"
+        ),
+        tags=["소셜 로그인"],
+        request=SocialPreLoginSerializer,
+        responses={
+            200: OpenApiResponse(
+                description="조회 성공",
+                examples=[
+                    OpenApiExample(
+                        "Apple 신규 사용자",
+                        value={
+                            "is_new_user": True
+                        }
+                    ),
+                    OpenApiExample(
+                        "Apple 기존 사용자",
+                        value={
+                            "is_new_user": False
+                        }
+                    ),
+                    OpenApiExample(
+                        "Kakao 신규 사용자",
+                        value={
+                            "is_new_user": True
+                        }
+                    ),
+                    OpenApiExample(
+                        "Kakao 기존 사용자",
+                        value={
+                            "is_new_user": False
+                        }
+                    ),
+                ]
+            ),
+            400: OpenApiResponse(description="잘못된 요청")
+        }
+    )
+
+    def post(self, request):
+        serializer = SocialPreLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        provider = serializer.validated_data["provider"]
+
+        # Apple
+        if provider == "apple":
+            apple_sub = serializer.validated_data["apple_sub"]
+            user = User.objects.filter(apple_sub=apple_sub).first()
+
+            return Response({
+                "is_new_user": user is None
+            })
+
+        # Kakao
+        if provider == "kakao":
+            email = serializer.validated_data["email"]
+            user = User.objects.filter(email=email).first()
+
+            return Response({
+                "is_new_user": user is None
+            })
