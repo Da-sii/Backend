@@ -97,11 +97,22 @@ class AdvertisementInquirySerializer(serializers.Serializer):
             raise serializers.ValidationError("올바른 연락처 형식을 입력해주세요. (예: 010-1234-5678)")
         return value
 
-# class SocialPreLoginSerializer(serializers.Serializer):
-#     provider = serializers.ChoiceField(choices=["apple", "kakao"])
+class SocialPreLoginSerializer(serializers.Serializer):
+    provider = serializers.ChoiceField(choices=["apple", "kakao"])
+    apple_sub = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
     
-    
-#     def validate(self, data):
-#         provider = data.get("provider")
+    def validate(self, data):
+        provider = data.get("provider")
+
+        if provider == "apple":
+            if not data.get("apple_sub"):
+                raise serializers.ValidationError("apple 로그인은 apple_sub이 필요합니다.")
+
+        if provider == "kakao":
+            if not data.get("email"):
+                raise serializers.ValidationError("kakao 로그인은 email이 필요합니다.")
+
+        return data
 
         
