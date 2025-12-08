@@ -23,7 +23,6 @@ class AppleSigninSerializer(serializers.Serializer):
         
         return value
 
-
 class AdvertisementInquirySerializer(serializers.Serializer):
     """광고/제휴 문의 시리얼라이저 (DB 저장 없이 이메일 전송만)"""
     
@@ -97,3 +96,23 @@ class AdvertisementInquirySerializer(serializers.Serializer):
         if not re.match(phone_pattern, value.replace('-', '')):
             raise serializers.ValidationError("올바른 연락처 형식을 입력해주세요. (예: 010-1234-5678)")
         return value
+
+class SocialPreLoginSerializer(serializers.Serializer):
+    provider = serializers.ChoiceField(choices=["apple", "kakao"])
+    apple_sub = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
+    
+    def validate(self, data):
+        provider = data.get("provider")
+
+        if provider == "apple":
+            if not data.get("apple_sub"):
+                raise serializers.ValidationError("apple 로그인은 apple_sub이 필요합니다.")
+
+        if provider == "kakao":
+            if not data.get("email"):
+                raise serializers.ValidationError("kakao 로그인은 email이 필요합니다.")
+
+        return data
+
+        

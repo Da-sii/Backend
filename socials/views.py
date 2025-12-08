@@ -6,10 +6,11 @@ from django.conf import settings
 import logging
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from drf_spectacular.openapi import OpenApiResponse
+from rest_framework.views import APIView
 
 from users.models import User
 from users.utils import generate_jwt_tokens_with_metadata
-from socials.serializers import AppleSigninSerializer, AdvertisementInquirySerializer
+from socials.serializers import AppleSigninSerializer, AdvertisementInquirySerializer, SocialPreLoginSerializer
 from socials.utils import verify_identity_token, send_advertisement_inquiry_email
 
 logger = logging.getLogger(__name__)
@@ -89,7 +90,7 @@ class AppleSigninView(GenericAPIView):
         try:
             # Apple 토큰 검증
             payload = verify_identity_token(identity_token)
-            logger.info(f"Apple 토큰 검증 성공 - apple_id: {payload.get('sub')}")
+            logger.info(f"Apple 토큰 검증 성공 - apple_sub: {payload.get('sub')}")
                 
         except Exception as e:
             logger.error(f"Apple 토큰 검증 실패: {str(e)}")
@@ -102,26 +103,36 @@ class AppleSigninView(GenericAPIView):
             )
 
         # Apple ID 및 이메일 추출
-        apple_id = payload["sub"]
+        apple_sub = payload["sub"]
         email = payload.get("email")
         
         # 이메일이 없으면 Apple ID로 생성
         if not email:
-            email = f"{apple_id}@apple.privaterelay.appleid.com"
+            email = f"{apple_sub}@apple.privaterelay.appleid.com"
         
-        # 사용자 생성 또는 조회
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "apple": True,
-                "nickname": User.objects.generate_nickname(),
-            },
-        )
-        
-        # 기존 사용자라면 Apple 로그인 플래그 업데이트
-        if not created and not user.apple:
-            user.apple = True
+        # 사용자 생성 또는 조회(기준: apple_sub)
+        user = User.objects.filter(apple_sub=apple_sub).first()
+
+        if user:
+            created = False
+
+            # email이 비어있고 payload에 email이 있으면 업데이트
+            if not user.email and email:
+                user.email = email
+            
+            if not user.apple:
+                user.apple = True
+
             user.save()
+        else:
+            # 신규 생성
+            user = User.objects.create(
+                email=email,
+                apple=True,
+                apple_sub = apple_sub,
+                nickname = User.objects.generate_nickname(),
+            )
+            created = True
 
         # JWT 토큰 발급 (apple 타입으로 메타데이터 추가)
         tokens = generate_jwt_tokens_with_metadata(user, 'apple')
@@ -152,7 +163,6 @@ class AppleSigninView(GenericAPIView):
         
         logger.info(f"Apple 로그인 완료 - 사용자: {user.email}, 새 사용자: {created}")
         return response
-
 
 class AdvertisementInquiryView(GenericAPIView):
     """광고/제휴 문의 API"""
@@ -250,3 +260,73 @@ class AdvertisementInquiryView(GenericAPIView):
                 "message": "입력 데이터를 확인해주세요.",
                 "errors": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
+
+class SocialPreLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="소셜 로그인 prelogin (약관 필요 여부 조회)",
+        description=(
+            "소셜 로그인 진행 전, 사용자 존재 여부 및 약관 동의 필요 여부를 조회합니다.(is_new_user가 True면 약관동의 필요)\n\n"
+            "- Apple: apple_sub로 조회 (항상 존재하는 고유 ID)\n"
+            "- Kakao: email로 조회 (SDK에서 제공)\n"
+        ),
+        tags=["소셜 로그인"],
+        request=SocialPreLoginSerializer,
+        responses={
+            200: OpenApiResponse(
+                description="조회 성공",
+                examples=[
+                    OpenApiExample(
+                        "Apple 신규 사용자",
+                        value={
+                            "is_new_user": True
+                        }
+                    ),
+                    OpenApiExample(
+                        "Apple 기존 사용자",
+                        value={
+                            "is_new_user": False
+                        }
+                    ),
+                    OpenApiExample(
+                        "Kakao 신규 사용자",
+                        value={
+                            "is_new_user": True
+                        }
+                    ),
+                    OpenApiExample(
+                        "Kakao 기존 사용자",
+                        value={
+                            "is_new_user": False
+                        }
+                    ),
+                ]
+            ),
+            400: OpenApiResponse(description="잘못된 요청")
+        }
+    )
+
+    def post(self, request):
+        serializer = SocialPreLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        provider = serializer.validated_data["provider"]
+
+        # Apple
+        if provider == "apple":
+            apple_sub = serializer.validated_data["apple_sub"]
+            user = User.objects.filter(apple_sub=apple_sub).first()
+
+            return Response({
+                "is_new_user": user is None
+            })
+
+        # Kakao
+        if provider == "kakao":
+            email = serializer.validated_data["email"]
+            user = User.objects.filter(email=email).first()
+
+            return Response({
+                "is_new_user": user is None
+            })
