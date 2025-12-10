@@ -178,7 +178,7 @@
         </div>
         {% endif %}
 
-        <form method="POST" id="productForm">
+        <form method="POST" enctype="multipart/form-data" id="productForm">
             {% csrf_token %}
             
             <!-- 기본 정보 -->
@@ -232,14 +232,10 @@
 
             <!-- 새 이미지 URL -->
             <div class="form-section">
-                <h2>새 이미지 URL 추가</h2>
-                <div id="imageContainer">
-                    <div class="dynamic-item">
-                        <input type="url" name="new_image_urls[]" placeholder="https://example.com/image.jpg" />
-                        <button type="button" class="btn-remove" onclick="removeItem(this)" style="display: none;">삭제</button>
-                    </div>
-                </div>
-                <button type="button" class="btn-add" onclick="addImageField()">이미지 추가</button>
+                <h2>새 이미지 파일 업로드</h2>
+                <p style="color: #666; margin-bottom: 10px;">파일 여러 개 업로드 가능</p>
+
+                <input type="file" name="new_image_files" multiple accept="image/*" />
             </div>
 
             <!-- 기존 성분 -->
