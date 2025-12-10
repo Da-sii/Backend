@@ -128,6 +128,7 @@ def product_form(request):
         unit = request.POST.get('unit', '').strip()
         piece = request.POST.get('piece', '').strip()
         product_type = request.POST.get('productType', '').strip()
+        coupang = request.POST.get('coupang', '').strip()
         
         # 필수 필드 검증
         if not all([name, company, price, unit, piece, product_type]):
@@ -141,7 +142,8 @@ def product_form(request):
                     price=int(price),
                     unit=unit,
                     piece=piece,
-                    productType=product_type
+                    productType=product_type,
+                    coupang=coupang
                 )
                 
                 # 이미지 파일 처리
@@ -385,6 +387,7 @@ def product_edit(request, product_id):
         product.unit = request.POST.get('unit', '').strip()
         product.piece = request.POST.get('piece', '').strip()
         product.productType = request.POST.get('productType', '').strip()
+        product.coupang = request.POST.get('coupang', '').strip()
         
         try:
             product.price = int(request.POST.get('price', 0))

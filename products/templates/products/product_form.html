@@ -151,6 +151,11 @@
                 <label>식품 유형 *</label>
                 <input type="text" name="productType" required>
             </div>
+
+            <div class="form-group">
+                <label>쿠팡 링크 *</label>
+                <input type="text" name="coupang" required>
+            </div>
         </div>
 
         <!-- 이미지 -->
@@ -220,6 +225,10 @@
 
             <div style="margin-top: 10px;">
                 단위: {{ product.unit }} / 개수: {{ product.piece }} / 유형: {{ product.productType }}
+            </div>
+
+            <div style="margin-top: 10px;">
+                쿠팡 링크: {{ product.coupang }}
             </div>
 
             <div style="margin-top: 15px; text-align: right;">
