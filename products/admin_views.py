@@ -402,12 +402,11 @@ def product_edit(request, product_id):
             if delete_image_ids:
                 ProductImage.objects.filter(id__in=delete_image_ids, product=product).delete()
             
-            # 새 이미지 URL 추가
-            new_image_urls = request.POST.getlist('new_image_urls[]')
-            for url in new_image_urls:
-                url = url.strip()
-                if url:
-                    ProductImage.objects.create(product=product, url=url)
+            # 새 이미지 추가
+            new_image_files = request.FILES.getlist('new_image_files')
+            if new_image_files:
+                uploaded_images = upload_images_to_s3(product, new_image_files)
+                ProductImage.objects.bulk_create(uploaded_images)
             
             # 기존 성분 삭제 처리
             delete_ingredient_ids = request.POST.getlist('delete_ingredient_ids[]')
