@@ -1,531 +1,272 @@
 <!DOCTYPE html>
 <html lang="ko">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>제품 추가</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                max-width: 1000px;
-                margin: 50px auto;
-                padding: 20px;
-                background-color: #f5f5f5;
-            }
-            .container {
-                background-color: white;
-                padding: 30px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-            }
-            h1 {
-                color: #333;
-                margin-bottom: 30px;
-            }
-            .form-section {
-                margin-bottom: 30px;
-                padding: 20px;
-                background-color: #f9f9f9;
-                border-radius: 4px;
-            }
-            .form-section h2 {
-                color: #555;
-                margin-top: 0;
-                margin-bottom: 20px;
-                font-size: 1.2em;
-            }
-            .form-group {
-                margin-bottom: 15px;
-            }
-            label {
-                display: block;
-                margin-bottom: 5px;
-                font-weight: bold;
-                color: #555;
-            }
-            input[type='text'],
-            input[type='number'],
-            input[type='url'],
-            select,
-            textarea {
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                font-size: 16px;
-                box-sizing: border-box;
-            }
-            select {
-                background-color: white;
-                cursor: pointer;
-            }
-            button {
-                background-color: #4caf50;
-                color: white;
-                padding: 12px 24px;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 16px;
-                margin-right: 10px;
-            }
-            button:hover {
-                background-color: #45a049;
-            }
-            .btn-remove {
-                background-color: #f44336;
-                padding: 8px 16px;
-                font-size: 14px;
-            }
-            .btn-remove:hover {
-                background-color: #da190b;
-            }
-            .btn-add {
-                background-color: #2196f3;
-                padding: 8px 16px;
-                font-size: 14px;
-            }
-            .btn-add:hover {
-                background-color: #0b7dda;
-            }
-            .messages {
-                margin-bottom: 20px;
-            }
-            .message {
-                padding: 10px;
-                border-radius: 4px;
-                margin-bottom: 10px;
-            }
-            .success {
-                background-color: #d4edda;
-                color: #155724;
-                border: 1px solid #c3e6cb;
-            }
-            .error {
-                background-color: #f8d7da;
-                color: #721c24;
-                border: 1px solid #f5c6cb;
-            }
-            .dynamic-item {
-                display: flex;
-                gap: 10px;
-                margin-bottom: 10px;
-                align-items: flex-end;
-            }
-            .dynamic-item > * {
-                flex: 1;
-            }
-            .dynamic-item button {
-                flex: 0 0 auto;
-            }
-            .product-list {
-                margin-top: 40px;
-            }
-            .product-list h2 {
-                color: #333;
-                margin-bottom: 15px;
-            }
-            .product-item {
-                padding: 20px;
-                background-color: #f9f9f9;
-                border-left: 3px solid #4caf50;
-                margin-bottom: 15px;
-                border-radius: 4px;
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                word-break: break-word;
-            }
-            .product-item strong {
-                color: #4caf50;
-            }
-            .product-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 15px;
-            }
-            .product-title {
-                flex: 1;
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                word-break: break-word;
-            }
-            .product-id {
-                color: #666;
-                font-size: 0.9em;
-                margin-right: 10px;
-            }
-            .product-name {
-                font-size: 1.2em;
-                font-weight: bold;
-                color: #333;
-                margin-bottom: 5px;
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                word-break: break-word;
-            }
-            .product-company {
-                color: #666;
-                font-size: 0.95em;
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                word-break: break-word;
-            }
-            .product-price {
-                font-size: 1.1em;
-                color: #4caf50;
-                font-weight: bold;
-            }
-            .product-details {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 10px;
-                margin-top: 15px;
-                padding-top: 15px;
-                border-top: 1px solid #ddd;
-            }
-            .detail-item {
-                font-size: 0.9em;
-            }
-            .detail-label {
-                color: #666;
-                font-weight: bold;
-                margin-right: 5px;
-            }
-            .detail-value {
-                color: #333;
-            }
-            .categories-list {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 5px;
-                margin-top: 5px;
-            }
-            .category-tag {
-                background-color: #e3f2fd;
-                color: #1976d2;
-                padding: 3px 8px;
-                border-radius: 12px;
-                font-size: 0.85em;
-            }
-            .stats {
-                display: flex;
-                gap: 15px;
-                margin-top: 10px;
-                font-size: 0.9em;
-            }
-            .stat-item {
-                color: #666;
-            }
-            .stat-value {
-                color: #4caf50;
-                font-weight: bold;
-            }
-            .nav-links {
-                margin-bottom: 20px;
-            }
-            .nav-links a {
-                color: #2196f3;
-                text-decoration: none;
-                margin-right: 15px;
-            }
-            .nav-links a:hover {
-                text-decoration: underline;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="nav-links">
-                <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
-                <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
-                <a href="{% url 'admin_ingredient_form' %}">성분</a>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>제품 추가</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .form-section h2 {
+            color: #555;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type='text'],
+        input[type='number'],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .btn-remove {
+            background-color: #f44336;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .btn-add {
+            background-color: #2196f3;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .messages { margin-bottom: 20px; }
+        .success { background-color: #d4edda; padding: 10px; }
+        .error { background-color: #f8d7da; padding: 10px; }
+
+        .product-list { margin-top: 40px; }
+        .product-item {
+            padding: 20px; background-color: #f9f9f9;
+            border-left: 3px solid #4caf50; margin-bottom: 15px; border-radius: 4px;
+        }
+
+        .product-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+
+        .nav-links a { margin-right: 15px; text-decoration: none; color: #2196f3; }
+        .nav-links a:hover { text-decoration: underline; }
+
+        .dynamic-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="nav-links">
+        <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+        <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
+        <a href="{% url 'admin_ingredient_form' %}">성분</a>
+    </div>
+
+    <h1>제품 추가</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- ✅ 제품 등록 Form은 여기까지만 -->
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- 기본 정보 -->
+        <div class="form-section">
+            <h2>기본 정보</h2>
+
+            <div class="form-group">
+                <label>제품 이름 *</label>
+                <input type="text" name="name" required>
             </div>
 
-            <h1>제품 추가</h1>
-
-            {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                <div class="message {{ message.tags }}">{{ message }}</div>
-                {% endfor %}
+            <div class="form-group">
+                <label>회사 *</label>
+                <input type="text" name="company" required>
             </div>
-            {% endif %}
 
-            <form method="POST" id="productForm" enctype="multipart/form-data">
-                {% csrf_token %}
+            <div class="form-group">
+                <label>가격 *</label>
+                <input type="number" name="price" required>
+            </div>
 
-                <!-- 기본 정보 -->
-                <div class="form-section">
-                    <h2>기본 정보</h2>
-                    <div class="form-group">
-                        <label for="name">제품 이름 *</label>
-                        <input type="text" id="name" name="name" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="company">회사 이름 *</label>
-                        <input type="text" id="company" name="company" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="price">가격 *</label>
-                        <input type="number" id="price" name="price" required min="0" />
-                    </div>
-                    <div class="form-group">
-                        <label for="unit">단위 *</label>
-                        <input type="text" id="unit" name="unit" required placeholder="예: 1병, 1박스 등" />
-                    </div>
-                    <div class="form-group">
-                        <label for="piece">개수 *</label>
-                        <input type="text" id="piece" name="piece" required placeholder="예: 30정, 60캡슐 등" />
-                    </div>
-                    <div class="form-group">
-                        <label for="productType">식품의 유형 *</label>
-                        <input
-                            type="text"
-                            id="productType"
-                            name="productType"
-                            required
-                            placeholder="예: 건강기능식품, 일반식품 등"
-                        />
-                    </div>
-                </div>
+            <div class="form-group">
+                <label>단위 *</label>
+                <input type="text" name="unit" required>
+            </div>
 
-                <!-- 이미지 URL -->
-                <div class="form-section">
-                    <h2>제품 이미지</h2>
-                    <!-- 파일 업로드 -->
-                    <div class="form-group">
-                        <label>이미지 파일 업로드</label>
-                        <input type="file" name="image_files" accept="image/*" multiple />
-                    </div>
-                </div>
+            <div class="form-group">
+                <label>개수 *</label>
+                <input type="text" name="piece" required>
+            </div>
 
-                <!-- 성분 -->
-                <div class="form-section">
-                    <h2>성분</h2>
-                    <div id="ingredientContainer">
-                        <div class="dynamic-item">
-                            <select name="ingredient_ids[]">
-                                <option value="">-- 성분 선택 --</option>
-                                {% for ingredient in ingredients %}
-                                <option value="{{ ingredient.id }}">
-                                    {{ ingredient.name }} ({{ ingredient.englishIngredient }})
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <input type="text" name="amounts[]" placeholder="포함량 (예: 1000mg)" />
-                            <button type="button" class="btn-remove" onclick="removeItem(this)" style="display: none">
-                                삭제
-                            </button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-add" onclick="addIngredientField()">성분 추가</button>
-                </div>
-
-                <!-- 카테고리 -->
-                <div class="form-section">
-                    <h2>카테고리</h2>
-                    <div id="categoryContainer">
-                        <div class="dynamic-item">
-                            <select name="category_ids[]">
-                                <option value="">-- 카테고리 선택 --</option>
-                                {% for category in small_categories %}
-                                <option value="{{ category.id }}">
-                                    [{{ category.bigCategory.category }}] {{ category.category }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <button type="button" class="btn-remove" onclick="removeItem(this)" style="display: none">
-                                삭제
-                            </button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-add" onclick="addCategoryField()">카테고리 추가</button>
-                </div>
-
-                <button type="submit">제품 추가하기</button>
-            </form>
-
-            <div class="product-list">
-                <h2>등록된 제품 목록</h2>
-                {% if products %} {% for product in products %}
-                <div class="product-item">
-                    <div class="product-header">
-                        <div class="product-title">
-                            <span class="product-id">ID: {{ product.id }}</span>
-                            <div class="product-name">{{ product.name }}</div>
-                            <div class="product-company">{{ product.company }}</div>
-                        </div>
-                        <div class="product-price">{{ product.price|floatformat:0 }}원</div>
-                    </div>
-
-                    <div class="product-details">
-                        <div class="detail-item">
-                            <span class="detail-label">단위:</span>
-                            <span class="detail-value">{{ product.unit }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">개수:</span>
-                            <span class="detail-value">{{ product.piece }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">식품 유형:</span>
-                            <span class="detail-value">{{ product.productType }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">조회수:</span>
-                            <span class="detail-value">{{ product.viewCount }}</span>
-                        </div>
-                    </div>
-
-                    <div class="stats">
-                        <div class="stat-item">이미지: <span class="stat-value">{{ product.image_count }}개</span></div>
-                        <div class="stat-item">
-                            성분: <span class="stat-value">{{ product.ingredient_count }}개</span>
-                        </div>
-                        <div class="stat-item">
-                            카테고리: <span class="stat-value">{{ product.category_count }}개</span>
-                        </div>
-                    </div>
-
-                    {% if product.category_products.all %}
-                    <div class="detail-item" style="margin-top: 10px">
-                        <span class="detail-label">카테고리:</span>
-                        <div class="categories-list">
-                            {% for category_product in product.category_products.all %}
-                            <span class="category-tag">
-                                [{{ category_product.category.bigCategory.category }}]
-                                {{category_product.category.category }}
-                            </span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %} {% if product.ingredients.all %}
-                    <div class="detail-item" style="margin-top: 10px">
-                        <span class="detail-label">주요 성분:</span>
-                        <div class="categories-list">
-                            {% for product_ingredient in product.ingredients.all|slice:":5" %}
-                            <span class="category-tag" style="background-color: #fff3e0; color: #e65100">
-                                {{ product_ingredient.ingredient.name }} ({{ product_ingredient.amount }})
-                            </span>
-                            {% endfor %} {% if product.ingredient_count > 5 %}
-                            <span class="category-tag" style="background-color: #f5f5f5; color: #666">
-                                +{{ product.ingredient_count|add:"-5" }}개 더
-                            </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <div
-                        style="margin-top: 15px; text-align: right; display: flex; gap: 10px; justify-content: flex-end"
-                    >
-                        <a
-                            href="{% url 'admin_product_edit' product.id %}"
-                            style="
-                                background-color: #2196f3;
-                                color: white;
-                                padding: 8px 16px;
-                                text-decoration: none;
-                                border-radius: 4px;
-                                font-size: 14px;
-                                display: inline-block;
-                            "
-                            >수정하기</a
-                        >
-                        <a
-                            href="{% url 'admin_product_edit' product.id %}?action=delete"
-                            style="
-                                background-color: #f44336;
-                                color: white;
-                                padding: 8px 16px;
-                                text-decoration: none;
-                                border-radius: 4px;
-                                font-size: 14px;
-                                display: inline-block;
-                            "
-                            >삭제하기</a
-                        >
-                    </div>
-                </div>
-                {% endfor %} {% else %}
-                <p>등록된 제품이 없습니다.</p>
-                {% endif %}
+            <div class="form-group">
+                <label>식품 유형 *</label>
+                <input type="text" name="productType" required>
             </div>
         </div>
 
-        <script>
-            function addImageField() {
-                const container = document.getElementById('imageContainer');
-                const newItem = document.createElement('div');
-                newItem.className = 'dynamic-item';
-                newItem.innerHTML = `
-                <input type="url" name="image_urls[]" placeholder="https://example.com/image.jpg" />
-                <button type="button" class="btn-remove" onclick="removeItem(this)">삭제</button>
-            `;
-                container.appendChild(newItem);
-                updateRemoveButtons('imageContainer');
-            }
+        <!-- 이미지 -->
+        <div class="form-section">
+            <h2>제품 이미지</h2>
+            <input type="file" name="image_files" multiple accept="image/*">
+        </div>
 
-            function addIngredientField() {
-                const container = document.getElementById('ingredientContainer');
-                const firstSelect = container.querySelector('select');
-                const newItem = document.createElement('div');
-                newItem.className = 'dynamic-item';
-                newItem.innerHTML = `
-                <select name="ingredient_ids[]">
-                    ${firstSelect.innerHTML}
-                </select>
-                <input type="text" name="amounts[]" placeholder="포함량 (예: 1000mg)" />
-                <button type="button" class="btn-remove" onclick="removeItem(this)">삭제</button>
-            `;
-                container.appendChild(newItem);
-                updateRemoveButtons('ingredientContainer');
-            }
+        <!-- 성분 -->
+        <div class="form-section">
+            <h2>성분</h2>
 
-            function addCategoryField() {
-                const container = document.getElementById('categoryContainer');
-                const firstSelect = container.querySelector('select');
-                const newItem = document.createElement('div');
-                newItem.className = 'dynamic-item';
-                newItem.innerHTML = `
-                <select name="category_ids[]">
-                    ${firstSelect.innerHTML}
-                </select>
-                <button type="button" class="btn-remove" onclick="removeItem(this)">삭제</button>
-            `;
-                container.appendChild(newItem);
-                updateRemoveButtons('categoryContainer');
-            }
+            <div id="ingredientContainer">
+                <div class="dynamic-item">
+                    <select name="ingredient_ids[]">
+                        <option value="">-- 성분 선택 --</option>
+                        {% for ingredient in ingredients %}
+                        <option value="{{ ingredient.id }}">{{ ingredient.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" name="amounts[]" placeholder="예: 1000mg">
+                </div>
+            </div>
 
-            function removeItem(button) {
-                button.parentElement.remove();
-                updateRemoveButtons('imageContainer');
-                updateRemoveButtons('ingredientContainer');
-                updateRemoveButtons('categoryContainer');
-            }
+            <button type="button" class="btn-add" onclick="addIngredientField()">성분 추가</button>
+        </div>
 
-            function updateRemoveButtons(containerId) {
-                const container = document.getElementById(containerId);
-                const items = container.querySelectorAll('.dynamic-item');
-                items.forEach((item, index) => {
-                    const removeBtn = item.querySelector('.btn-remove');
-                    if (removeBtn) {
-                        if (items.length > 1) {
-                            removeBtn.style.display = 'block';
-                        } else {
-                            removeBtn.style.display = 'none';
-                        }
-                    }
-                });
-            }
+        <!-- 카테고리 -->
+        <div class="form-section">
+            <h2>카테고리</h2>
 
-            // 초기화
-            updateRemoveButtons('imageContainer');
-            updateRemoveButtons('ingredientContainer');
-            updateRemoveButtons('categoryContainer');
-        </script>
-    </body>
+            <div id="categoryContainer">
+                <div class="dynamic-item">
+                    <select name="category_ids[]">
+                        <option value="">-- 카테고리 선택 --</option>
+                        {% for category in small_categories %}
+                        <option value="{{ category.id }}">[{{ category.bigCategory.category }}] {{ category.category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <button type="button" class="btn-add" onclick="addCategoryField()">카테고리 추가</button>
+        </div>
+
+        <button type="submit">제품 추가하기</button>
+    </form>
+    <!-- ❗ form 종료 -->
+
+    <!-- ================================== -->
+    <!--        여기부터 제품 리스트        -->
+    <!-- ================================== -->
+
+    <div class="product-list">
+        <h2>등록된 제품 목록</h2>
+
+        {% for product in products %}
+        <div class="product-item">
+            <div class="product-header">
+                <div>
+                    <div>ID: {{ product.id }}</div>
+                    <div><strong>{{ product.name }}</strong></div>
+                    <div>{{ product.company }}</div>
+                </div>
+                <div>{{ product.price }}원</div>
+            </div>
+
+            <div style="margin-top: 10px;">
+                단위: {{ product.unit }} / 개수: {{ product.piece }} / 유형: {{ product.productType }}
+            </div>
+
+            <div style="margin-top: 15px; text-align: right;">
+                <a href="{% url 'admin_product_edit' product.id %}"
+                   style="background:#2196f3;color:white;padding:8px 16px;border-radius:4px;text-decoration:none;">
+                    수정하기
+                </a>
+
+                <a href="{% url 'admin_product_edit' product.id %}?action=delete"
+                   style="background:#f44336;color:white;padding:8px 16px;border-radius:4px;text-decoration:none;">
+                    삭제하기
+                </a>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script>
+    function addIngredientField() {
+        const container = document.getElementById('ingredientContainer');
+        const newItem = document.createElement('div');
+        newItem.className = 'dynamic-item';
+        newItem.innerHTML = `
+            <select name="ingredient_ids[]">
+                ${container.children[0].querySelector("select").innerHTML}
+            </select>
+            <input type="text" name="amounts[]" placeholder="예: 1000mg">
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+        `;
+        container.appendChild(newItem);
+    }
+
+    function addCategoryField() {
+        const container = document.getElementById('categoryContainer');
+        const newItem = document.createElement('div');
+        newItem.className = 'dynamic-item';
+        newItem.innerHTML = `
+            <select name="category_ids[]">
+                ${container.children[0].querySelector("select").innerHTML}
+            </select>
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+        `;
+        container.appendChild(newItem);
+    }
+</script>
+</body>
 </html>

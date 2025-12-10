@@ -366,6 +366,7 @@ def product_edit(request, product_id):
     # 삭제 처리
     if request.method == 'POST' and request.POST.get('action') == 'delete':
         product_name = product.name
+        ProductIngredient.objects.filter(product=product).delete()
         CategoryProduct.objects.filter(product=product).delete()
         product.delete()
         messages.success(request, f'"{product_name}" 제품이 성공적으로 삭제되었습니다.')
@@ -402,12 +403,11 @@ def product_edit(request, product_id):
             if delete_image_ids:
                 ProductImage.objects.filter(id__in=delete_image_ids, product=product).delete()
             
-            # 새 이미지 URL 추가
-            new_image_urls = request.POST.getlist('new_image_urls[]')
-            for url in new_image_urls:
-                url = url.strip()
-                if url:
-                    ProductImage.objects.create(product=product, url=url)
+            # 새 이미지 추가
+            new_image_files = request.FILES.getlist('new_image_files')
+            if new_image_files:
+                uploaded_images = upload_images_to_s3(product, new_image_files)
+                ProductImage.objects.bulk_create(uploaded_images)
             
             # 기존 성분 삭제 처리
             delete_ingredient_ids = request.POST.getlist('delete_ingredient_ids[]')
@@ -478,9 +478,10 @@ def product_edit(request, product_id):
     small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
     
     return render(request, 'products/product_edit.html', {
-        'product': product,
-        'ingredients': ingredients,
-        'small_categories': small_categories
+    'product': product,
+    'ingredients': ingredients,
+    'small_categories': small_categories,
+    'action': request.GET.get('action')
     })
 
 # Product 삭제
@@ -495,6 +496,9 @@ def product_delete(request, product_id):
     
     if request.method == 'POST':
         product_name = product.name
+
+        # ProductIngredient 삭제
+        ProductIngredient.objects.filter(product=product).delete()
         
         # PROTECT로 설정된 CategoryProduct를 먼저 삭제
         CategoryProduct.objects.filter(product=product).delete()
@@ -508,4 +512,3 @@ def product_delete(request, product_id):
     return render(request, 'products/product_delete_confirm.html', {
         'product': product
     })
-
