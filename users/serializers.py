@@ -146,12 +146,10 @@ class NicknameUpdateRequestSerializer(serializers.Serializer):
             
         return value
 
-
 class NicknameUpdateResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()
     user_id = serializers.IntegerField()
     nickname = serializers.CharField()
-
 
 class PasswordVerifyRequestSerializer(serializers.Serializer):
     """현재 비밀번호 확인 요청 시리얼라이저"""
@@ -167,7 +165,6 @@ class PasswordVerifyRequestSerializer(serializers.Serializer):
             raise serializers.ValidationError("현재 비밀번호를 입력해주세요.")
         return value.strip()
 
-
 class PasswordVerifyResponseSerializer(serializers.Serializer):
     """현재 비밀번호 확인 응답 시리얼라이저"""
     success = serializers.BooleanField()
@@ -175,7 +172,6 @@ class PasswordVerifyResponseSerializer(serializers.Serializer):
         help_text="비밀번호 일치 여부"
     )
     message = serializers.CharField()
-
 
 class PasswordChangeRequestSerializer(serializers.Serializer):
     """비밀번호 변경 요청 시리얼라이저"""
@@ -213,13 +209,11 @@ class PasswordChangeRequestSerializer(serializers.Serializer):
         
         return data
 
-
 class PasswordChangeResponseSerializer(serializers.Serializer):
     """비밀번호 변경 응답 시리얼라이저"""
     success = serializers.BooleanField()
     user_id = serializers.IntegerField()
     message = serializers.CharField()
-
 
 class PhoneNumberFindAccountRequestSerializer(serializers.Serializer):
     """핸드폰번호로 계정 찾기 요청 시리얼라이저"""
@@ -237,7 +231,6 @@ class PhoneNumberFindAccountRequestSerializer(serializers.Serializer):
             raise serializers.ValidationError("올바른 핸드폰번호 형식이 아닙니다. (예: 010-1234-5678)")
         return value
 
-
 class AccountInfoSerializer(serializers.Serializer):
     """계정 정보 시리얼라이저"""
     id = serializers.IntegerField()
@@ -245,7 +238,6 @@ class AccountInfoSerializer(serializers.Serializer):
     nickname = serializers.CharField()
     login_type = serializers.CharField()
     created_at = serializers.DateTimeField()
-
 
 class PhoneNumberFindAccountResponseSerializer(serializers.Serializer):
     """핸드폰번호로 계정 찾기 응답 시리얼라이저"""
@@ -256,14 +248,12 @@ class PhoneNumberFindAccountResponseSerializer(serializers.Serializer):
     )
     message = serializers.CharField()
 
-
 class MyPageUserInfoResponseSerializer(serializers.Serializer):
     """마이페이지 사용자 정보 응답 시리얼라이저"""
     success = serializers.BooleanField()
     user_info = serializers.DictField(
         help_text="사용자 정보 (닉네임, 이메일, 로그인 방식, 리뷰 개수)"
     )
-
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     """비밀번호 재설정 요청 시리얼라이저 (계정 찾기용)"""
@@ -324,13 +314,11 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         
         return data
 
-
 class PasswordResetResponseSerializer(serializers.Serializer):
     """비밀번호 재설정 응답 시리얼라이저"""
     success = serializers.BooleanField()
     user_id = serializers.IntegerField()
     message = serializers.CharField()
-
 
 class EmailCheckRequestSerializer(serializers.Serializer):
     """이메일 존재 여부 확인 요청 시리얼라이저"""
@@ -344,14 +332,12 @@ class EmailCheckRequestSerializer(serializers.Serializer):
             raise serializers.ValidationError("이메일을 입력해주세요.")
         return value.strip().lower()
 
-
 class EmailCheckResponseSerializer(serializers.Serializer):
     """이메일 존재 여부 확인 응답 시리얼라이저"""
     success = serializers.BooleanField()
     email = serializers.EmailField()
     exists = serializers.BooleanField()
     message = serializers.CharField()
-
 
 class EmailPasswordResetRequestSerializer(serializers.Serializer):
     """이메일 기반 비밀번호 재설정 요청 시리얼라이저"""
@@ -437,14 +423,12 @@ class EmailPasswordResetRequestSerializer(serializers.Serializer):
         
         return data
 
-
 class EmailPasswordResetResponseSerializer(serializers.Serializer):
     """이메일 기반 비밀번호 재설정 응답 시리얼라이저"""
     success = serializers.BooleanField()
     email = serializers.EmailField()
     user_id = serializers.IntegerField()
     message = serializers.CharField()
-
 
 class PhoneNumberAccountInfoRequestSerializer(serializers.Serializer):
     """전화번호로 계정 정보 조회 요청 시리얼라이저"""
@@ -458,7 +442,6 @@ class PhoneNumberAccountInfoRequestSerializer(serializers.Serializer):
             raise serializers.ValidationError("전화번호가 필요합니다.")
         return value.strip()
 
-
 class PhoneNumberAccountInfoResponseSerializer(serializers.Serializer):
     """전화번호로 계정 정보 조회 응답 시리얼라이저"""
     success = serializers.BooleanField()
@@ -468,9 +451,3 @@ class PhoneNumberAccountInfoResponseSerializer(serializers.Serializer):
         help_text="해당 전화번호로 가입된 계정들의 리스트"
     )
     message = serializers.CharField()
-
-
-class AccountInfoSerializer(serializers.Serializer):
-    """계정 정보 시리얼라이저"""
-    email = serializers.EmailField()
-    created_at = serializers.DateTimeField()
