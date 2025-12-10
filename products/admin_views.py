@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Count
 from products.models import Product, BigCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, CategoryProduct
+from products.utils import upload_images_to_s3
 
 # BigCategory 입력 화면 (템플릿 기반)
 def big_category_form(request):
@@ -143,12 +144,12 @@ def product_form(request):
                     productType=product_type
                 )
                 
-                # 이미지 URL들 추가
-                image_urls = request.POST.getlist('image_urls[]')
-                for url in image_urls:
-                    url = url.strip()
-                    if url:
-                        ProductImage.objects.create(product=product, url=url)
+                # 이미지 파일 처리
+                image_files = request.FILES.getlist('image_files')
+                
+                if image_files:
+                    uploaded_images = upload_images_to_s3(product, image_files)
+                    ProductImage.objects.bulk_create(uploaded_images)
                 
                 # 성분들 추가
                 ingredient_ids = request.POST.getlist('ingredient_ids[]')
