@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import models
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from .models import User
 from .serializers import (
@@ -29,9 +29,7 @@ from .serializers import (
     EmailCheckResponseSerializer,
     EmailPasswordResetRequestSerializer,
     EmailPasswordResetResponseSerializer,
-    PhoneNumberFindAccountRequestSerializer,
     PhoneNumberFindAccountResponseSerializer,
-    AccountInfoSerializer,
     PhoneNumberAccountInfoRequestSerializer,
     PhoneNumberAccountInfoResponseSerializer,
     MyPageUserInfoResponseSerializer
@@ -259,6 +257,7 @@ class KakaoLoginView(GenericAPIView):
                                 "kakao": True
                             },
                             "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+                            "is_new_user": "false",
                             "message": "Login successful"
                         }
                     ),
@@ -273,6 +272,7 @@ class KakaoLoginView(GenericAPIView):
                                 "kakao": True
                             },
                             "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+                            "is_new_user": "true",
                             "message": "User created and logged in"
                         }
                     )
@@ -358,6 +358,9 @@ class KakaoLoginView(GenericAPIView):
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        existing_user = User.objects.filter(email=email).first()
+        is_new_user = existing_user is None
+
         # 3) 이메일로 사용자 조회/갱신
         try:
             user = User.objects.get(email=email)
@@ -391,6 +394,7 @@ class KakaoLoginView(GenericAPIView):
                 "kakao": user.kakao,
             },
             "access": tokens['access'],
+            "is_new_user": is_new_user,
             "message": "Login successful" if not created else "User created and logged in",
         }, status=status.HTTP_200_OK)
         
