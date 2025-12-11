@@ -10,7 +10,6 @@ class IngredientAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "name",
-        "englishIngredient",
         "minRecommended",
         "maxRecommended",
         "effect",
@@ -18,13 +17,12 @@ class IngredientAdmin(admin.ModelAdmin):
     )
     list_editable = (
         "name",
-        "englishIngredient",
         "minRecommended",
         "maxRecommended",
         "effect",
         "sideEffect",
     )
-    search_fields = ("name", "englishIngredient", "effect", "sideEffect")
+    search_fields = ("name", "effect", "sideEffect")
     list_filter = ()
     ordering = ("name",)
 
@@ -37,7 +35,6 @@ class ProductIngredientAdmin(admin.ModelAdmin):
     search_fields = (
         "product__name",
         "ingredient__name",
-        "ingredient__englishIngredient",
     )
     list_filter = ("ingredient",)
     autocomplete_fields = ("product", "ingredient")

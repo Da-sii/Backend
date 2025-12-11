@@ -358,7 +358,7 @@ class ProductSearchView(generics.ListAPIView):
 
         if query:
             ingredient_product_ids = ProductIngredient.objects.filter(
-                Q(ingredient__name__icontains=query) | Q(ingredient__englishIngredient__icontains=query)
+                Q(ingredient__name__icontains=query)
             ).values("product_id")
 
             qs = qs.filter(

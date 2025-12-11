@@ -218,20 +218,18 @@ def ingredient_form(request):
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         main_ingredient = request.POST.get('mainIngredient', '').strip()
-        english_ingredient = request.POST.get('englishIngredient', '').strip()
         min_recommended = request.POST.get('minRecommended', '').strip()
         max_recommended = request.POST.get('maxRecommended', '').strip()
         effect = request.POST.get('effect', '').strip()
         side_effect = request.POST.get('sideEffect', '').strip()
         
         # 필수 필드 검증
-        if not all([name, main_ingredient, english_ingredient, min_recommended, max_recommended, effect]):
+        if not all([name, main_ingredient, min_recommended, max_recommended, effect]):
             messages.error(request, '필수 항목을 모두 입력해주세요.')
         else:
             Ingredient.objects.create(
                 name=name,
                 mainIngredient=main_ingredient,
-                englishIngredient=english_ingredient,
                 minRecommended=min_recommended,
                 maxRecommended=max_recommended,
                 effect=effect,
@@ -258,18 +256,16 @@ def ingredient_edit(request, ingredient_id):
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         main_ingredient = request.POST.get('mainIngredient', '').strip()
-        english_ingredient = request.POST.get('englishIngredient', '').strip()
         min_recommended = request.POST.get('minRecommended', '').strip()
         max_recommended = request.POST.get('maxRecommended', '').strip()
         effect = request.POST.get('effect', '').strip()
         side_effect = request.POST.get('sideEffect', '').strip()
 
-        if not all([name, main_ingredient, english_ingredient, min_recommended, max_recommended, effect]):
+        if not all([name, main_ingredient, min_recommended, max_recommended, effect]):
             messages.error(request, '필수 항목을 모두 입력해주세요.')
         else:
             ingredient.name = name
             ingredient.mainIngredient = main_ingredient
-            ingredient.englishIngredient = english_ingredient
             ingredient.minRecommended = min_recommended
             ingredient.maxRecommended = max_recommended
             ingredient.effect = effect
