@@ -91,11 +91,6 @@
       .ingredient-item strong {
         color: #ff9800;
       }
-      .ingredient-item .english-name {
-        color: #666;
-        font-size: 0.9em;
-        margin-left: 10px;
-      }
       .ingredient-item .details {
         margin-top: 10px;
         font-size: 0.9em;
@@ -152,16 +147,6 @@
             name="mainIngredient"
             required
             placeholder="예: Ascorbic Acid, DHA/EPA 등"
-          />
-        </div>
-        <div class="form-group">
-          <label for="englishIngredient">영어 이름 *</label>
-          <input
-            type="text"
-            id="englishIngredient"
-            name="englishIngredient"
-            required
-            placeholder="예: Vitamin C, Omega-3 등"
           />
         </div>
         <div class="form-group">
@@ -224,9 +209,6 @@
               "
             >
               <strong>ID {{ ingredient.id }}:</strong> {{ ingredient.name }}
-              <span class="english-name"
-                >({{ ingredient.englishIngredient }})</span
-              >
               <div class="details">
                 <strong>주성분:</strong> {{ ingredient.mainIngredient|default:"None" }}<br />
                 <strong>권장량:</strong> {{ ingredient.minRecommended }} ~ {{ ingredient.maxRecommended }}<br />
