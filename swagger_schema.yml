@@ -2162,8 +2162,6 @@ components:
       properties:
         ingredientName:
           type: string
-        englishName:
-          type: string
         amount:
           type: string
           title: 포함량
@@ -2182,7 +2180,6 @@ components:
       required:
       - amount
       - effect
-      - englishName
       - ingredientName
       - maxRecommended
       - minRecommended
