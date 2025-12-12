@@ -5,10 +5,10 @@ from django.utils import timezone
 from django.db.models import Sum, Avg
 from django.db import transaction
 from rest_framework import serializers
-from django.conf import settings
 
 from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory
 from products.utils import upload_images_to_s3
+
 class ProductIngredientInputSerializer(serializers.Serializer):
     ingredientId = serializers.IntegerField()
     amount = serializers.CharField()

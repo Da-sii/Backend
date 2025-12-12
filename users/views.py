@@ -36,7 +36,6 @@ from .serializers import (
 )
 from .utils import generate_jwt_tokens_with_metadata, get_token_type_from_token
 
-
 class SignUpView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = SignUpSerializer
@@ -879,7 +878,6 @@ class NicknameUpdateView(GenericAPIView):
 
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
-
 class PasswordVerifyView(GenericAPIView):
     """현재 비밀번호 확인 API"""
     permission_classes = [IsAuthenticated]
@@ -951,7 +949,6 @@ class PasswordVerifyView(GenericAPIView):
         response_serializer.is_valid(raise_exception=True)
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
-
 
 class PasswordChangeView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -1067,7 +1064,6 @@ class PasswordChangeView(GenericAPIView):
         response_serializer.is_valid(raise_exception=True)
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
-
 
 class PhoneNumberFindAccountView(GenericAPIView):
     """핸드폰번호로 계정 찾기"""
@@ -1206,7 +1202,6 @@ class PhoneNumberFindAccountView(GenericAPIView):
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
-
 class PhoneNumberAccountInfoView(GenericAPIView):
     """전화번호로 계정 정보 조회 API"""
     permission_classes = [AllowAny]
@@ -1330,7 +1325,6 @@ class PhoneNumberAccountInfoView(GenericAPIView):
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
-
 class MyPageUserInfoView(GenericAPIView):
     """마이페이지 사용자 정보 조회"""
     permission_classes = [AllowAny]
@@ -1411,7 +1405,6 @@ class MyPageUserInfoView(GenericAPIView):
         }
         
         return Response(response_data, status=status.HTTP_200_OK)
-
 
 class PasswordResetView(GenericAPIView):
     """비밀번호 재설정 API (계정 찾기용)"""
@@ -1512,7 +1505,6 @@ class PasswordResetView(GenericAPIView):
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
-
 class EmailCheckView(GenericAPIView):
     """이메일 존재 여부 확인 API"""
     permission_classes = [AllowAny]
@@ -1597,7 +1589,6 @@ class EmailCheckView(GenericAPIView):
         response_serializer.is_valid(raise_exception=True)
         
         return Response(response_serializer.data, status=status.HTTP_200_OK)
-
 
 class EmailPasswordResetView(GenericAPIView):
     """이메일 기반 비밀번호 재설정 API"""
