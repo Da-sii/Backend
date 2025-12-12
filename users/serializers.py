@@ -86,15 +86,45 @@ class SignInSerializer(serializers.Serializer):
         return data
 
 class KakaoLoginSerializer(serializers.Serializer):
+    """
+    카카오 로그인 시리얼라이저
+    
+    두 가지 방식을 지원합니다:
+    1. SDK 방식: kakao_access_token과 kakao_refresh_token을 전달
+    2. Code 방식: 카카오 인증 후 받은 code를 전달 (백엔드에서 토큰 교환)
+    """
     kakao_access_token = serializers.CharField(
-        help_text="카카오 SDK에서 받은 access_token",
-        required=True
-    )
-    kakao_refresh_token = serializers.CharField(
-        help_text="카카오 SDK에서 받은 refresh_token",
+        help_text="카카오 SDK에서 받은 access_token (SDK 방식 사용 시)",
         required=False,
         allow_blank=True
     )
+    kakao_refresh_token = serializers.CharField(
+        help_text="카카오 SDK에서 받은 refresh_token (SDK 방식 사용 시, 선택사항)",
+        required=False,
+        allow_blank=True
+    )
+    code = serializers.CharField(
+        help_text="카카오 OAuth 인증 후 받은 authorization code (Code 방식 사용 시)",
+        required=False,
+        allow_blank=True
+    )
+    
+    def validate(self, data):
+        """kakao_access_token 또는 code 중 하나는 필수"""
+        kakao_access_token = data.get("kakao_access_token", "").strip()
+        code = data.get("code", "").strip()
+        
+        if not kakao_access_token and not code:
+            raise serializers.ValidationError(
+                "kakao_access_token 또는 code 중 하나는 필수입니다."
+            )
+        
+        if kakao_access_token and code:
+            raise serializers.ValidationError(
+                "kakao_access_token과 code를 동시에 보낼 수 없습니다. 하나만 선택해주세요."
+            )
+        
+        return data
 
 class KakaoLogoutRequestSerializer(serializers.Serializer):
     """카카오 로그아웃 요청 시리얼라이저"""
