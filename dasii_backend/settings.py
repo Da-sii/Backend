@@ -41,6 +41,8 @@ APPLE_CLIENT_ID = os.getenv("APPLE_CLIENT_ID", "com.podostore.dasii")
 APPLE_TEAM_ID = os.getenv("APPLE_TEAM_ID", "AGQJU3FNWG")
 APPLE_KEY_ID = os.getenv("APPLE_KEY_ID", "J3MCT3RYAZ")
 
+# Openapi
+FOOD_API_KEY = os.getenv("FOOD_API_KEY", "")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
