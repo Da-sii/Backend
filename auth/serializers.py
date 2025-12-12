@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-
 class PhoneVerificationRequestSerializer(serializers.Serializer):
     """전화번호 인증 요청 시리얼라이저"""
     phone_number = serializers.CharField(
@@ -20,12 +19,10 @@ class PhoneVerificationRequestSerializer(serializers.Serializer):
             raise serializers.ValidationError("전화번호가 필요합니다.")
         return value.strip()
 
-
 class PhoneVerificationResponseSerializer(serializers.Serializer):
     """전화번호 인증 응답 시리얼라이저"""
     success = serializers.BooleanField()
     message = serializers.CharField()
-
 
 class VerifyCodeRequestSerializer(serializers.Serializer):
     """인증번호 검증 요청 시리얼라이저"""
@@ -50,7 +47,6 @@ class VerifyCodeRequestSerializer(serializers.Serializer):
             raise serializers.ValidationError("인증번호는 6자리 숫자여야 합니다.")
         return value.strip()
 
-
 class VerifyCodeResponseSerializer(serializers.Serializer):
     """인증번호 검증 응답 시리얼라이저"""
     success = serializers.BooleanField()
@@ -59,15 +55,12 @@ class VerifyCodeResponseSerializer(serializers.Serializer):
     expires_at = serializers.CharField(help_text="토큰 만료 시간")
     expires_in_seconds = serializers.IntegerField(help_text="토큰 만료까지 남은 시간(초)")
 
-
 class ErrorResponseSerializer(serializers.Serializer):
     """에러 응답 시리얼라이저"""
     error = serializers.CharField()
 
-
 class PhoneSendRequestSerializer(serializers.Serializer):
     phone_number = serializers.CharField(help_text="전화번호 (예: 01012345678 또는 010-1234-5678)")
-
 
 class PhoneVerifyRequestSerializer(serializers.Serializer):
     phone_number = serializers.CharField(help_text="전화번호 (예: 01012345678 또는 010-1234-5678)")
