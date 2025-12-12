@@ -199,7 +199,6 @@ class PhoneVerificationView(APIView):
             'verification_code': verification_code  # 개발용 - 실제 운영에서는 제거
         }, status=status.HTTP_200_OK)
 
-
 class VerifyCodeView(APIView):
     """
     인증번호 검증 API
@@ -334,7 +333,6 @@ class VerifyCodeView(APIView):
                 {'error': '인증번호가 일치하지 않습니다.'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-
 
 class DeleteInfoView(APIView):
     """
