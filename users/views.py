@@ -230,14 +230,21 @@ class KakaoLoginView(GenericAPIView):
 
     @extend_schema(
         summary="카카오 로그인",
-        description="카카오 SDK에서 받은 access_token과 refresh_token으로 로그인합니다. 이메일이 없으면 실패하며, 신규 사용자는 자동으로 가입됩니다.",
+        description="카카오 로그인을 지원합니다. 두 가지 방식을 지원합니다: 1) SDK 방식: kakao_access_token 전달, 2) Code 방식: 카카오 인증 후 받은 code 전달. 이메일이 없으면 실패하며, 신규 사용자는 자동으로 가입됩니다.",
         request=KakaoLoginSerializer,
         examples=[
             OpenApiExample(
-                '카카오 로그인 요청',
+                'SDK 방식 (토큰 직접 전달)',
                 value={
                     "kakao_access_token": "카카오_SDK에서_받은_access_token",
                     "kakao_refresh_token": "카카오_SDK에서_받은_refresh_token"
+                },
+                request_only=True
+            ),
+            OpenApiExample(
+                'Code 방식 (인증 코드 전달)',
+                value={
+                    "code": "카카오_OAuth_인증_후_받은_code"
                 },
                 request_only=True
             )
@@ -303,10 +310,71 @@ class KakaoLoginView(GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        kakao_access_token = serializer.validated_data["kakao_access_token"]
-        kakao_refresh_token = serializer.validated_data.get("kakao_refresh_token")
+        
+        kakao_access_token = serializer.validated_data.get("kakao_access_token", "").strip()
+        kakao_refresh_token = serializer.validated_data.get("kakao_refresh_token", "").strip()
+        code = serializer.validated_data.get("code", "").strip()
+        
+        # Code 방식인 경우 토큰 교환
+        if code:
+            try:
+                token_response = requests.post(
+                    "https://kauth.kakao.com/oauth/token",
+                    data={
+                        "grant_type": "authorization_code",
+                        "client_id": settings.KAKAO_REST_API_KEY,
+                        "redirect_uri": settings.KAKAO_REDIRECT_URI,
+                        "code": code,
+                        "client_secret": settings.KAKAO_CLIENT_SECRET,
+                    },
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    timeout=5,
+                )
+                
+                if token_response.status_code != 200:
+                    try:
+                        error_detail = token_response.json()
+                    except (ValueError, AttributeError):
+                        error_detail = token_response.text if token_response.text else "카카오 토큰 교환 실패"
+                    
+                    return Response(
+                        {
+                            "error": "Failed to exchange code for token",
+                            "detail": error_detail,
+                            "status_code": token_response.status_code
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                token_json = token_response.json()
+                kakao_access_token = token_json.get("access_token")
+                kakao_refresh_token = token_json.get("refresh_token")
+                
+                if not kakao_access_token:
+                    return Response(
+                        {"error": "Failed to get access token", "detail": token_json}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            except requests.exceptions.RequestException as e:
+                return Response(
+                    {
+                        "error": "카카오 토큰 교환 실패",
+                        "detail": f"네트워크 오류 또는 타임아웃: {str(e)}"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # kakao_access_token이 없으면 에러
+        if not kakao_access_token:
+            return Response(
+                {
+                    "error": "카카오 액세스 토큰이 필요합니다",
+                    "detail": "kakao_access_token 또는 code를 제공해주세요."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # 프론트엔드에서 받은 카카오 access_token으로 사용자 정보 조회
+        # 카카오 access_token으로 사용자 정보 조회
         try:
             profile_response = requests.get(
                 "https://kapi.kakao.com/v2/user/me",
