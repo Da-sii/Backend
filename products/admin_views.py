@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Count
 from products.models import Product, BigCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, CategoryProduct
 from products.utils import upload_images_to_s3
+import json
 
 # BigCategory 입력 화면 (템플릿 기반)
 def big_category_form(request):
@@ -213,19 +214,30 @@ def product_form(request):
 
 # Ingredient 입력 화면 (템플릿 기반)
 def ingredient_form(request):
-    """Ingredient 데이터 입력 화면"""
-    
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         main_ingredient = request.POST.get('mainIngredient', '').strip()
         min_recommended = request.POST.get('minRecommended', '').strip()
         max_recommended = request.POST.get('maxRecommended', '').strip()
-        effect = request.POST.get('effect', '').strip()
-        side_effect = request.POST.get('sideEffect', '').strip()
-        
-        # 필수 필드 검증
+
+        # JSON 문자열 수신
+        effect_raw = request.POST.get('effect', '[]')
+        side_raw = request.POST.get('sideEffect', '[]')
+
+        # 문자열 → 리스트 변환
+        try:
+            effect = json.loads(effect_raw)
+        except:
+            effect = []
+
+        try:
+            side_effect = json.loads(side_raw)
+        except:
+            side_effect = None
+
         if not all([name, main_ingredient, min_recommended, max_recommended, effect]):
             messages.error(request, '필수 항목을 모두 입력해주세요.')
+
         else:
             Ingredient.objects.create(
                 name=name,
@@ -233,14 +245,13 @@ def ingredient_form(request):
                 minRecommended=min_recommended,
                 maxRecommended=max_recommended,
                 effect=effect,
-                sideEffect=side_effect if side_effect else None
+                sideEffect=side_effect or None
             )
+
             messages.success(request, f'"{name}" 성분이 성공적으로 추가되었습니다.')
             return redirect('admin_ingredient_form')
-    
-    # 기존 성분 목록 가져오기
+
     ingredients = Ingredient.objects.all().order_by('id')
-    
     return render(request, 'products/ingredient_form.html', {
         'ingredients': ingredients
     })
@@ -254,26 +265,25 @@ def ingredient_edit(request, ingredient_id):
         return redirect('admin_ingredient_form')
 
     if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        main_ingredient = request.POST.get('mainIngredient', '').strip()
-        min_recommended = request.POST.get('minRecommended', '').strip()
-        max_recommended = request.POST.get('maxRecommended', '').strip()
-        effect = request.POST.get('effect', '').strip()
-        side_effect = request.POST.get('sideEffect', '').strip()
+        effect_raw = request.POST.get('effect', '[]')
+        side_raw = request.POST.get('sideEffect', '[]')
 
-        if not all([name, main_ingredient, min_recommended, max_recommended, effect]):
-            messages.error(request, '필수 항목을 모두 입력해주세요.')
-        else:
-            ingredient.name = name
-            ingredient.mainIngredient = main_ingredient
-            ingredient.minRecommended = min_recommended
-            ingredient.maxRecommended = max_recommended
-            ingredient.effect = effect
-            ingredient.sideEffect = side_effect if side_effect else None
-            ingredient.save()
+        try:
+            effect = json.loads(effect_raw)
+        except:
+            effect = []
 
-            messages.success(request, f'"{ingredient.name}" 성분이 성공적으로 수정되었습니다.')
-            return redirect('admin_ingredient_form')
+        try:
+            side_effect = json.loads(side_raw)
+        except:
+            side_effect = None
+
+        ingredient.effect = effect
+        ingredient.sideEffect = side_effect
+        ingredient.save()
+
+        messages.success(request, f'"{ingredient.name}" 성분이 성공적으로 수정되었습니다.')
+        return redirect('admin_ingredient_form')
 
     return render(request, 'products/ingredient_edit.html', {
         'ingredient': ingredient

@@ -15,29 +15,6 @@ from products.serializers import ProductCreateSerializer, ProductReadSerializer,
 from products.serializers import ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer
 from products.utils import record_view, upload_images_to_s3
 
-# 제품 등록
-class ProductCreateView(generics.CreateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductCreateSerializer
-    permission_classes = [AllowAny]  # 인증 없이 접근 가능
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
-
-    def create(self, request, *args, **kwargs):
-        create_serializer = self.get_serializer(data=request.data)
-        create_serializer.is_valid(raise_exception=True)
-        product = create_serializer.save()
-
-        read_serializer = ProductReadSerializer(product)
-        
-        return Response({"success": True, "product": read_serializer.data}, status=201)
-
-    @extend_schema(
-        summary="제품 등록",
-        tags=["제품"]
-    )
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-
 # 제품 상세 (GET /products/<id>/)
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
@@ -51,7 +28,6 @@ class ProductDetailView(generics.RetrieveAPIView):
     )
 
     def get(self, request, *args, **kwargs):
-
         product = self.get_object()
 
         record_view(product)
