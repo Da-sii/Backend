@@ -230,13 +230,14 @@ class KakaoLoginView(GenericAPIView):
 
     @extend_schema(
         summary="카카오 로그인",
-        description="카카오 OAuth 인증 코드로 로그인합니다. 이메일이 없으면 실패하며, 신규 사용자는 자동으로 가입됩니다.",
+        description="카카오 SDK에서 받은 access_token과 refresh_token으로 로그인합니다. 이메일이 없으면 실패하며, 신규 사용자는 자동으로 가입됩니다.",
         request=KakaoLoginSerializer,
         examples=[
             OpenApiExample(
                 '카카오 로그인 요청',
                 value={
-                    "code": "KAKAO_AUTHORIZATION_CODE"
+                    "kakao_access_token": "카카오_SDK에서_받은_access_token",
+                    "kakao_refresh_token": "카카오_SDK에서_받은_refresh_token"
                 },
                 request_only=True
             )
@@ -302,37 +303,52 @@ class KakaoLoginView(GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        code = serializer.validated_data["code"]
+        kakao_access_token = serializer.validated_data["kakao_access_token"]
+        kakao_refresh_token = serializer.validated_data.get("kakao_refresh_token")
 
-        # 1) 토큰 발급
-        token_response = requests.post(
-            "https://kauth.kakao.com/oauth/token",
-            data={
-                "grant_type": "authorization_code",
-                "client_id": settings.KAKAO_REST_API_KEY,
-                "redirect_uri": settings.KAKAO_REDIRECT_URI,
-                "code": code,
-                "client_secret": settings.KAKAO_CLIENT_SECRET,
-            },
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=5,
-        )
-        token_json = token_response.json()
-        access_token = token_json.get("access_token")
-        refresh_token = token_json.get("refresh_token")
-        if not access_token:
+        # 프론트엔드에서 받은 카카오 access_token으로 사용자 정보 조회
+        try:
+            profile_response = requests.get(
+                "https://kapi.kakao.com/v2/user/me",
+                headers={"Authorization": f"Bearer {kakao_access_token}"},
+                timeout=5,
+            )
+        except requests.exceptions.RequestException as e:
             return Response(
-                {"error": "Failed to get access token", "detail": token_json}, 
+                {
+                    "error": "카카오 API 호출 실패",
+                    "detail": f"네트워크 오류 또는 타임아웃: {str(e)}"
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # 2) 사용자 정보
-        profile_response = requests.get(
-            "https://kapi.kakao.com/v2/user/me",
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=5,
-        )
-        profile_json = profile_response.json()
+        
+        # 카카오 API 호출 실패 처리
+        if profile_response.status_code != 200:
+            try:
+                error_detail = profile_response.json()
+            except (ValueError, AttributeError):
+                error_detail = profile_response.text if profile_response.text else "카카오 사용자 정보 조회 실패"
+            
+            return Response(
+                {
+                    "error": "Failed to get user info from Kakao",
+                    "detail": error_detail,
+                    "status_code": profile_response.status_code
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # JSON 파싱
+        try:
+            profile_json = profile_response.json()
+        except (ValueError, AttributeError) as e:
+            return Response(
+                {
+                    "error": "카카오 응답 파싱 실패",
+                    "detail": f"카카오 API 응답을 JSON으로 파싱할 수 없습니다: {str(e)}"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         kakao_id = profile_json.get("id")
         kakao_account = profile_json.get("kakao_account", {})
@@ -380,8 +396,8 @@ class KakaoLoginView(GenericAPIView):
         tokens = generate_jwt_tokens_with_metadata(
             user,
             'kakao',
-            kakao_access_token=access_token,
-            kakao_refresh_token=refresh_token,
+            kakao_access_token=kakao_access_token,
+            kakao_refresh_token=kakao_refresh_token,
         )
 
         response = Response({

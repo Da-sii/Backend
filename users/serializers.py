@@ -86,9 +86,14 @@ class SignInSerializer(serializers.Serializer):
         return data
 
 class KakaoLoginSerializer(serializers.Serializer):
-    code = serializers.CharField(
-        help_text="카카오 로그인 후 받은 authorization code",
+    kakao_access_token = serializers.CharField(
+        help_text="카카오 SDK에서 받은 access_token",
         required=True
+    )
+    kakao_refresh_token = serializers.CharField(
+        help_text="카카오 SDK에서 받은 refresh_token",
+        required=False,
+        allow_blank=True
     )
 
 class KakaoLogoutRequestSerializer(serializers.Serializer):
