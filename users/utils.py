@@ -2,7 +2,6 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-
 def generate_jwt_tokens_with_metadata(user, token_type, kakao_access_token=None, kakao_refresh_token=None):
     """
     사용자에 대한 JWT 토큰을 생성하고 메타데이터를 추가합니다.
@@ -38,7 +37,6 @@ def generate_jwt_tokens_with_metadata(user, token_type, kakao_access_token=None,
         'refresh': refresh_token
     }
 
-
 def get_token_type_from_token(token_string):
     """
     JWT 토큰에서 tokenType 메타데이터를 추출합니다.
@@ -60,7 +58,6 @@ def get_token_type_from_token(token_string):
             return token.get('tokenType')
     except InvalidToken:
         return None
-
 
 def get_kakao_tokens_from_token(token_string):
     """

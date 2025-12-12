@@ -6,11 +6,9 @@ from django.http import HttpResponseForbidden
 import os
 from decouple import config
 
-
 def get_admin_auth_code():
     """환경변수에서 관리자 인증 코드 가져오기"""
     return config('ADMIN_CODE', default='')
-
 
 def admin_auth_required(view_func):
     """관리자 페이지 인증 데코레이터 - 로그인된 상태에서만 접근 가능"""
@@ -28,7 +26,6 @@ def admin_auth_required(view_func):
         return redirect('admin_login')
     
     return wrapper
-
 
 def admin_login_view(request):
     """관리자 로그인 - ADMIN_CODE 입력 및 .env 값과 비교"""
@@ -57,10 +54,8 @@ def admin_login_view(request):
     # ADMIN_CODE 입력 페이지 표시
     return render(request, 'products/admin_login.html')
 
-
 def admin_logout(request):
     """관리자 로그아웃"""
     request.session.pop('admin_authenticated', None)
     messages.success(request, '로그아웃되었습니다.')
     return redirect('admin_login')
-

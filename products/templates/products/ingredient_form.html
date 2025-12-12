@@ -91,11 +91,6 @@
       .ingredient-item strong {
         color: #ff9800;
       }
-      .ingredient-item .english-name {
-        color: #666;
-        font-size: 0.9em;
-        margin-left: 10px;
-      }
       .ingredient-item .details {
         margin-top: 10px;
         font-size: 0.9em;
@@ -155,16 +150,6 @@
           />
         </div>
         <div class="form-group">
-          <label for="englishIngredient">영어 이름 *</label>
-          <input
-            type="text"
-            id="englishIngredient"
-            name="englishIngredient"
-            required
-            placeholder="예: Vitamin C, Omega-3 등"
-          />
-        </div>
-        <div class="form-group">
           <label for="minRecommended">최소 권장량 *</label>
           <input
             type="text"
@@ -203,7 +188,6 @@
         </div>
         <button type="submit">추가하기</button>
       </form>
-
       <div class="ingredient-list">
         <h2>등록된 성분 목록</h2>
         {% if ingredients %} {% for ingredient in ingredients %}
@@ -215,34 +199,48 @@
               align-items: flex-start;
             "
           >
-            <div style="flex: 1">
+            <div
+              style="
+                flex: 1;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+                min-width: 0;
+              "
+            >
               <strong>ID {{ ingredient.id }}:</strong> {{ ingredient.name }}
-              <span class="english-name"
-                >({{ ingredient.englishIngredient }})</span
-              >
-              <div class="details" style="margin-top: 6px">
-                <strong>주성분:</strong> {{ ingredient.mainIngredient }}
-              </div>
               <div class="details">
-                <strong>권장량:</strong> {{ ingredient.minRecommended }} ~ {{
-                ingredient.maxRecommended }}<br />
-                <strong>효과:</strong> {{ ingredient.effect|truncatewords:20 }}
-                {% if ingredient.sideEffect %} <br /><strong>부작용:</strong> {{
-                ingredient.sideEffect|truncatewords:20 }} {% endif %}
+                <strong>주성분:</strong> {{ ingredient.mainIngredient|default:"None" }}<br />
+                <strong>권장량:</strong> {{ ingredient.minRecommended }} ~ {{ ingredient.maxRecommended }}<br />
+                <strong>효과:</strong> {{ ingredient.effect }}
+                {% if ingredient.sideEffect %}
+                <br /><strong>부작용:</strong> {{ ingredient.sideEffect }}
+                {% endif %}
               </div>
             </div>
-            <a
-              href="{% url 'admin_ingredient_delete' ingredient.id %}"
+            <div
               style="
-                color: #f44336;
-                text-decoration: none;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 4px;
                 margin-left: 15px;
                 font-size: 0.9em;
                 white-space: nowrap;
               "
-              onclick="return confirm('정말 삭제하시겠습니까?');"
-              >삭제</a
             >
+              <a
+                href="{% url 'admin_ingredient_edit' ingredient.id %}"
+                style="color: #2196f3; text-decoration: none"
+                >수정</a
+              >
+              <a
+                href="{% url 'admin_ingredient_delete' ingredient.id %}"
+                style="color: #f44336; text-decoration: none"
+                onclick="return confirm('정말 삭제하시겠습니까?');"
+                >삭제</a
+              >
+            </div>
           </div>
         </div>
         {% endfor %} {% else %}
