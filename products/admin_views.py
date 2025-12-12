@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Count
 from products.models import Product, BigCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, CategoryProduct
+from products.utils import upload_images_to_s3
 
 # BigCategory 입력 화면 (템플릿 기반)
 def big_category_form(request):
@@ -127,6 +128,7 @@ def product_form(request):
         unit = request.POST.get('unit', '').strip()
         piece = request.POST.get('piece', '').strip()
         product_type = request.POST.get('productType', '').strip()
+        coupang = request.POST.get('coupang', '').strip()
         
         # 필수 필드 검증
         if not all([name, company, price, unit, piece, product_type]):
@@ -140,15 +142,16 @@ def product_form(request):
                     price=int(price),
                     unit=unit,
                     piece=piece,
-                    productType=product_type
+                    productType=product_type,
+                    coupang=coupang
                 )
                 
-                # 이미지 URL들 추가
-                image_urls = request.POST.getlist('image_urls[]')
-                for url in image_urls:
-                    url = url.strip()
-                    if url:
-                        ProductImage.objects.create(product=product, url=url)
+                # 이미지 파일 처리
+                image_files = request.FILES.getlist('image_files')
+                
+                if image_files:
+                    uploaded_images = upload_images_to_s3(product, image_files)
+                    ProductImage.objects.bulk_create(uploaded_images)
                 
                 # 성분들 추가
                 ingredient_ids = request.POST.getlist('ingredient_ids[]')
@@ -189,7 +192,7 @@ def product_form(request):
                 messages.error(request, f'오류가 발생했습니다: {str(e)}')
     
     # 기존 데이터 가져오기
-    ingredients = Ingredient.objects.all().order_by('name')
+    ingredients = Ingredient.objects.all().order_by('id')
     small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
     # 제품 정보를 더 자세히 가져오기 (이미지, 성분, 카테고리 개수 포함)
     products = Product.objects.annotate(
@@ -200,7 +203,7 @@ def product_form(request):
         'images',
         'ingredients',
         'category_products__category__bigCategory'
-    ).order_by('-id')  # 전체 제품 표시
+    ).order_by('id')  # 전체 제품 표시 (ID 오름차순)
     
     return render(request, 'products/product_form.html', {
         'ingredients': ingredients,
@@ -215,20 +218,18 @@ def ingredient_form(request):
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         main_ingredient = request.POST.get('mainIngredient', '').strip()
-        english_ingredient = request.POST.get('englishIngredient', '').strip()
         min_recommended = request.POST.get('minRecommended', '').strip()
         max_recommended = request.POST.get('maxRecommended', '').strip()
         effect = request.POST.get('effect', '').strip()
         side_effect = request.POST.get('sideEffect', '').strip()
         
         # 필수 필드 검증
-        if not all([name, main_ingredient, english_ingredient, min_recommended, max_recommended, effect]):
+        if not all([name, main_ingredient, min_recommended, max_recommended, effect]):
             messages.error(request, '필수 항목을 모두 입력해주세요.')
         else:
             Ingredient.objects.create(
                 name=name,
                 mainIngredient=main_ingredient,
-                englishIngredient=english_ingredient,
                 minRecommended=min_recommended,
                 maxRecommended=max_recommended,
                 effect=effect,
@@ -238,7 +239,7 @@ def ingredient_form(request):
             return redirect('admin_ingredient_form')
     
     # 기존 성분 목록 가져오기
-    ingredients = Ingredient.objects.all().order_by('name')
+    ingredients = Ingredient.objects.all().order_by('id')
     
     return render(request, 'products/ingredient_form.html', {
         'ingredients': ingredients
@@ -254,17 +255,17 @@ def ingredient_edit(request, ingredient_id):
 
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
-        english_ingredient = request.POST.get('englishIngredient', '').strip()
+        main_ingredient = request.POST.get('mainIngredient', '').strip()
         min_recommended = request.POST.get('minRecommended', '').strip()
         max_recommended = request.POST.get('maxRecommended', '').strip()
         effect = request.POST.get('effect', '').strip()
         side_effect = request.POST.get('sideEffect', '').strip()
 
-        if not all([name, english_ingredient, min_recommended, max_recommended, effect]):
+        if not all([name, main_ingredient, min_recommended, max_recommended, effect]):
             messages.error(request, '필수 항목을 모두 입력해주세요.')
         else:
             ingredient.name = name
-            ingredient.englishIngredient = english_ingredient
+            ingredient.mainIngredient = main_ingredient
             ingredient.minRecommended = min_recommended
             ingredient.maxRecommended = max_recommended
             ingredient.effect = effect
@@ -363,6 +364,7 @@ def product_edit(request, product_id):
     # 삭제 처리
     if request.method == 'POST' and request.POST.get('action') == 'delete':
         product_name = product.name
+        ProductIngredient.objects.filter(product=product).delete()
         CategoryProduct.objects.filter(product=product).delete()
         product.delete()
         messages.success(request, f'"{product_name}" 제품이 성공적으로 삭제되었습니다.')
@@ -381,6 +383,7 @@ def product_edit(request, product_id):
         product.unit = request.POST.get('unit', '').strip()
         product.piece = request.POST.get('piece', '').strip()
         product.productType = request.POST.get('productType', '').strip()
+        product.coupang = request.POST.get('coupang', '').strip()
         
         try:
             product.price = int(request.POST.get('price', 0))
@@ -399,12 +402,11 @@ def product_edit(request, product_id):
             if delete_image_ids:
                 ProductImage.objects.filter(id__in=delete_image_ids, product=product).delete()
             
-            # 새 이미지 URL 추가
-            new_image_urls = request.POST.getlist('new_image_urls[]')
-            for url in new_image_urls:
-                url = url.strip()
-                if url:
-                    ProductImage.objects.create(product=product, url=url)
+            # 새 이미지 추가
+            new_image_files = request.FILES.getlist('new_image_files')
+            if new_image_files:
+                uploaded_images = upload_images_to_s3(product, new_image_files)
+                ProductImage.objects.bulk_create(uploaded_images)
             
             # 기존 성분 삭제 처리
             delete_ingredient_ids = request.POST.getlist('delete_ingredient_ids[]')
@@ -471,13 +473,14 @@ def product_edit(request, product_id):
             return redirect('admin_product_form')
     
     # 기존 데이터 가져오기
-    ingredients = Ingredient.objects.all().order_by('name')
+    ingredients = Ingredient.objects.all().order_by('id')
     small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
     
     return render(request, 'products/product_edit.html', {
-        'product': product,
-        'ingredients': ingredients,
-        'small_categories': small_categories
+    'product': product,
+    'ingredients': ingredients,
+    'small_categories': small_categories,
+    'action': request.GET.get('action')
     })
 
 # Product 삭제
@@ -492,6 +495,9 @@ def product_delete(request, product_id):
     
     if request.method == 'POST':
         product_name = product.name
+
+        # ProductIngredient 삭제
+        ProductIngredient.objects.filter(product=product).delete()
         
         # PROTECT로 설정된 CategoryProduct를 먼저 삭제
         CategoryProduct.objects.filter(product=product).delete()
@@ -505,4 +511,3 @@ def product_delete(request, product_id):
     return render(request, 'products/product_delete_confirm.html', {
         'product': product
     })
-

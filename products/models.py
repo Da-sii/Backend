@@ -1,6 +1,6 @@
-from tabnanny import verbose
 from django.db import models
 from django.utils import timezone
+
 class BigCategory(models.Model):
     category = models.CharField(max_length=100, verbose_name="카테고리")
 
@@ -56,6 +56,7 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"{self.product.name} 이미지"
+
 class CategoryProduct(models.Model):
     category = models.ForeignKey(
         SmallCategory,
@@ -95,17 +96,16 @@ class ProductDailyView(models.Model):
 class Ingredient(models.Model):
     name = models.TextField(verbose_name="성분 이름")
     mainIngredient = models.TextField(max_length=100, verbose_name="주성분이름", null=True, blank=True)
-    englishIngredient = models.CharField(max_length=100, verbose_name="영어이름")
-    minRecommended = models.CharField(max_length=50, verbose_name="최소권장량")
-    maxRecommended = models.CharField(max_length=50, verbose_name="최대권장량")
-    effect = models.TextField(verbose_name="효과")
-    sideEffect = models.TextField(verbose_name="부작용", null=True, blank=True)
+    minRecommended = models.CharField(max_length=50, verbose_name="최소권장량", null=True, blank=True)
+    maxRecommended = models.CharField(max_length=50, verbose_name="최대권장량", null=True, blank=True)
+    effect = models.JSONField(default=list, verbose_name="효과", null=True, blank=True)
+    sideEffect = models.JSONField(default=list, verbose_name="부작용", null=True, blank=True)
 
     class Meta:
         db_table = "ingredients"
 
     def __str__(self):
-        return self.name
+        return self.name더
 
 class ProductIngredient(models.Model):
     product = models.ForeignKey(

@@ -1,118 +1,38 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>제품 삭제 확인 - {{ product.name }}</title>
+    <meta charset="UTF-8">
+    <title>제품 삭제</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            font-family: Arial; max-width:600px; margin:80px auto;
+            background:#f5f5f5; padding:20px;
         }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        .box {
+            background:white; padding:30px; border-radius:8px;
+            text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.1);
         }
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .warning {
-            background-color: #fff3cd;
-            border: 1px solid #ffc107;
-            color: #856404;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        .warning strong {
-            display: block;
-            margin-bottom: 10px;
-        }
-        .product-info {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        .product-info strong {
-            color: #333;
-        }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-delete {
-            background-color: #f44336;
-            color: white;
-        }
-        .btn-delete:hover {
-            background-color: #da190b;
-        }
-        .btn-cancel {
-            background-color: #757575;
-            color: white;
-        }
-        .btn-cancel:hover {
-            background-color: #616161;
-        }
-        .nav-links {
-            margin-bottom: 20px;
-        }
-        .nav-links a {
-            color: #2196f3;
-            text-decoration: none;
-            margin-right: 15px;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
+        .btn { padding:12px 20px; border-radius:4px; color:white; text-decoration:none; margin:10px; display:inline-block; }
+        .btn-delete { background:#d32f2f; }
+        .btn-cancel { background:#757575; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="nav-links">
-            <a href="{% url 'admin_product_form' %}">← 제품 목록으로</a>
-        </div>
+    <div class="box">
+        <h2>정말 삭제하시겠습니까?</h2>
 
-        <h1>제품 삭제 확인</h1>
-
-        <div class="warning">
-            <strong>⚠️ 경고</strong>
-            이 작업은 되돌릴 수 없습니다. 제품과 관련된 모든 데이터(이미지, 성분, 카테고리 연결 등)가 함께 삭제됩니다.
-        </div>
-
-        <div class="product-info">
-            <strong>삭제할 제품 정보:</strong><br />
-            ID: {{ product.id }}<br />
-            제품 이름: {{ product.name }}<br />
-            회사: {{ product.company }}<br />
-            가격: {{ product.price|floatformat:0 }}원
-        </div>
+        <p>
+            <strong>{{ product.name }}</strong><br>
+            (ID: {{ product.id }})
+        </p>
 
         <form method="POST">
             {% csrf_token %}
-            <div class="button-group">
-                <a href="{% url 'admin_product_form' %}" class="btn-cancel" style="text-decoration: none;">취소</a>
-                <button type="submit" class="btn-delete">삭제하기</button>
-            </div>
+            <input type="hidden" name="action" value="delete">
+            <button type="submit" class="btn btn-delete">삭제하기</button>
         </form>
+
+        <a href="{% url 'admin_product_edit' product.id %}" class="btn btn-cancel">취소</a>
     </div>
 </body>
 </html>
-
