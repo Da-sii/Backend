@@ -1,167 +1,151 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
     <title>성분 수정</title>
+
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 50px auto;
-        padding: 20px;
-        background-color: #f5f5f5;
-      }
-      .container {
-        background-color: white;
-        padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-      }
-      h1 {
-        color: #333;
-        margin-bottom: 30px;
-      }
-      .form-group {
-        margin-bottom: 20px;
-      }
-      label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-        color: #555;
-      }
-      input[type="text"],
-      textarea {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 16px;
-        box-sizing: border-box;
-      }
-      textarea {
-        min-height: 100px;
-        resize: vertical;
-      }
-      button {
-        background-color: #4caf50;
-        color: white;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-      }
-      button:hover {
-        background-color: #45a049;
-      }
-      .messages {
-        margin-bottom: 20px;
-      }
-      .message {
-        padding: 10px;
-        border-radius: 4px;
-        margin-bottom: 10px;
-      }
-      .success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-      }
-      .error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-      }
-      .nav-links {
-        margin-bottom: 20px;
-      }
-      .nav-links a {
-        color: #2196f3;
-        text-decoration: none;
-        margin-right: 15px;
-      }
-      .nav-links a:hover {
-        text-decoration: underline;
-      }
+        body {
+            font-family: Arial;
+            max-width: 800px;
+            margin: 40px auto;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 6px; }
+
+        textarea {
+            width: 100%;
+            min-height: 60px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            resize: vertical;
+            font-size: 15px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .dynamic-item { display: flex; gap: 10px; margin-bottom: 10px; }
+        .btn-add, .btn-remove {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            color: white;
+        }
+        .btn-add { background: #4caf50; }
+        .btn-remove { background: #e74c3c; }
     </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="nav-links">
-        <a href="{% url 'admin_ingredient_form' %}">← 성분 목록으로</a>
-      </div>
 
-      <h1>성분 수정</h1>
+    <script>
+        function addEffectField() {
+            const box = document.getElementById("effectContainer");
+            const div = document.createElement("div");
+            div.className = "dynamic-item";
+            div.innerHTML = `
+                <textarea name="effect_list[]"></textarea>
+                <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+            `;
+            box.appendChild(div);
+        }
 
-      {% if messages %}
-      <div class="messages">
-        {% for message in messages %}
-        <div class="message {{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-      </div>
-      {% endif %}
+        function addSideField() {
+            const box = document.getElementById("sideContainer");
+            const div = document.createElement("div");
+            div.className = "dynamic-item";
+            div.innerHTML = `
+                <textarea name="side_list[]"></textarea>
+                <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+            `;
+            box.appendChild(div);
+        }
 
-      <form method="POST">
+        function beforeSubmit() {
+            const effects = [...document.getElementsByName("effect_list[]")].map(e => e.value.trim()).filter(v => v);
+            const sides = [...document.getElementsByName("side_list[]")].map(e => e.value.trim()).filter(v => v);
+
+            document.getElementById("effectHidden").value = JSON.stringify(effects);
+            document.getElementById("sideHidden").value = JSON.stringify(sides);
+
+            return true;
+        }
+    </script>
+</head>
+
+<body>
+<div class="container">
+    <h1>성분 수정</h1>
+
+    <form method="POST" onsubmit="return beforeSubmit()">
         {% csrf_token %}
+
+        <!-- 성분 이름 -->
         <div class="form-group">
-          <label for="name">성분 이름 *</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            required
-            value="{{ ingredient.name }}"
-          />
+            <label>성분 이름 *</label>
+            <textarea name="name" required>{{ ingredient.name }}</textarea>
         </div>
+
+        <!-- 주성분 -->
         <div class="form-group">
-          <label for="mainIngredient">주성분 이름 *</label>
-          <input
-            type="text"
-            id="mainIngredient"
-            name="mainIngredient"
-            required
-            value="{{ ingredient.mainIngredient }}"
-            placeholder="예: Ascorbic Acid, DHA/EPA 등"
-          />
+            <label>주성분 *</label>
+            <textarea name="mainIngredient" required>{{ ingredient.mainIngredient }}</textarea>
         </div>
+
+        <!-- 최소 권장량 -->
         <div class="form-group">
-          <label for="minRecommended">최소 권장량 *</label>
-          <input
-            type="text"
-            id="minRecommended"
-            name="minRecommended"
-            required
-            value="{{ ingredient.minRecommended }}"
-          />
+            <label>최소 권장량 *</label>
+            <textarea name="minRecommended" required>{{ ingredient.minRecommended }}</textarea>
         </div>
+
+        <!-- 최대 권장량 -->
         <div class="form-group">
-          <label for="maxRecommended">최대 권장량 *</label>
-          <input
-            type="text"
-            id="maxRecommended"
-            name="maxRecommended"
-            required
-            value="{{ ingredient.maxRecommended }}"
-          />
+            <label>최대 권장량 *</label>
+            <textarea name="maxRecommended" required>{{ ingredient.maxRecommended }}</textarea>
         </div>
+
+        <!-- 효과 -->
         <div class="form-group">
-          <label for="effect">효과 *</label>
-          <textarea id="effect" name="effect" required>
-{{ ingredient.effect }}</textarea
-          >
+            <label>효과 *</label>
+            <div id="effectContainer">
+                {% for e in ingredient.effect %}
+                <div class="dynamic-item">
+                    <textarea name="effect_list[]">{{ e }}</textarea>
+                    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="btn-add" onclick="addEffectField()">+ 줄 추가</button>
         </div>
+
+        <!-- 부작용 -->
         <div class="form-group">
-          <label for="sideEffect">부작용 (선택사항)</label>
-          <textarea id="sideEffect" name="sideEffect">
-{{ ingredient.sideEffect }}</textarea
-          >
+            <label>부작용</label>
+            <div id="sideContainer">
+                {% if ingredient.sideEffect %}
+                    {% for s in ingredient.sideEffect %}
+                    <div class="dynamic-item">
+                        <textarea name="side_list[]">{{ s }}</textarea>
+                        <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <button type="button" class="btn-add" onclick="addSideField()">+ 줄 추가</button>
         </div>
-        <button type="submit">저장하기</button>
-      </form>
-    </div>
-  </body>
+
+        <!-- Hidden JSON -->
+        <input type="hidden" name="effect" id="effectHidden">
+        <input type="hidden" name="sideEffect" id="sideHidden">
+
+        <button type="submit" style="margin-top:20px;">저장하기</button>
+    </form>
+</div>
+</body>
 </html>
