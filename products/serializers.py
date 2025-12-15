@@ -140,7 +140,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients")
+        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "coupang", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients")
 
     def get_reviewImages(self, obj):
         # 해당 제품의 리뷰 이미지를 최신순 6개 반환
