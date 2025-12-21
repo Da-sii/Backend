@@ -104,8 +104,8 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
     ingredientName = serializers.CharField(source="ingredient.name")
     minRecommended = serializers.CharField(source="ingredient.minRecommended")
     maxRecommended = serializers.CharField(source="ingredient.maxRecommended")
-    effect = serializers.CharField(source="ingredient.effect")
-    sideEffect = serializers.CharField(source="ingredient.sideEffect")
+    effect = serializers.JSONField(source="ingredient.effect")
+    sideEffect = serializers.JSONField(source="ingredient.sideEffect")
     status = serializers.SerializerMethodField()
 
     class Meta:
