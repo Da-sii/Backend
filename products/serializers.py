@@ -102,6 +102,7 @@ class ProductReadSerializer(serializers.ModelSerializer):
 
 class ProductIngredientDetailSerializer(serializers.ModelSerializer):
     ingredientName = serializers.CharField(source="ingredient.name")
+    mainIngredient = serializers.CharField(source="ingredient.mainIngredient")
     minRecommended = serializers.CharField(source="ingredient.minRecommended")
     maxRecommended = serializers.CharField(source="ingredient.maxRecommended")
     effect = serializers.JSONField(source="ingredient.effect")
@@ -110,7 +111,7 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductIngredient
-        fields = ("ingredientName", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect", "status")
+        fields = ("ingredientName", "mainIngredient", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect", "status")
 
     def get_status(self, obj: ProductIngredient) -> str:
         try:
