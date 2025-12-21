@@ -105,7 +105,7 @@ class Ingredient(models.Model):
         db_table = "ingredients"
 
     def __str__(self):
-        return self.name더
+        return self.name
 
 class ProductIngredient(models.Model):
     product = models.ForeignKey(
