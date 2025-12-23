@@ -23,7 +23,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("name", "company", "price", "unit", "piece", "productType", "images", "ingredients")
+        fields = ("name", "company", "productType", "images", "ingredients")
 
     def validate_ingredients(self, value) -> List[Dict[str, Any]]:
         if not value:
@@ -98,7 +98,7 @@ class ProductReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "images", "ingredients")
+        fields = ("id", "name", "company", "productType", "images", "ingredients")
 
 class ProductIngredientDetailSerializer(serializers.ModelSerializer):
     ingredientName = serializers.CharField(source="ingredient.name")
@@ -141,7 +141,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "price", "unit", "piece", "productType", "coupang", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients")
+        fields = ("id", "name", "company", "productType", "coupang", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients")
 
     def get_reviewImages(self, obj):
         # 해당 제품의 리뷰 이미지를 최신순 6개 반환
@@ -213,7 +213,7 @@ class ProductRankingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount", "reviewAvg", "rankDiff")
+        fields = ("id", "name", "image", "company", "reviewCount", "reviewAvg", "rankDiff")
 
     def get_image(self, obj):
         first_image = obj.images.order_by("id").first()
@@ -244,7 +244,7 @@ class ProductsListSerializer(serializers.ModelSerializer):
     reviewAvg = serializers.SerializerMethodField()
     class Meta:
         model = Product
-        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount", "reviewAvg")
+        fields = ("id", "name", "image", "company", "reviewCount", "reviewAvg")
 
     def get_image(self, obj):
         first_image = obj.images.order_by("id").first()
@@ -275,7 +275,7 @@ class ProductSearchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount", "reviewAvg")
+        fields = ("id", "name", "image", "company", "reviewCount", "reviewAvg")
 
     def get_image(self, obj):
         first_image = obj.images.order_by("id").first()
@@ -296,7 +296,7 @@ class MainSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "image", "company", "price", "unit", "piece", "reviewCount", "reviewAvg")
+        fields = ("id", "name", "image", "company", "reviewCount", "reviewAvg")
 
     def get_image(self, obj):
         first_image = obj.images.order_by("id").first()
