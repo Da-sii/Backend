@@ -216,9 +216,9 @@ class ProductListView(generics.ListAPIView):
                 name="sort",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="정렬: monthly_rank | price_asc | price_desc | review_desc (기본: monthly_rank)",
+                description="정렬: monthly_rank | review_desc (기본: monthly_rank)",
                 required=False,
-                enum=["monthly_rank", "price_asc", "price_desc", "review_desc"],
+                enum=["monthly_rank", "review_desc"],
             ),
         ],
         tags=["제품"]
@@ -242,12 +242,6 @@ class ProductListView(generics.ListAPIView):
 
         if smallCategory and smallCategory != "전체":
             qs = qs.filter(category_products__category__category=smallCategory).distinct()
-
-        if sort == "price_asc":
-            return qs.order_by("price", "id")
-
-        if sort == "price_desc":
-            return qs.order_by("-price", "id")
 
         if sort == "review_desc":
             return (
@@ -313,9 +307,9 @@ class ProductSearchView(generics.ListAPIView):
                 name="sort",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="정렬: monthly_rank | price_asc | price_desc | review_desc (기본: monthly_rank)",
+                description="정렬: monthly_rank | review_desc (기본: monthly_rank)",
                 required=False,
-                enum=["monthly_rank", "price_asc", "price_desc", "review_desc"],
+                enum=["monthly_rank", "review_desc"],
             ),
         ],
         tags=["제품"]
@@ -342,12 +336,6 @@ class ProductSearchView(generics.ListAPIView):
                 Q(company__icontains=query) |
                 Q(id__in=Subquery(ingredient_product_ids))
             ).distinct()
-
-        if sort == "price_asc":
-            return qs.order_by("price", "id")
-
-        if sort == "price_desc":
-            return qs.order_by("-price", "id")
 
         if sort == "review_desc":
             return (

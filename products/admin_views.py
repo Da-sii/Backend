@@ -125,14 +125,11 @@ def product_form(request):
         # 기본 정보
         name = request.POST.get('name', '').strip()
         company = request.POST.get('company', '').strip()
-        price = request.POST.get('price', '').strip()
-        unit = request.POST.get('unit', '').strip()
-        piece = request.POST.get('piece', '').strip()
         product_type = request.POST.get('productType', '').strip()
         coupang = request.POST.get('coupang', '').strip()
         
         # 필수 필드 검증
-        if not all([name, company, price, unit, piece, product_type]):
+        if not all([name, company, product_type]):
             messages.error(request, '모든 필수 항목을 입력해주세요.')
         else:
             try:
@@ -140,9 +137,6 @@ def product_form(request):
                 product = Product.objects.create(
                     name=name,
                     company=company,
-                    price=int(price),
-                    unit=unit,
-                    piece=piece,
                     productType=product_type,
                     coupang=coupang
                 )
@@ -265,21 +259,24 @@ def ingredient_edit(request, ingredient_id):
         return redirect('admin_ingredient_form')
 
     if request.method == 'POST':
+        ingredient.name = request.POST.get('name', '').strip()
+        ingredient.mainIngredient = request.POST.get('mainIngredient', '').strip()
+        ingredient.minRecommended = request.POST.get('minRecommended', '').strip()
+        ingredient.maxRecommended = request.POST.get('maxRecommended', '').strip()
+
         effect_raw = request.POST.get('effect', '[]')
         side_raw = request.POST.get('sideEffect', '[]')
 
         try:
-            effect = json.loads(effect_raw)
+            ingredient.effect = json.loads(effect_raw)
         except:
-            effect = []
+            ingredient.effect = []
 
         try:
-            side_effect = json.loads(side_raw)
+            ingredient.sideEffect = json.loads(side_raw)
         except:
-            side_effect = None
+            ingredient.sideEffect = None
 
-        ingredient.effect = effect
-        ingredient.sideEffect = side_effect
         ingredient.save()
 
         messages.success(request, f'"{ingredient.name}" 성분이 성공적으로 수정되었습니다.')
@@ -390,19 +387,11 @@ def product_edit(request, product_id):
         # 기본 정보 수정
         product.name = request.POST.get('name', '').strip()
         product.company = request.POST.get('company', '').strip()
-        product.unit = request.POST.get('unit', '').strip()
-        product.piece = request.POST.get('piece', '').strip()
         product.productType = request.POST.get('productType', '').strip()
         product.coupang = request.POST.get('coupang', '').strip()
         
-        try:
-            product.price = int(request.POST.get('price', 0))
-        except ValueError:
-            messages.error(request, '가격은 숫자로 입력해주세요.')
-            return redirect('admin_product_edit', product_id=product_id)
-        
         # 필수 필드 검증
-        if not all([product.name, product.company, product.unit, product.piece, product.productType]):
+        if not all([product.name, product.company, product.productType]):
             messages.error(request, '모든 필수 항목을 입력해주세요.')
         else:
             product.save()
