@@ -834,10 +834,8 @@ paths:
           type: string
           enum:
           - monthly_rank
-          - price_asc
-          - price_desc
           - review_desc
-        description: '정렬: monthly_rank | price_asc | price_desc | review_desc (기본:
+        description: '정렬: monthly_rank | review_desc (기본:
           monthly_rank)'
       tags:
       - 제품
@@ -916,10 +914,8 @@ paths:
           type: string
           enum:
           - monthly_rank
-          - price_asc
-          - price_desc
           - review_desc
-        description: '정렬: monthly_rank | price_asc | price_desc | review_desc (기본:
+        description: '정렬: monthly_rank | review_desc (기본:
           monthly_rank)'
       - in: query
         name: word
@@ -1224,9 +1220,6 @@ paths:
                         id: 1
                         name: 향수 제품명
                         company: 회사명
-                        price: 50000
-                        unit: ml
-                        piece: 1
                         productType: 향수
                         viewCount: 150
                       rate: 5
@@ -2009,19 +2002,6 @@ components:
         company:
           type: string
           title: 회사 이름
-        price:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 가격
-        unit:
-          type: string
-          title: 단위
-        piece:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 개수
         productType:
           type: string
           title: 식품의 유형
@@ -2035,10 +2015,7 @@ components:
       required:
       - company
       - name
-      - piece
-      - price
       - productType
-      - unit
     ProductCreateRequest:
       type: object
       properties:
@@ -2050,20 +2027,6 @@ components:
           type: string
           minLength: 1
           title: 회사 이름
-        price:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 가격
-        unit:
-          type: string
-          minLength: 1
-          title: 단위
-        piece:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 개수
         productType:
           type: string
           minLength: 1
@@ -2079,10 +2042,7 @@ components:
       required:
       - company
       - name
-      - piece
-      - price
       - productType
-      - unit
     ProductDetail:
       type: object
       properties:
@@ -2095,19 +2055,6 @@ components:
         company:
           type: string
           title: 회사 이름
-        price:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 가격
-        unit:
-          type: string
-          title: 단위
-        piece:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 개수
         productType:
           type: string
           title: 식품의 유형
@@ -2140,13 +2087,10 @@ components:
       - ingredients
       - ingredientsCount
       - name
-      - piece
-      - price
       - productType
       - ranking
       - reviewAvg
       - reviewCount
-      - unit
     ProductImage:
       type: object
       properties:
@@ -2200,19 +2144,6 @@ components:
         company:
           type: string
           title: 회사 이름
-        price:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 가격
-        unit:
-          type: string
-          title: 단위
-        piece:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 개수
         reviewCount:
           type: string
           readOnly: true
@@ -2227,12 +2158,9 @@ components:
       - id
       - image
       - name
-      - piece
-      - price
       - rankDiff
       - reviewAvg
       - reviewCount
-      - unit
     ProductRatingStatsResponse:
       type: object
       properties:
@@ -2294,19 +2222,6 @@ components:
         company:
           type: string
           title: 회사 이름
-        price:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 가격
-        unit:
-          type: string
-          title: 단위
-        piece:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 개수
         reviewCount:
           type: string
           readOnly: true
@@ -2318,11 +2233,8 @@ components:
       - id
       - image
       - name
-      - piece
-      - price
       - reviewAvg
       - reviewCount
-      - unit
     ProductsList:
       type: object
       properties:
@@ -2338,19 +2250,6 @@ components:
         company:
           type: string
           title: 회사 이름
-        price:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 가격
-        unit:
-          type: string
-          title: 단위
-        piece:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          title: 개수
         reviewCount:
           type: string
           readOnly: true
@@ -2362,11 +2261,8 @@ components:
       - id
       - image
       - name
-      - piece
-      - price
       - reviewAvg
       - reviewCount
-      - unit
     ReasonEnum:
       enum:
       - IRRELEVANT

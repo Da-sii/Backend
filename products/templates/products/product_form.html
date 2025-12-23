@@ -66,34 +66,99 @@
             font-size: 16px;
             margin-right: 10px;
         }
-        .btn-remove {
-            background-color: #f44336;
-            padding: 8px 16px;
-            font-size: 14px;
-        }
         .btn-add {
             background-color: #2196f3;
             padding: 8px 16px;
             font-size: 14px;
         }
-        .messages { margin-bottom: 20px; }
-        .success { background-color: #d4edda; padding: 10px; }
-        .error { background-color: #f8d7da; padding: 10px; }
 
         .product-list { margin-top: 40px; }
-        .product-item {
-            padding: 20px; background-color: #f9f9f9;
-            border-left: 3px solid #4caf50; margin-bottom: 15px; border-radius: 4px;
-        }
-
-        .product-header {
-            display: flex; justify-content: space-between; align-items: flex-start;
-        }
 
         .nav-links a { margin-right: 15px; text-decoration: none; color: #2196f3; }
         .nav-links a:hover { text-decoration: underline; }
 
         .dynamic-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+
+        .product-item { padding: 20px 24px; background-color: #ffffff; border: 1px solid #eee; border-radius: 8px;margin-bottom: 16px; }
+
+        .product-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+
+        .product-title { font-size: 18px; font-weight: 700; color: #222; }
+
+        .product-id {
+            font-size: 13px;
+            font-weight: normal;
+            color: #999;
+            margin-left: 6px;
+        }
+
+        .product-meta {
+            margin-top: 6px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .product-meta .dot { margin: 0 6px; }
+
+        .product-link {
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .product-link a {
+            color: #2196f3;
+            text-decoration: none;
+        }
+
+        .product-link a:hover { text-decoration: underline; }
+
+        .product-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-edit {
+            background: #2196f3;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .btn-delete {
+            background: #f44336;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .product-ingredients {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .ingredient-chip {
+            background-color: #f1f3f5;
+            color: #333;
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 13px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .ingredient-chip strong {
+            margin-left: 4px;
+            font-weight: 600;
+            color: #000;
+        }
+
     </style>
 </head>
 
@@ -130,21 +195,6 @@
             <div class="form-group">
                 <label>회사 *</label>
                 <input type="text" name="company" required>
-            </div>
-
-            <div class="form-group">
-                <label>가격 *</label>
-                <input type="number" name="price" required>
-            </div>
-
-            <div class="form-group">
-                <label>단위 *</label>
-                <input type="text" name="unit" required>
-            </div>
-
-            <div class="form-group">
-                <label>개수 *</label>
-                <input type="text" name="piece" required>
             </div>
 
             <div class="form-group">
@@ -215,34 +265,43 @@
         {% for product in products %}
         <div class="product-item">
             <div class="product-header">
-                <div>
-                    <div>ID: {{ product.id }}</div>
-                    <div><strong>{{ product.name }}</strong></div>
-                    <div>{{ product.company }}</div>
+                <div class="product-info">
+                    <div class="product-title">
+                        {{ product.name }}
+                        <span class="product-id">#{{ product.id }}</span>
+                    </div>
+
+                    <div class="product-meta">
+                        <span>{{ product.company }}</span>
+                        <span class="dot">·</span>
+                        <span>{{ product.productType }}</span>
+                    </div>
+
+                    {% if product.ingredients.all %}
+                        <div class="product-ingredients">
+                            {% for pi in product.ingredients.all %}
+                                <span class="ingredient-chip">
+                                    {{ pi.ingredient.name }}
+                                    <strong>{{ pi.amount }}</strong>
+                                </span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if product.coupang %}
+                        <div class="product-link">
+                            <a href="{{ product.coupang }}" target="_blank">
+                                쿠팡 링크 바로가기 →
+                            </a>
+                        </div>
+                    {% endif %}
                 </div>
-                <div>{{ product.price }}원</div>
+
+                <div class="product-actions">
+                    <a href="{% url 'admin_product_edit' product.id %}" class="btn-edit">수정</a>
+                    <a href="{% url 'admin_product_edit' product.id %}?action=delete" class="btn-delete">삭제</a>
+                </div>
             </div>
-
-            <div style="margin-top: 10px;">
-                단위: {{ product.unit }} / 개수: {{ product.piece }} / 유형: {{ product.productType }}
-            </div>
-
-            <div style="margin-top: 10px;">
-                쿠팡 링크: {{ product.coupang }}
-            </div>
-
-            <div style="margin-top: 15px; text-align: right;">
-                <a href="{% url 'admin_product_edit' product.id %}"
-                   style="background:#2196f3;color:white;padding:8px 16px;border-radius:4px;text-decoration:none;">
-                    수정하기
-                </a>
-
-                <a href="{% url 'admin_product_edit' product.id %}?action=delete"
-                   style="background:#f44336;color:white;padding:8px 16px;border-radius:4px;text-decoration:none;">
-                    삭제하기
-                </a>
-            </div>
-
         </div>
         {% endfor %}
     </div>

@@ -55,13 +55,92 @@
         .btn-remove {
             background-color: #f44336;
         }
+
         .ingredient-item {
-            padding: 15px;
-            background-color: #fafafa;
-            border-left: 3px solid #ff9800;
-            margin-bottom: 12px;
-            border-radius: 4px;
+            padding: 20px 24px;
+            background-color: #ffffff;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 16px;
         }
+
+        .ingredient-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .ingredient-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .ingredient-id {
+            font-size: 13px;
+            color: #999;
+            margin-left: 6px;
+        }
+
+        .ingredient-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-edit {
+            background: #2196f3;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .btn-delete {
+            background: #f44336;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .ingredient-meta {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #555;
+            display: flex;
+            gap: 16px;
+        }
+
+        .ingredient-section {
+            margin-top: 14px;
+        }
+
+        .ingredient-section.warning {
+            background: #fff7f7;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .bullet-list {
+            margin: 0;
+            padding-left: 18px;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .bullet-list li {
+            margin-bottom: 4px;
+        }
+
     </style>
 </head>
 
@@ -133,28 +212,50 @@
 
     {% for ing in ingredients %}
         <div class="ingredient-item">
-            <strong>ID {{ ing.id }} :</strong> {{ ing.name }}<br><br>
-            <strong>주성분:</strong> {{ ing.mainIngredient }}<br><br>
-            <strong>권장량:</strong> {{ ing.minRecommended }} ~ {{ ing.maxRecommended }}<br><br>
+            <div class="ingredient-header">
+                <div class="ingredient-title">
+                    {{ ing.name }}
+                    <span class="ingredient-id">#{{ ing.id }}</span>
+                </div>
 
-            <strong>효과:</strong><br>
-            {% for e in ing.effect %}
-                • {{ e }}<br>
-            {% endfor %}
+                <div class="ingredient-actions">
+                    <a href="{% url 'admin_ingredient_edit' ing.id %}" class="btn-edit">수정</a>
+                    <a href="{% url 'admin_ingredient_delete' ing.id %}"
+                       class="btn-delete"
+                       onclick="return confirm('삭제하시겠습니까?')">삭제</a>
+                </div>
+            </div>
 
-            <br>
-            {% if ing.sideEffect %}
-                <strong>부작용:</strong><br>
-                {% for s in ing.sideEffect %}
-                    • {{ s }}<br>
-                {% endfor %}
+            <div class="ingredient-meta">
+                {% if ing.mainIngredient %}
+                    <span><strong>주성분</strong> {{ ing.mainIngredient }}</span>
+                {% endif %}
+                <span><strong>권장량</strong> {{ ing.minRecommended }} ~ {{ ing.maxRecommended }}</span>
+            </div>
+
+            {% if ing.effect %}
+                <div class="ingredient-section">
+                    <div class="section-title">효과</div>
+                    <ul class="bullet-list">
+                        {% for e in ing.effect %}
+                            <li>{{ e }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
             {% endif %}
 
-            <br>
-            <a href="{% url 'admin_ingredient_edit' ing.id %}">수정</a> |
-            <a style="color:red;" href="{% url 'admin_ingredient_delete' ing.id %}"
-               onclick="return confirm('삭제하시겠습니까?')">삭제</a>
+            {% if ing.sideEffect %}
+                <div class="ingredient-section warning">
+                    <div class="section-title">부작용 / 주의</div>
+                    <ul class="bullet-list">
+                        {% for s in ing.sideEffect %}
+                            <li>{{ s }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
         </div>
+
     {% endfor %}
 
 </div>

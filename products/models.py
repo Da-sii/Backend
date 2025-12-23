@@ -28,9 +28,6 @@ class SmallCategory(models.Model):
 class Product(models.Model):
     name = models.TextField(verbose_name="제품 이름")
     company = models.TextField(verbose_name="회사 이름")
-    price = models.IntegerField(verbose_name="가격")
-    unit = models.TextField(verbose_name="단위")
-    piece = models.TextField(verbose_name="개수")
     productType = models.TextField(verbose_name="식품의 유형")
     viewCount = models.IntegerField(verbose_name="조회수", default=0)
     coupang = models.TextField(verbose_name="쿠팡 링크", null=True, blank=True)

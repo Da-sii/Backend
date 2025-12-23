@@ -44,7 +44,7 @@ class ProductIngredientAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     """제품 관리에서 성분 관계를 같이 볼 수 있게 설정"""
 
-    list_display = ("id", "name", "company", "price")
+    list_display = ("id", "name", "company")
     search_fields = ("name", "company")
     list_filter = ()
     ordering = ("name",)
