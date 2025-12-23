@@ -100,7 +100,7 @@ def clean_text(value: str):
     v = value.strip()
 
     # 1) (국문), (영문), (기타기능), (생리활성기능 등급) 제거
-    v = re.sub(r"\((국문|영문|기타기능|생리활성기능.*?|.*?등급.*?)\)", "", v)
+    v = re.sub(r"\((국문|영문|기타.*?|생리활성기능.*?|.*?등급.*?)\)", "", v)
 
     # 2) 영어 문장 제거 (영문이 포함된 전체 문장 제거)
     v = re.sub(r"[A-Za-z].*", "", v)
@@ -115,6 +115,4 @@ def clean_text(value: str):
     v = re.sub(r"\n+", "\n", v)
 
     # 6) 문장 단위 리스트로 분리
-    parts = [p.strip() for p in v.split("\n") if p.strip()]
-
-    return parts
+    return [p.strip() for p in v.split("\n") if p.strip()]
