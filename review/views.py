@@ -877,9 +877,6 @@ class ReviewDetailView(GenericAPIView):
                                     "id": 1,
                                     "name": "향수 제품명",
                                     "company": "회사명",
-                                    "price": 50000,
-                                    "unit": "ml",
-                                    "piece": 1,
                                     "productType": "향수",
                                     "viewCount": 150
                                 },
@@ -940,9 +937,6 @@ class ReviewDetailView(GenericAPIView):
             'id': review.product.id,
             'name': review.product.name,
             'company': review.product.company,
-            'price': review.product.price,
-            'unit': review.product.unit,
-            'piece': review.product.piece,
             'productType': review.product.productType,
             'viewCount': review.product.viewCount
         }
