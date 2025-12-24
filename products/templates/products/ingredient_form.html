@@ -141,11 +141,20 @@
             margin-bottom: 4px;
         }
 
+        .nav-links a { margin-right: 15px; text-decoration: none; color: #2196f3; }
+        .nav-links a:hover { text-decoration: underline; }
+
     </style>
 </head>
 
 <body>
 <div class="container">
+
+    <div class="nav-links">
+        <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+        <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
+        <a href="{% url 'admin_product_form' %}">제품</a>
+    </div>
 
     <h1>성분 추가</h1>
 
