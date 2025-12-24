@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <title>제품 수정 - {{ product.name }}</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,54 +19,90 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             background-color: white;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
         }
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-        }
+
+        h1 { margin-bottom: 30px; }
+
         .form-section {
             margin-bottom: 30px;
             padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 4px;
+            background: #f9f9f9;
+            border-radius: 6px;
         }
-        .form-section h2 {
-            margin: 0 0 20px 0;
-            font-size: 1.2em;
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 6px;
         }
-        .form-group { margin-bottom: 15px; }
-        label { font-weight: bold; margin-bottom: 5px; display: block; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; }
-        .btn-cancel { background: #757575; color: white; }
-        .btn-add { background: #2196f3; color: white; }
-        .btn-remove { background: #f44336; color: white; }
-        .nav-links a { margin-right: 10px; color: #2196f3; text-decoration: none; }
-        .existing-item { padding: 10px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 4px; display:flex; justify-content:space-between; }
+
+        input, select {
+            width: 100%;
+            height: 38px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .nav-links a {
+            margin-right: 10px;
+            color: #2196f3;
+            text-decoration: none;
+        }
+
+        /* === 성분 Row 공통 === */
+        .dynamic-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 80px;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .btn-add {
+            background: #2196f3;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-remove {
+            background: #f44336;
+            color: white;
+            height: 38px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Select2 높이 맞춤 */
+        .select2-container .select2-selection--single {
+            height: 38px;
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
+
 <body>
 <div class="container">
 
     <div class="nav-links">
-        <a href="{% url 'admin_product_form' %}">← 제품 목록으로</a>
-        <a href="{% url 'admin_big_category_form' %}">대분류</a>
-        <a href="{% url 'admin_small_category_form' %}">소분류</a>
+        <a href="{% url 'admin_product_form' %}">← 제품 목록</a>
         <a href="{% url 'admin_ingredient_form' %}">성분</a>
     </div>
 
     <h1>제품 수정 - {{ product.name }}</h1>
-
-    {% if messages %}
-    {% for message in messages %}
-        <div class="{{ message.tags }}">{{ message }}</div>
-    {% endfor %}
-    {% endif %}
 
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
@@ -67,142 +110,125 @@
         <!-- 기본 정보 -->
         <div class="form-section">
             <h2>기본 정보</h2>
-            <label>제품 이름 *</label>
-            <input type="text" name="name" value="{{ product.name }}" required />
 
-            <label>회사 *</label>
-            <input type="text" name="company" value="{{ product.company }}" required />
+            <label>제품 이름</label>
+            <input type="text" name="name" value="{{ product.name }}" required>
 
-            <label>식품 유형 *</label>
-            <input type="text" name="productType" value="{{ product.productType }}" required />
+            <label>회사</label>
+            <input type="text" name="company" value="{{ product.company }}" required>
 
-            <label>쿠팡 링크 *</label>
-            <input type="text" name="coupang" value="{{ product.coupang }}" required />
+            <label>식품 유형</label>
+            <input type="text" name="productType" value="{{ product.productType }}" required>
+
+            <label>쿠팡 링크</label>
+            <input type="text" name="coupang" value="{{ product.coupang }}">
         </div>
 
-        <!-- 기존 이미지 -->
+        <!-- 성분 -->
         <div class="form-section">
-            <h2>기존 이미지</h2>
+            <h2>성분</h2>
 
-            {% for img in product.images.all %}
-            <div class="existing-item">
-                <div>
-                    <a href="{{ img.url }}" target="_blank">{{ img.url }}</a>
-                </div>
-                <div>
-                    <input type="checkbox" name="delete_image_ids[]" value="{{ img.id }}"> 삭제
-                </div>
-            </div>
-            {% endfor %}
-
-            <label>새 이미지 업로드</label>
-            <input type="file" name="new_image_files" multiple accept="image/*" />
-        </div>
-
-        <!-- 성분 수정 -->
-        <div class="form-section">
-            <h2>성분 수정</h2>
-
+            <!-- 기존 성분 -->
             {% for pi in product.ingredients.all %}
-            <div class="existing-item">
-                <div style="flex:1; display:flex; gap:10px;">
-                    <select name="existing_ingredient_ids[]">
-                        {% for ing in ingredients %}
-                            <option value="{{ ing.id }}"
-                                {% if ing.id == pi.ingredient.id %}selected{% endif %}>{{ ing.name }}</option>
-                        {% endfor %}
-                    </select>
+            <div class="dynamic-item">
+                <select name="existing_ingredient_ids[]" class="ingredient-select">
+                    {% for ing in ingredients %}
+                        <option value="{{ ing.id }}"
+                            {% if ing.id == pi.ingredient.id %}selected{% endif %}>
+                            {{ ing.name }}
+                        </option>
+                    {% endfor %}
+                </select>
 
-                    <input type="text" name="existing_amounts[]" value="{{ pi.amount }}">
-                    <input type="hidden" name="existing_product_ingredient_ids[]" value="{{ pi.id }}">
-                </div>
+                <input type="text"
+                       name="existing_amounts[]"
+                       value="{{ pi.amount }}">
 
-                <div>
-                    <input type="checkbox" name="delete_ingredient_ids[]" value="{{ pi.id }}"> 삭제
-                </div>
+                <input type="hidden"
+                       name="existing_product_ingredient_ids[]"
+                       value="{{ pi.id }}">
+
+                <button type="button"
+                        class="btn-remove"
+                        onclick="this.parentElement.remove()">
+                    삭제
+                </button>
             </div>
             {% endfor %}
 
+            <!-- 신규 성분 -->
             <div id="ingredientContainer">
                 <div class="dynamic-item">
-                    <select name="new_ingredient_ids[]">
-                        <option value="">-- 성분 선택 --</option>
+                    <select name="new_ingredient_ids[]" class="ingredient-select">
+                        <option value="">-- 성분 검색 --</option>
                         {% for ing in ingredients %}
                         <option value="{{ ing.id }}">{{ ing.name }}</option>
                         {% endfor %}
                     </select>
+
                     <input type="text" name="new_amounts[]" placeholder="예: 500mg">
-                    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+
+                    <button type="button"
+                            class="btn-remove"
+                            onclick="this.parentElement.remove()">
+                        삭제
+                    </button>
                 </div>
             </div>
 
-            <button type="button" class="btn-add" onclick="addIngredientField()">성분 추가</button>
+            <button type="button" class="btn-add" onclick="addIngredientField()">+ 성분 추가</button>
         </div>
 
-        <!-- 카테고리 -->
-        <div class="form-section">
-            <h2>카테고리</h2>
-
-            {% for cp in product.category_products.all %}
-            <div class="existing-item">
-                <div>
-                    [{{ cp.category.bigCategory.category }}] {{ cp.category.category }}
-                </div>
-                <div>
-                    <input type="checkbox" name="delete_category_ids[]" value="{{ cp.id }}"> 삭제
-                </div>
-            </div>
-            {% endfor %}
-
-            <div id="categoryContainer">
-                <div class="dynamic-item">
-                    <select name="new_category_ids[]">
-                        <option value="">-- 카테고리 선택 --</option>
-                        {% for cat in small_categories %}
-                        <option value="{{ cat.id }}">
-                            [{{ cat.bigCategory.category }}] {{ cat.category }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
-                </div>
-            </div>
-
-            <button type="button" class="btn-add" onclick="addCategoryField()">카테고리 추가</button>
-        </div>
-
-        <button type="submit" style="background:#4caf50;color:white;">수정 저장</button>
+        <button type="submit" style="background:#4caf50;color:white;padding:10px 20px;border-radius:6px;">
+            수정 저장
+        </button>
     </form>
-
 </div>
 
 <script>
-function addIngredientField() {
-    const container = document.getElementById("ingredientContainer");
-    const newEl = document.createElement("div");
-    newEl.className = "dynamic-item";
-    newEl.innerHTML = `
-        <select name="new_ingredient_ids[]">
-            ${container.children[0].querySelector("select").innerHTML}
-        </select>
-        <input type="text" name="new_amounts[]" placeholder="예: 500mg">
-        <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
-    `;
-    container.appendChild(newEl);
-}
+    function normalizeText(text) {
+        return text.toLowerCase()
+            .replace(/\s+/g, '')
+            .replace(/[^\w가-힣]/g, '');
+    }
 
-function addCategoryField() {
-    const container = document.getElementById("categoryContainer");
-    const newEl = document.createElement("div");
-    newEl.className = "dynamic-item";
-    newEl.innerHTML = `
-        <select name="new_category_ids[]">
-            ${container.children[0].querySelector("select").innerHTML}
-        </select>
-        <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
-    `;
-    container.appendChild(newEl);
-}
+    function ignoreSpaceMatcher(params, data) {
+        if ($.trim(params.term) === '') return data;
+        if (!data.text) return null;
+
+        return normalizeText(data.text).includes(
+            normalizeText(params.term)
+        ) ? data : null;
+    }
+
+    function initIngredientSelect(target) {
+        $(target).select2({
+            placeholder: "성분 검색",
+            width: '100%',
+            matcher: ignoreSpaceMatcher
+        });
+    }
+
+    function addIngredientField() {
+        const container = document.getElementById("ingredientContainer");
+        const el = document.createElement("div");
+        el.className = "dynamic-item";
+        el.innerHTML = `
+            <select name="new_ingredient_ids[]" class="ingredient-select">
+                ${container.children[0].querySelector("select").innerHTML}
+            </select>
+            <input type="text" name="new_amounts[]" placeholder="예: 500mg">
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+        `;
+        container.appendChild(el);
+        initIngredientSelect($(el).find('.ingredient-select'));
+    }
+
+    $(document).ready(function () {
+        $('.ingredient-select').each(function () {
+            initIngredientSelect(this);
+        });
+    });
 </script>
 
 </body>
