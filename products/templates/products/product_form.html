@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <title>제품 추가</title>
 
     <style>
@@ -220,7 +224,7 @@
 
             <div id="ingredientContainer">
                 <div class="dynamic-item">
-                    <select name="ingredient_ids[]">
+                    <select name="ingredient_ids[]" class="ingredient-select">
                         <option value="">-- 성분 선택 --</option>
                         {% for ingredient in ingredients %}
                         <option value="{{ ingredient.id }}">{{ ingredient.name }}</option>
@@ -314,13 +318,19 @@
         const newItem = document.createElement('div');
         newItem.className = 'dynamic-item';
         newItem.innerHTML = `
-            <select name="ingredient_ids[]">
+            <select name="ingredient_ids[]" class="ingredient-select">
                 ${container.children[0].querySelector("select").innerHTML}
             </select>
             <input type="text" name="amounts[]" placeholder="예: 1000mg">
             <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
         `;
         container.appendChild(newItem);
+
+        $(newItem).find('.ingredient-select').select2({
+            placeholder: "성분 검색",
+            width: '100%',
+            matcher: ignoreSpaceMatcher
+        });
     }
 
     function addCategoryField() {
@@ -335,6 +345,41 @@
         `;
         container.appendChild(newItem);
     }
+
+    $(document).ready(function () {
+        $('.ingredient-select').select2({
+            placeholder: "성분 검색",
+            width: '100%',
+            matcher: ignoreSpaceMatcher
+        });
+    });
+
+    function normalizeText(text) {
+        return text
+            .toLowerCase()
+            .replace(/\s+/g, '')     // 모든 공백 제거
+            .replace(/[^\w가-힣]/g, ''); // 특수문자 제거 (선택)
+    }
+
+    function ignoreSpaceMatcher(params, data) {
+        // 검색어가 없으면 그대로 표시
+        if ($.trim(params.term) === '') {
+            return data;
+        }
+
+        if (!data.text) {
+            return null;
+        }
+
+        const search = normalizeText(params.term);
+        const target = normalizeText(data.text);
+
+        if (target.includes(search)) {
+            return data;
+        }
+
+        return null;
+}
 </script>
 </body>
 </html>
