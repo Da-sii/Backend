@@ -177,6 +177,44 @@
             <button type="button" class="btn-add" onclick="addIngredient()">+ 성분 추가</button>
         </div>
 
+<div class="form-section">
+    <h2>카테고리</h2>
+
+    <!-- 기존 카테고리 -->
+    {% for cp in product.category_products.all %}
+    <div class="dynamic-item">
+        <select name="existing_category_ids[]">
+            <option value="">-- 카테고리 선택 --</option>
+            {% for cat in small_categories %}
+                <option value="{{ cat.id }}"
+                    {% if cat.id == cp.category.id %}selected{% endif %}>
+                    [{{ cat.bigCategory.category }}] {{ cat.category }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <input type="hidden"
+               name="existing_category_product_ids[]"
+               value="{{ cp.id }}">
+
+        <button type="button"
+                class="btn-remove"
+                onclick="markDeleteCategory(this, '{{ cp.id }}')">
+            삭제
+        </button>
+    </div>
+    {% endfor %}
+
+    <!-- 신규 카테고리 -->
+    <div id="categoryContainer"></div>
+
+    <button type="button"
+            class="btn-add"
+            onclick="addCategory()">
+        + 카테고리 추가
+    </button>
+</div>
+
         <button type="submit" class="btn-submit">수정 저장</button>
     </form>
 </div>
@@ -237,6 +275,41 @@
 
         initSelect2(select);
     }
+
+function addCategory() {
+    const container = document.getElementById('categoryContainer');
+
+    const row = document.createElement('div');
+    row.className = 'dynamic-item';
+
+    row.innerHTML = `
+        <select name="new_category_ids[]">
+            <option value="">-- 카테고리 선택 --</option>
+            {% for cat in small_categories %}
+                <option value="{{ cat.id }}">
+                    [{{ cat.bigCategory.category }}] {{ cat.category }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="button"
+                class="btn-remove"
+                onclick="this.parentElement.remove()">
+            삭제
+        </button>
+    `;
+
+    container.appendChild(row);
+}
+
+function markDeleteCategory(btn, id) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'delete_category_ids[]';
+    input.value = id;
+    btn.closest('form').appendChild(input);
+    btn.parentElement.remove();
+}
 
     $(document).ready(function () {
         $('.ingredient-select').each(function () {
