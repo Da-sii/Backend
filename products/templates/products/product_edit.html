@@ -17,79 +17,88 @@
             max-width: 1000px;
             margin: 50px auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background:#f5f5f5;
         }
-
         .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            background:#fff;
+            padding:30px;
+            border-radius:8px;
+            box-shadow:0 2px 4px rgba(0,0,0,.1);
         }
-
-        h1 { margin-bottom: 30px; }
+        h1 { margin-bottom:30px; }
 
         .form-section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 6px;
+            margin-bottom:30px;
+            padding:20px;
+            background:#f9f9f9;
+            border-radius:6px;
+            overflow: visible;
         }
 
         label {
-            font-weight: bold;
-            display: block;
-            margin-top: 12px;
-            margin-bottom: 6px;
+            display:block;
+            margin-top:12px;
+            margin-bottom:6px;
+            font-weight:600;
         }
 
         input, select {
-            width: 100%;
-            height: 38px;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
+            width:100%;
+            height:38px;
+            padding:8px;
+            border:1px solid #ddd;
+            border-radius:6px;
+            box-sizing:border-box;
         }
 
-        .nav-links a {
-            margin-right: 10px;
-            color: #2196f3;
-            text-decoration: none;
-        }
-
-        /* === 성분 Row 공통 === */
         .dynamic-item {
-            display: grid;
-            grid-template-columns: 2fr 1fr 80px;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 10px;
+            display:grid;
+            grid-template-columns:minmax(0,1fr) 180px 90px;
+            gap:12px;
+            align-items:center;
+            margin-bottom:10px;
         }
 
         .btn-add {
-            background: #2196f3;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
+            background:#2196f3;
+            color:#fff;
+            padding:8px 16px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
         }
 
         .btn-remove {
-            background: #f44336;
-            color: white;
-            height: 38px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
+            background:#f44336;
+            color:#fff;
+            height:38px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            font-weight:600;
         }
 
-        /* Select2 높이 맞춤 */
-        .select2-container .select2-selection--single {
-            height: 38px;
-            display: flex;
-            align-items: center;
+        .btn-submit {
+            background:#4caf50;
+            color:#fff;
+            padding:10px 20px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        }
+
+        .select2-container { width:100% !important; }
+        .select2-container--open { z-index:9999; }
+        .select2-selection--single {
+            height:38px;
+            display:flex;
+            align-items:center;
+        }
+
+        .nav-links a {
+            margin-right:10px;
+            color:#2196f3;
+            text-decoration:none;
         }
     </style>
 </head>
@@ -107,7 +116,7 @@
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <!-- 기본 정보 -->
+        <!-- ================= 기본 정보 ================= -->
         <div class="form-section">
             <h2>기본 정보</h2>
 
@@ -124,9 +133,17 @@
             <input type="text" name="coupang" value="{{ product.coupang }}">
         </div>
 
-        <!-- 성분 -->
+        <!-- ================= 성분 ================= -->
         <div class="form-section">
             <h2>성분</h2>
+
+            <!-- 성분 옵션 템플릿 (숨김) -->
+            <select id="ingredientTemplate" style="display:none;">
+                <option value="">-- 성분 검색 --</option>
+                {% for ing in ingredients %}
+                    <option value="{{ ing.id }}">{{ ing.name }}</option>
+                {% endfor %}
+            </select>
 
             <!-- 기존 성분 -->
             {% for pi in product.ingredients.all %}
@@ -140,9 +157,7 @@
                     {% endfor %}
                 </select>
 
-                <input type="text"
-                       name="existing_amounts[]"
-                       value="{{ pi.amount }}">
+                <input type="text" name="existing_amounts[]" value="{{ pi.amount }}">
 
                 <input type="hidden"
                        name="existing_product_ingredient_ids[]"
@@ -150,83 +165,82 @@
 
                 <button type="button"
                         class="btn-remove"
-                        onclick="this.parentElement.remove()">
+                        onclick="markDeleteIngredient(this, '{{ pi.id }}')">
                     삭제
                 </button>
             </div>
             {% endfor %}
 
-            <!-- 신규 성분 -->
-            <div id="ingredientContainer">
-                <div class="dynamic-item">
-                    <select name="new_ingredient_ids[]" class="ingredient-select">
-                        <option value="">-- 성분 검색 --</option>
-                        {% for ing in ingredients %}
-                        <option value="{{ ing.id }}">{{ ing.name }}</option>
-                        {% endfor %}
-                    </select>
+            <!-- 신규 성분 영역 (처음엔 비어 있음) -->
+            <div id="ingredientContainer"></div>
 
-                    <input type="text" name="new_amounts[]" placeholder="예: 500mg">
-
-                    <button type="button"
-                            class="btn-remove"
-                            onclick="this.parentElement.remove()">
-                        삭제
-                    </button>
-                </div>
-            </div>
-
-            <button type="button" class="btn-add" onclick="addIngredientField()">+ 성분 추가</button>
+            <button type="button" class="btn-add" onclick="addIngredient()">+ 성분 추가</button>
         </div>
 
-        <button type="submit" style="background:#4caf50;color:white;padding:10px 20px;border-radius:6px;">
-            수정 저장
-        </button>
+        <button type="submit" class="btn-submit">수정 저장</button>
     </form>
 </div>
 
 <script>
-    function normalizeText(text) {
-        return text.toLowerCase()
-            .replace(/\s+/g, '')
-            .replace(/[^\w가-힣]/g, '');
+    function normalize(text) {
+        return text.toLowerCase().replace(/\s+/g,'').replace(/[^\w가-힣]/g,'');
     }
 
-    function ignoreSpaceMatcher(params, data) {
-        if ($.trim(params.term) === '') return data;
+    function matcher(params, data) {
+        if (!params.term) return data;
         if (!data.text) return null;
-
-        return normalizeText(data.text).includes(
-            normalizeText(params.term)
-        ) ? data : null;
+        return normalize(data.text).includes(normalize(params.term)) ? data : null;
     }
 
-    function initIngredientSelect(target) {
-        $(target).select2({
-            placeholder: "성분 검색",
+    function initSelect2(el) {
+        $(el).select2({
             width: '100%',
-            matcher: ignoreSpaceMatcher
+            placeholder: '성분 검색',
+            matcher: matcher
         });
     }
 
-    function addIngredientField() {
-        const container = document.getElementById("ingredientContainer");
-        const el = document.createElement("div");
-        el.className = "dynamic-item";
-        el.innerHTML = `
-            <select name="new_ingredient_ids[]" class="ingredient-select">
-                ${container.children[0].querySelector("select").innerHTML}
-            </select>
-            <input type="text" name="new_amounts[]" placeholder="예: 500mg">
-            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
-        `;
-        container.appendChild(el);
-        initIngredientSelect($(el).find('.ingredient-select'));
+    function markDeleteIngredient(btn, id) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'delete_ingredient_ids[]';
+        input.value = id;
+        btn.closest('form').appendChild(input);
+        btn.parentElement.remove();
+    }
+
+    function addIngredient() {
+        const container = document.getElementById('ingredientContainer');
+        const template = document.getElementById('ingredientTemplate');
+
+        const row = document.createElement('div');
+        row.className = 'dynamic-item';
+
+        const select = document.createElement('select');
+        select.name = 'new_ingredient_ids[]';
+        select.className = 'ingredient-select';
+        select.innerHTML = template.innerHTML;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'new_amounts[]';
+        input.placeholder = '예: 500mg';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-remove';
+        btn.textContent = '삭제';
+        btn.onclick = () => row.remove();
+
+        row.append(select, input, btn);
+        container.appendChild(row);
+
+        initSelect2(select);
     }
 
     $(document).ready(function () {
         $('.ingredient-select').each(function () {
-            initIngredientSelect(this);
+            initSelect2(this);
         });
     });
 </script>
