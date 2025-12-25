@@ -357,7 +357,7 @@ def ingredient_delete(request, ingredient_id):
 # Product 수정 화면 (템플릿 기반)
 def product_edit(request, product_id):
     """Product 데이터 수정 화면"""
-    
+
     try:
         product = Product.objects.prefetch_related(
             'images',
@@ -367,8 +367,8 @@ def product_edit(request, product_id):
     except Product.DoesNotExist:
         messages.error(request, '제품을 찾을 수 없습니다.')
         return redirect('admin_product_form')
-    
-    # 삭제 처리
+
+    # ================= 삭제 처리 =================
     if request.method == 'POST' and request.POST.get('action') == 'delete':
         product_name = product.name
         ProductIngredient.objects.filter(product=product).delete()
@@ -376,110 +376,143 @@ def product_edit(request, product_id):
         product.delete()
         messages.success(request, f'"{product_name}" 제품이 성공적으로 삭제되었습니다.')
         return redirect('admin_product_form')
-    
-    # 삭제 확인 페이지
+
     if request.GET.get('action') == 'delete':
         return render(request, 'products/product_delete_confirm.html', {
             'product': product
         })
-    
+
+    # ================= 수정 처리 =================
     if request.method == 'POST':
-        # 기본 정보 수정
+        # ---------- 기본 정보 ----------
         product.name = request.POST.get('name', '').strip()
         product.company = request.POST.get('company', '').strip()
         product.productType = request.POST.get('productType', '').strip()
         product.coupang = request.POST.get('coupang', '').strip()
-        
-        # 필수 필드 검증
+
         if not all([product.name, product.company, product.productType]):
             messages.error(request, '모든 필수 항목을 입력해주세요.')
-        else:
-            product.save()
-            
-            # 기존 이미지 삭제 처리
-            delete_image_ids = request.POST.getlist('delete_image_ids[]')
-            if delete_image_ids:
-                ProductImage.objects.filter(id__in=delete_image_ids, product=product).delete()
-            
-            # 새 이미지 추가
-            new_image_files = request.FILES.getlist('new_image_files')
-            if new_image_files:
-                uploaded_images = upload_images_to_s3(product, new_image_files)
-                ProductImage.objects.bulk_create(uploaded_images)
-            
-            # 기존 성분 삭제 처리
-            delete_ingredient_ids = request.POST.getlist('delete_ingredient_ids[]')
-            if delete_ingredient_ids:
-                ProductIngredient.objects.filter(id__in=delete_ingredient_ids, product=product).delete()
-            
-            # 기존 성분 수정
-            existing_product_ingredient_ids = request.POST.getlist('existing_product_ingredient_ids[]')
-            existing_ingredient_ids = request.POST.getlist('existing_ingredient_ids[]')
-            existing_amounts = request.POST.getlist('existing_amounts[]')
-            for prod_ing_id, ing_id, amount in zip(existing_product_ingredient_ids, existing_ingredient_ids, existing_amounts):
-                prod_ing_id = prod_ing_id.strip()
-                ing_id = ing_id.strip()
-                amount = amount.strip()
-                if prod_ing_id and ing_id and amount:
-                    try:
-                        product_ing = ProductIngredient.objects.get(id=prod_ing_id, product=product)
-                        ingredient = Ingredient.objects.get(id=ing_id)
-                        product_ing.ingredient = ingredient
-                        product_ing.amount = amount
-                        product_ing.save()
-                    except (ProductIngredient.DoesNotExist, Ingredient.DoesNotExist):
-                        pass
-            
-            # 새 성분 추가
-            new_ingredient_ids = request.POST.getlist('new_ingredient_ids[]')
-            new_amounts = request.POST.getlist('new_amounts[]')
-            for ingredient_id, amount in zip(new_ingredient_ids, new_amounts):
-                ingredient_id = ingredient_id.strip()
-                amount = amount.strip()
-                if ingredient_id and amount:
-                    try:
-                        ingredient = Ingredient.objects.get(id=ingredient_id)
-                        ProductIngredient.objects.create(
-                            product=product,
-                            ingredient=ingredient,
-                            amount=amount
-                        )
-                    except Ingredient.DoesNotExist:
-                        pass
-            
-            # 기존 카테고리 삭제 처리
-            delete_category_ids = request.POST.getlist('delete_category_ids[]')
-            if delete_category_ids:
-                CategoryProduct.objects.filter(id__in=delete_category_ids, product=product).delete()
-            
-            # 새 카테고리 추가
-            new_category_ids = request.POST.getlist('new_category_ids[]')
-            for category_id in new_category_ids:
-                category_id = category_id.strip()
-                if category_id:
-                    try:
-                        category = SmallCategory.objects.get(id=category_id)
-                        # 중복 체크
-                        if not CategoryProduct.objects.filter(product=product, category=category).exists():
-                            CategoryProduct.objects.create(
-                                product=product,
-                                category=category
-                            )
-                    except SmallCategory.DoesNotExist:
-                        pass
-            
-            messages.success(request, f'"{product.name}" 제품이 성공적으로 수정되었습니다.')
-            return redirect('admin_product_form')
-    
-    # 기존 데이터 가져오기
+            return redirect('admin_product_edit', product_id=product.id)
+
+        product.save()
+
+        # ---------- 이미지 ----------
+        delete_image_ids = [
+            i for i in request.POST.getlist('delete_image_ids[]') if i.strip()
+        ]
+        if delete_image_ids:
+            ProductImage.objects.filter(id__in=delete_image_ids, product=product).delete()
+
+        new_image_files = request.FILES.getlist('new_image_files')
+        if new_image_files:
+            uploaded_images = upload_images_to_s3(product, new_image_files)
+            ProductImage.objects.bulk_create(uploaded_images)
+
+        # ---------- 성분 삭제 ----------
+        delete_ingredient_ids = [
+            i for i in request.POST.getlist('delete_ingredient_ids[]') if i.strip()
+        ]
+        if delete_ingredient_ids:
+            ProductIngredient.objects.filter(id__in=delete_ingredient_ids, product=product).delete()
+
+        # ---------- 기존 성분 수정 ----------
+        existing_pi_ids = request.POST.getlist('existing_product_ingredient_ids[]')
+        existing_ing_ids = request.POST.getlist('existing_ingredient_ids[]')
+        existing_amounts = request.POST.getlist('existing_amounts[]')
+
+        for pi_id, ing_id, amount in zip(existing_pi_ids, existing_ing_ids, existing_amounts):
+            pi_id = pi_id.strip()
+            ing_id = ing_id.strip()
+            amount = amount.strip()
+
+            if not (pi_id and ing_id and amount):
+                continue
+
+            try:
+                pi = ProductIngredient.objects.get(id=pi_id, product=product)
+                ingredient = Ingredient.objects.get(id=ing_id)
+                pi.ingredient = ingredient
+                pi.amount = amount
+                pi.save()
+            except (ProductIngredient.DoesNotExist, Ingredient.DoesNotExist):
+                pass
+
+        # ---------- 새 성분 추가 ----------
+        new_ing_ids = request.POST.getlist('new_ingredient_ids[]')
+        new_amounts = request.POST.getlist('new_amounts[]')
+
+        for ing_id, amount in zip(new_ing_ids, new_amounts):
+            ing_id = ing_id.strip()
+            amount = amount.strip()
+
+            if not (ing_id and amount):
+                continue
+
+            try:
+                ingredient = Ingredient.objects.get(id=ing_id)
+                ProductIngredient.objects.create(
+                    product=product,
+                    ingredient=ingredient,
+                    amount=amount
+                )
+            except Ingredient.DoesNotExist:
+                pass
+
+        # ---------- 기존 카테고리 수정 ⭐ 핵심 ----------
+        existing_cp_ids = request.POST.getlist('existing_category_product_ids[]')
+        existing_cat_ids = request.POST.getlist('existing_category_ids[]')
+
+        for cp_id, cat_id in zip(existing_cp_ids, existing_cat_ids):
+            cp_id = cp_id.strip()
+            cat_id = cat_id.strip()
+
+            if not (cp_id and cat_id):
+                continue
+
+            try:
+                cp = CategoryProduct.objects.get(id=cp_id, product=product)
+                category = SmallCategory.objects.get(id=cat_id)
+                cp.category = category
+                cp.save()
+            except (CategoryProduct.DoesNotExist, SmallCategory.DoesNotExist):
+                pass
+
+        # ---------- 기존 카테고리 삭제 ----------
+        delete_category_ids = [
+            i for i in request.POST.getlist('delete_category_ids[]') if i.strip()
+        ]
+        if delete_category_ids:
+            CategoryProduct.objects.filter(id__in=delete_category_ids, product=product).delete()
+
+        # ---------- 새 카테고리 추가 ----------
+        new_category_ids = request.POST.getlist('new_category_ids[]')
+
+        for cat_id in new_category_ids:
+            cat_id = cat_id.strip()
+            if not cat_id:
+                continue
+
+            try:
+                category = SmallCategory.objects.get(id=cat_id)
+                CategoryProduct.objects.get_or_create(
+                    product=product,
+                    category=category
+                )
+            except SmallCategory.DoesNotExist:
+                pass
+
+        messages.success(request, f'"{product.name}" 제품이 성공적으로 수정되었습니다.')
+        return redirect('admin_product_form')
+
+    # ================= GET =================
     ingredients = Ingredient.objects.all().order_by('id')
     small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
-    
+
     return render(request, 'products/product_edit.html', {
-    'product': product,
-    'ingredients': ingredients,
-    'small_categories': small_categories,
-    'action': request.GET.get('action')
+        'product': product,
+        'ingredients': ingredients,
+        'small_categories': small_categories,
+        'action': request.GET.get('action')
     })
 
 # Product 삭제

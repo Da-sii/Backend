@@ -226,6 +226,34 @@
     <button type="button" class="btn-add" onclick="addIngredient()">+ 성분 추가</button>
 </div>
 
+<!-- 카테고리 -->
+<div class="form-section">
+    <h2>카테고리</h2>
+
+    <div id="categoryContainer">
+        <div class="dynamic-item">
+            <select name="category_ids[]">
+                <option value="">-- 카테고리 선택 --</option>
+                {% for category in small_categories %}
+                <option value="{{ category.id }}">
+                    [{{ category.bigCategory.category }}] {{ category.category }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="button"
+                    class="btn-remove"
+                    onclick="this.parentElement.remove()">
+                삭제
+            </button>
+        </div>
+    </div>
+
+    <button type="button" class="btn-add" onclick="addCategoryField()">
+        카테고리 추가
+    </button>
+</div>
+
+
 <button type="submit" style="background:#4caf50;padding:10px 20px;">
     제품 추가하기
 </button>
@@ -327,6 +355,24 @@ function addIngredient() {
 
     container.appendChild(div);
     initSelect2(select);
+}
+
+function addCategoryField() {
+    const container = document.getElementById('categoryContainer');
+    const firstSelect = container.querySelector('select');
+
+    const div = document.createElement('div');
+    div.className = 'dynamic-item';
+
+    div.innerHTML = `
+        <select name="category_ids[]">
+            ${firstSelect.innerHTML}
+        </select>
+        <button type="button" class="btn-remove"
+                onclick="this.parentElement.remove()">삭제</button>
+    `;
+
+    container.appendChild(div);
 }
 
 $(document).ready(function () {
