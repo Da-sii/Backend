@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Select2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -15,129 +17,111 @@
             max-width: 1000px;
             margin: 50px auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background: #f5f5f5;
         }
+
         .container {
-            background-color: white;
+            background: #fff;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            word-wrap: break-word;
-            overflow-wrap: break-word;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
         }
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-        }
+
+        h1 { margin-bottom: 30px; }
+
         .form-section {
             margin-bottom: 30px;
             padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 4px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            overflow: visible;
         }
-        .form-section h2 {
-            color: #555;
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
+
         label {
-            display: block;
-            margin-bottom: 5px;
             font-weight: bold;
-            color: #555;
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 6px;
         }
-        input[type='text'],
-        input[type='number'],
-        select {
+
+        input[type="text"], select {
             width: 100%;
-            padding: 10px;
+            height: 38px;
+            padding: 8px;
+            border-radius: 6px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
             box-sizing: border-box;
         }
+
         button {
-            background-color: #4caf50;
-            color: white;
-            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
-            margin-right: 10px;
+            color: #fff;
         }
+
         .btn-add {
-            background-color: #2196f3;
+            background: #2196f3;
             padding: 8px 16px;
-            font-size: 14px;
+            margin-top: 10px;
         }
 
-        .product-list { margin-top: 40px; }
+        .btn-remove {
+            background: #f44336;
+            height: 38px;
+            font-weight: 600;
+        }
 
-        .nav-links a { margin-right: 15px; text-decoration: none; color: #2196f3; }
-        .nav-links a:hover { text-decoration: underline; }
+        /* 성분 row */
+        .dynamic-item {
+            display: grid;
+            grid-template-columns: minmax(0,1fr) 180px 90px;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
 
-        .dynamic-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        /* Select2 보정 */
+        .select2-container { width: 100% !important; }
+        .select2-container--open { z-index: 9999; }
+        .select2-selection--single {
+            height: 38px;
+            display: flex;
+            align-items: center;
+        }
 
-        .product-item { padding: 20px 24px; background-color: #ffffff; border: 1px solid #eee; border-radius: 8px;margin-bottom: 16px; }
+        /* 제품 리스트 */
+        .product-list { margin-top: 50px; }
 
-        .product-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+        .product-item {
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            background: #fff;
+        }
 
-        .product-title { font-size: 18px; font-weight: 700; color: #222; }
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .product-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
 
         .product-id {
             font-size: 13px;
-            font-weight: normal;
             color: #999;
             margin-left: 6px;
         }
 
         .product-meta {
-            margin-top: 6px;
             font-size: 14px;
             color: #666;
-        }
-
-        .product-meta .dot { margin: 0 6px; }
-
-        .product-link {
-            margin-top: 8px;
-            font-size: 14px;
-        }
-
-        .product-link a {
-            color: #2196f3;
-            text-decoration: none;
-        }
-
-        .product-link a:hover { text-decoration: underline; }
-
-        .product-actions {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .btn-edit {
-            background: #2196f3;
-            color: white;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 14px;
-            text-decoration: none;
-        }
-
-        .btn-delete {
-            background: #f44336;
-            color: white;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 14px;
-            text-decoration: none;
+            margin-top: 6px;
         }
 
         .product-ingredients {
@@ -148,21 +132,32 @@
         }
 
         .ingredient-chip {
-            background-color: #f1f3f5;
-            color: #333;
+            background: #f1f3f5;
             padding: 6px 10px;
             border-radius: 16px;
             font-size: 13px;
-            line-height: 1;
-            white-space: nowrap;
         }
 
-        .ingredient-chip strong {
-            margin-left: 4px;
-            font-weight: 600;
-            color: #000;
+        .ingredient-chip strong { margin-left: 4px; }
+
+        .btn-edit {
+            background: #2196f3;
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #fff;
         }
 
+        .btn-delete {
+            background: #f44336;
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .nav-links a { margin-right: 15px; text-decoration: none; color: #2196f3; }
+        .nav-links a:hover { text-decoration: underline; }
     </style>
 </head>
 
@@ -175,211 +170,169 @@
         <a href="{% url 'admin_ingredient_form' %}">성분</a>
     </div>
 
-    <h1>제품 추가</h1>
+<h1>제품 추가</h1>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="message {{ message.tags }}">{{ message }}</div>
+<form method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+
+<!-- 기본 정보 -->
+<div class="form-section">
+    <h2>기본 정보</h2>
+
+    <label>제품 이름</label>
+    <input type="text" name="name" required>
+
+    <label>회사</label>
+    <input type="text" name="company" required>
+
+    <label>식품 유형</label>
+    <input type="text" name="productType" required>
+
+    <label>쿠팡 링크</label>
+    <input type="text" name="coupang" required>
+</div>
+
+<!-- 이미지 -->
+<div class="form-section">
+    <h2>제품 이미지</h2>
+    <input type="file" name="image_files" multiple>
+</div>
+
+<!-- 성분 -->
+<div class="form-section">
+    <h2>성분</h2>
+
+    <!-- 성분 템플릿 -->
+    <select id="ingredientTemplate" style="display:none;">
+        <option value="">-- 성분 검색 --</option>
+        {% for ing in ingredients %}
+            <option value="{{ ing.id }}">{{ ing.name }}</option>
         {% endfor %}
-    {% endif %}
+    </select>
 
-    <!-- ✅ 제품 등록 Form은 여기까지만 -->
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-
-        <!-- 기본 정보 -->
-        <div class="form-section">
-            <h2>기본 정보</h2>
-
-            <div class="form-group">
-                <label>제품 이름 *</label>
-                <input type="text" name="name" required>
-            </div>
-
-            <div class="form-group">
-                <label>회사 *</label>
-                <input type="text" name="company" required>
-            </div>
-
-            <div class="form-group">
-                <label>식품 유형 *</label>
-                <input type="text" name="productType" required>
-            </div>
-
-            <div class="form-group">
-                <label>쿠팡 링크 *</label>
-                <input type="text" name="coupang" required>
-            </div>
+    <div id="ingredientContainer">
+        <div class="dynamic-item">
+            <select name="ingredient_ids[]" class="ingredient-select">
+                <option value="">-- 성분 검색 --</option>
+                {% for ing in ingredients %}
+                    <option value="{{ ing.id }}">{{ ing.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="amounts[]" placeholder="예: 1000mg">
+            <button type="button" class="btn-remove" onclick="removeIngredient(this)">삭제</button>
         </div>
-
-        <!-- 이미지 -->
-        <div class="form-section">
-            <h2>제품 이미지</h2>
-            <input type="file" name="image_files" multiple accept="image/*">
-        </div>
-
-        <!-- 성분 -->
-        <div class="form-section">
-            <h2>성분</h2>
-
-            <div id="ingredientContainer">
-                <div class="dynamic-item">
-                    <select name="ingredient_ids[]" class="ingredient-select">
-                        <option value="">-- 성분 선택 --</option>
-                        {% for ingredient in ingredients %}
-                        <option value="{{ ingredient.id }}">{{ ingredient.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <input type="text" name="amounts[]" placeholder="예: 1000mg">
-                </div>
-            </div>
-
-            <button type="button" class="btn-add" onclick="addIngredientField()">성분 추가</button>
-        </div>
-
-        <!-- 카테고리 -->
-        <div class="form-section">
-            <h2>카테고리</h2>
-
-            <div id="categoryContainer">
-                <div class="dynamic-item">
-                    <select name="category_ids[]">
-                        <option value="">-- 카테고리 선택 --</option>
-                        {% for category in small_categories %}
-                        <option value="{{ category.id }}">[{{ category.bigCategory.category }}] {{ category.category }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-
-            <button type="button" class="btn-add" onclick="addCategoryField()">카테고리 추가</button>
-        </div>
-
-        <button type="submit">제품 추가하기</button>
-    </form>
-    <!-- ❗ form 종료 -->
-
-    <!-- ================================== -->
-    <!--        여기부터 제품 리스트        -->
-    <!-- ================================== -->
-
-    <div class="product-list">
-        <h2>등록된 제품 목록</h2>
-
-        {% for product in products %}
-        <div class="product-item">
-            <div class="product-header">
-                <div class="product-info">
-                    <div class="product-title">
-                        {{ product.name }}
-                        <span class="product-id">#{{ product.id }}</span>
-                    </div>
-
-                    <div class="product-meta">
-                        <span>{{ product.company }}</span>
-                        <span class="dot">·</span>
-                        <span>{{ product.productType }}</span>
-                    </div>
-
-                    {% if product.ingredients.all %}
-                        <div class="product-ingredients">
-                            {% for pi in product.ingredients.all %}
-                                <span class="ingredient-chip">
-                                    {{ pi.ingredient.name }}
-                                    <strong>{{ pi.amount }}</strong>
-                                </span>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    {% if product.coupang %}
-                        <div class="product-link">
-                            <a href="{{ product.coupang }}" target="_blank">
-                                쿠팡 링크 바로가기 →
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-
-                <div class="product-actions">
-                    <a href="{% url 'admin_product_edit' product.id %}" class="btn-edit">수정</a>
-                    <a href="{% url 'admin_product_edit' product.id %}?action=delete" class="btn-delete">삭제</a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
     </div>
+
+    <button type="button" class="btn-add" onclick="addIngredient()">+ 성분 추가</button>
+</div>
+
+<button type="submit" style="background:#4caf50;padding:10px 20px;">
+    제품 추가하기
+</button>
+</form>
+
+<!-- ================= 제품 리스트 ================= -->
+<div class="product-list">
+<h2>등록된 제품 목록</h2>
+
+{% for product in products %}
+<div class="product-item">
+    <div class="product-header">
+        <div>
+            <div class="product-title">
+                {{ product.name }}
+                <span class="product-id">#{{ product.id }}</span>
+            </div>
+
+            <div class="product-meta">
+                {{ product.company }} · {{ product.productType }}
+            </div>
+
+            {% if product.ingredients.all %}
+            <div class="product-ingredients">
+                {% for pi in product.ingredients.all %}
+                <span class="ingredient-chip">
+                    {{ pi.ingredient.name }} <strong>{{ pi.amount }}</strong>
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <a href="{% url 'admin_product_edit' product.id %}" class="btn-edit">수정</a>
+            <a href="{% url 'admin_product_edit' product.id %}?action=delete" class="btn-delete">삭제</a>
+        </div>
+    </div>
+</div>
+{% endfor %}
+</div>
 
 </div>
 
 <script>
-    function addIngredientField() {
-        const container = document.getElementById('ingredientContainer');
-        const newItem = document.createElement('div');
-        newItem.className = 'dynamic-item';
-        newItem.innerHTML = `
-            <select name="ingredient_ids[]" class="ingredient-select">
-                ${container.children[0].querySelector("select").innerHTML}
-            </select>
-            <input type="text" name="amounts[]" placeholder="예: 1000mg">
-            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
-        `;
-        container.appendChild(newItem);
-
-        $(newItem).find('.ingredient-select').select2({
-            placeholder: "성분 검색",
-            width: '100%',
-            matcher: ignoreSpaceMatcher
-        });
-    }
-
-    function addCategoryField() {
-        const container = document.getElementById('categoryContainer');
-        const newItem = document.createElement('div');
-        newItem.className = 'dynamic-item';
-        newItem.innerHTML = `
-            <select name="category_ids[]">
-                ${container.children[0].querySelector("select").innerHTML}
-            </select>
-            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
-        `;
-        container.appendChild(newItem);
-    }
-
-    $(document).ready(function () {
-        $('.ingredient-select').select2({
-            placeholder: "성분 검색",
-            width: '100%',
-            matcher: ignoreSpaceMatcher
-        });
-    });
-
-    function normalizeText(text) {
-        return text
-            .toLowerCase()
-            .replace(/\s+/g, '')     // 모든 공백 제거
-            .replace(/[^\w가-힣]/g, ''); // 특수문자 제거 (선택)
-    }
-
-    function ignoreSpaceMatcher(params, data) {
-        // 검색어가 없으면 그대로 표시
-        if ($.trim(params.term) === '') {
-            return data;
-        }
-
-        if (!data.text) {
-            return null;
-        }
-
-        const search = normalizeText(params.term);
-        const target = normalizeText(data.text);
-
-        if (target.includes(search)) {
-            return data;
-        }
-
-        return null;
+function normalize(text) {
+    return text.toLowerCase().replace(/\s+/g,'');
 }
+
+function matcher(params, data) {
+    if (!params.term) return data;
+    if (!data.text) return null;
+    return normalize(data.text).includes(normalize(params.term)) ? data : null;
+}
+
+function initSelect2(el) {
+    $(el).select2({
+        width: '100%',
+        placeholder: '성분 검색',
+        matcher: matcher
+    });
+}
+
+function removeIngredient(btn) {
+    const container = document.getElementById('ingredientContainer');
+    if (container.children.length <= 1) {
+        alert('성분은 최소 1개 이상 필요합니다.');
+        return;
+    }
+    btn.parentElement.remove();
+}
+
+function addIngredient() {
+    const container = document.getElementById('ingredientContainer');
+    const template = document.getElementById('ingredientTemplate');
+
+    const div = document.createElement('div');
+    div.className = 'dynamic-item';
+
+    const select = document.createElement('select');
+    select.name = 'ingredient_ids[]';
+    select.className = 'ingredient-select';
+    select.innerHTML = template.innerHTML;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'amounts[]';
+    input.placeholder = '예: 1000mg';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-remove';
+    btn.textContent = '삭제';
+    btn.onclick = () => removeIngredient(btn);
+
+    div.appendChild(select);
+    div.appendChild(input);
+    div.appendChild(btn);
+
+    container.appendChild(div);
+    initSelect2(select);
+}
+
+$(document).ready(function () {
+    document.querySelectorAll('.ingredient-select').forEach(initSelect2);
+});
 </script>
+
 </body>
 </html>
