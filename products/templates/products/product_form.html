@@ -101,10 +101,15 @@
             background: #fff;
         }
 
-        .product-header {
+        .product-top {
             display: flex;
             justify-content: space-between;
-            gap: 20px;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .product-title-area {
+            min-width: 0;
         }
 
         .product-title {
@@ -124,11 +129,10 @@
             margin-top: 6px;
         }
 
-        .product-ingredients {
-            margin-top: 12px;
+        .product-actions {
             display: flex;
-            flex-wrap: wrap;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .ingredient-chip {
@@ -144,16 +148,25 @@
             background: #2196f3;
             padding: 8px 14px;
             border-radius: 6px;
-            text-decoration: none;
             color: #fff;
+            text-decoration: none;
+            white-space: nowrap;
         }
 
         .btn-delete {
             background: #f44336;
             padding: 8px 14px;
             border-radius: 6px;
-            text-decoration: none;
             color: #fff;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .product-ingredients {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .nav-links a { margin-right: 15px; text-decoration: none; color: #2196f3; }
@@ -265,8 +278,8 @@
 
 {% for product in products %}
 <div class="product-item">
-    <div class="product-header">
-        <div>
+    <div class="product-top">
+        <div class="product-title-area">
             <div class="product-title">
                 {{ product.name }}
                 <span class="product-id">#{{ product.id }}</span>
@@ -275,23 +288,23 @@
             <div class="product-meta">
                 {{ product.company }} · {{ product.productType }}
             </div>
-
-            {% if product.ingredients.all %}
-            <div class="product-ingredients">
-                {% for pi in product.ingredients.all %}
-                <span class="ingredient-chip">
-                    {{ pi.ingredient.name }} <strong>{{ pi.amount }}</strong>
-                </span>
-                {% endfor %}
-            </div>
-            {% endif %}
         </div>
 
-        <div>
+        <div class="product-actions">
             <a href="{% url 'admin_product_edit' product.id %}" class="btn-edit">수정</a>
             <a href="{% url 'admin_product_edit' product.id %}?action=delete" class="btn-delete">삭제</a>
         </div>
     </div>
+
+    {% if product.ingredients.all %}
+    <div class="product-ingredients">
+        {% for pi in product.ingredients.all %}
+        <span class="ingredient-chip">
+            {{ pi.ingredient.name }} <strong>{{ pi.amount }}</strong>
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
 {% endfor %}
 </div>
