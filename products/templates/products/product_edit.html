@@ -177,11 +177,11 @@
         <div class="form-section">
             <h2>현재 등록된 이미지</h2>
 
-            {% if product.images.all %}
+            {% if product.images.exists %}
                 <div class="image-grid">
                     {% for img in product.images.all %}
                         <div class="image-item">
-                            <img src="{{ img.image.url }}" alt="product image">
+                            <img src="{{ img.image_url }}" alt="product image">
                             <div class="image-delete">
                                 <label>
                                     <input type="checkbox"
