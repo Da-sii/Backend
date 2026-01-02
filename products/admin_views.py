@@ -1,8 +1,9 @@
 # 관리자용 템플릿 뷰
-from django.shortcuts import render, redirect
+from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Count
-from products.models import Product, BigCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, CategoryProduct
+from products.models import Product, BigCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, CategoryProduct, OtherIngredient, ProductOtherIngredient
 from products.utils import upload_images_to_s3
 import json
 
@@ -118,6 +119,7 @@ def small_category_edit(request, category_id):
     })
 
 # Product 입력 화면 (템플릿 기반)
+@transaction.atomic
 def product_form(request):
     """Product 데이터 입력 화면"""
     
@@ -126,7 +128,8 @@ def product_form(request):
         name = request.POST.get('name', '').strip()
         company = request.POST.get('company', '').strip()
         product_type = request.POST.get('productType', '').strip()
-        coupang = request.POST.get('coupang', '').strip()
+        coupang_raw = request.POST.get('coupang', '').strip()
+        coupang = coupang_raw or None
         
         # 필수 필드 검증
         if not all([name, company, product_type]):
@@ -164,6 +167,20 @@ def product_form(request):
                             )
                         except Ingredient.DoesNotExist:
                             pass
+
+                # 기타 원료들 추가
+                other_ingredient_ids = request.POST.getlist('other_ingredient_ids[]')
+                for oi_id in other_ingredient_ids:
+                    oi_id = oi_id.strip()
+                    if oi_id:
+                        try:
+                            oi = OtherIngredient.objects.get(id=oi_id)
+                            ProductOtherIngredient.objects.create(
+                                product=product,
+                                other_ingredient=oi
+                            )
+                        except OtherIngredient.DoesNotExist:
+                            pass
                 
                 # 카테고리들 추가
                 category_ids = request.POST.getlist('category_ids[]')
@@ -189,6 +206,8 @@ def product_form(request):
     # 기존 데이터 가져오기
     ingredients = Ingredient.objects.all().order_by('id')
     small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
+    other_ingredients = OtherIngredient.objects.all().order_by("name")
+
     # 제품 정보를 더 자세히 가져오기 (이미지, 성분, 카테고리 개수 포함)
     products = Product.objects.annotate(
         image_count=Count('images', distinct=True),
@@ -197,11 +216,13 @@ def product_form(request):
     ).prefetch_related(
         'images',
         'ingredients',
-        'category_products__category__bigCategory'
+        'category_products__category__bigCategory',
+        'product_other_ingredients__other_ingredient'
     ).order_by('id')  # 전체 제품 표시 (ID 오름차순)
-    
+
     return render(request, 'products/product_form.html', {
         'ingredients': ingredients,
+        "other_ingredients": other_ingredients,
         'small_categories': small_categories,
         'products': products
     })
@@ -355,6 +376,7 @@ def ingredient_delete(request, ingredient_id):
     })
 
 # Product 수정 화면 (템플릿 기반)
+@transaction.atomic
 def product_edit(request, product_id):
     """Product 데이터 수정 화면"""
 
@@ -362,7 +384,9 @@ def product_edit(request, product_id):
         product = Product.objects.prefetch_related(
             'images',
             'ingredients__ingredient',
-            'category_products__category__bigCategory'
+            'category_products__category__bigCategory',
+            'product_other_ingredients__other_ingredient',
+            'product_other_ingredients__other_ingredient'
         ).get(id=product_id)
     except Product.DoesNotExist:
         messages.error(request, '제품을 찾을 수 없습니다.')
@@ -375,6 +399,7 @@ def product_edit(request, product_id):
         CategoryProduct.objects.filter(product=product).delete()
         product.delete()
         messages.success(request, f'"{product_name}" 제품이 성공적으로 삭제되었습니다.')
+
         return redirect('admin_product_form')
 
     if request.GET.get('action') == 'delete':
@@ -388,7 +413,8 @@ def product_edit(request, product_id):
         product.name = request.POST.get('name', '').strip()
         product.company = request.POST.get('company', '').strip()
         product.productType = request.POST.get('productType', '').strip()
-        product.coupang = request.POST.get('coupang', '').strip()
+        coupang_raw = request.POST.get('coupang', '').strip()
+        product.coupang = coupang_raw or None
 
         if not all([product.name, product.company, product.productType]):
             messages.error(request, '모든 필수 항목을 입력해주세요.')
@@ -458,7 +484,7 @@ def product_edit(request, product_id):
             except Ingredient.DoesNotExist:
                 pass
 
-        # ---------- 기존 카테고리 수정 ⭐ 핵심 ----------
+        # ---------- 기존 카테고리 수정 ----------
         existing_cp_ids = request.POST.getlist('existing_category_product_ids[]')
         existing_cat_ids = request.POST.getlist('existing_category_ids[]')
 
@@ -501,16 +527,42 @@ def product_edit(request, product_id):
             except SmallCategory.DoesNotExist:
                 pass
 
+        # 기존 기타 원료 삭제
+        delete_ids = request.POST.getlist("delete_other_ingredient_ids[]")
+        if delete_ids:
+            ProductOtherIngredient.objects.filter(id__in=delete_ids).delete()
+
+        # 기존 기타 원료 수정
+        existing_ids = request.POST.getlist("existing_product_other_ingredient_ids[]")
+        existing_oi_ids = request.POST.getlist("existing_other_ingredient_ids[]")
+
+        for poi_id, oi_id in zip(existing_ids, existing_oi_ids):
+            if oi_id:
+                ProductOtherIngredient.objects.filter(id=poi_id).update(
+                    other_ingredient_id=oi_id
+                )
+
+        # 신규 기타 원료 추가
+        new_oi_ids = request.POST.getlist("new_other_ingredient_ids[]")
+        for oi_id in new_oi_ids:
+            if oi_id:
+                ProductOtherIngredient.objects.get_or_create(
+                    product=product,
+                    other_ingredient_id=oi_id
+                )
+
         messages.success(request, f'"{product.name}" 제품이 성공적으로 수정되었습니다.')
         return redirect('admin_product_form')
 
     # ================= GET =================
     ingredients = Ingredient.objects.all().order_by('id')
     small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
+    other_ingredients = OtherIngredient.objects.all().order_by("name")
 
     return render(request, 'products/product_edit.html', {
         'product': product,
         'ingredients': ingredients,
+        'other_ingredients': other_ingredients,
         'small_categories': small_categories,
         'action': request.GET.get('action')
     })
@@ -543,3 +595,60 @@ def product_delete(request, product_id):
     return render(request, 'products/product_delete_confirm.html', {
         'product': product
     })
+
+# OtherIngredient 입력 화면 (템플릿 기반)
+def other_ingredient_form(request):
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+
+        if not name:
+            messages.error(request, "기타원료 이름을 입력해주세요.")
+        else:
+            if OtherIngredient.objects.filter(name=name).exists():
+                messages.error(request, "이미 등록된 기타원료입니다.")
+            else:
+                OtherIngredient.objects.create(name=name)
+                messages.success(
+                    request,
+                    f'"{name}" 기타원료가 성공적으로 추가되었습니다.'
+                )
+                return redirect("admin_other_ingredient_form")
+
+    other_ingredients = OtherIngredient.objects.all().order_by("id")
+
+    return render(
+        request,
+        "products/other_ingredient_form.html",
+        {
+            "other_ingredients": other_ingredients
+        }
+    )
+
+def other_ingredient_edit(request, pk):
+    other = get_object_or_404(OtherIngredient, pk=pk)
+
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+
+        if not name:
+            messages.error(request, "기타 원료명을 입력해주세요.")
+        else:
+            other.name = name
+            other.save()
+            messages.success(request, "기타 원료가 수정되었습니다.")
+            return redirect("admin_other_ingredient_form")
+
+    return render(request, "products/other_ingredient_edit.html", {
+        "other": other
+    })
+
+def other_ingredient_delete(request, pk):
+    if request.method != "POST":
+        return redirect("admin_other_ingredient_form")
+
+    other = get_object_or_404(OtherIngredient, pk=pk)
+    name = other.name
+    other.delete()
+
+    messages.success(request, f'"{name}" 기타 원료가 삭제되었습니다.')
+    return redirect("admin_other_ingredient_form")

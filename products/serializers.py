@@ -6,7 +6,7 @@ from django.db.models import Sum, Avg
 from django.db import transaction
 from rest_framework import serializers
 
-from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory
+from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory, OtherIngredient, ProductOtherIngredient
 from products.utils import upload_images_to_s3
 
 class ProductIngredientInputSerializer(serializers.Serializer):
@@ -129,11 +129,25 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
         else:
             return "적정"
 
+class OtherIngredientDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OtherIngredient
+        fields = ("id", "name")
+
+class ProductOtherIngredientSerializer(serializers.ModelSerializer):
+    otherIngredientName = serializers.CharField(source="other_ingredient.name")
+
+    class Meta:
+        model = ProductOtherIngredient
+        fields = ("otherIngredientName",)
+
 class ProductDetailSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     reviewImages = serializers.SerializerMethodField()
     ingredients = ProductIngredientDetailSerializer(many=True, read_only=True)
     ingredientsCount = serializers.SerializerMethodField()
+    otherIngredients = ProductOtherIngredientSerializer(many=True, read_only=True, source="product_other_ingredients")
+    otherIngredientsCount = serializers.SerializerMethodField()
     ranking = serializers.SerializerMethodField()
     reviewCount = serializers.SerializerMethodField()
     reviewAvg = serializers.SerializerMethodField()
@@ -141,7 +155,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "productType", "coupang", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients")
+        fields = ("id", "name", "company", "productType", "coupang", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients", "otherIngredientsCount", "otherIngredients")
 
     def get_reviewImages(self, obj):
         # 해당 제품의 리뷰 이미지를 최신순 6개 반환
@@ -161,6 +175,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     def get_ingredientsCount(self, obj: Product) -> int:
         return obj.ingredients.count()
+
+    def get_otherIngredientsCount(self, obj: Product) -> int:
+        return obj.product_other_ingredients.count()
 
     def get_ranking(self, obj):
         # 카테고리별 월간 랭킹

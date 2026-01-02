@@ -10,9 +10,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Sum, Count, Q, Subquery
 from django.db.models.functions import Coalesce
-from products.models import Product, BigCategory, ProductIngredient, ProductImage
-from products.serializers import ProductCreateSerializer, ProductReadSerializer, ProductDetailSerializer, ProductRankingSerializer
-from products.serializers import ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer
+from products.models import Product, BigCategory, ProductIngredient, ProductImage, ProductOtherIngredient
+from products.serializers import ProductDetailSerializer, ProductRankingSerializer, ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer
 from products.utils import record_view, upload_images_to_s3
 
 # 제품 상세 (GET /products/<id>/)
@@ -300,7 +299,7 @@ class ProductSearchView(generics.ListAPIView):
                 name="word",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="검색어(제품명, 회사명, 기능성 원료명)",
+                description="검색어(제품명, 회사명, 기능성 원료명, 기타 원료명)",
                 required=False,
             ),
             OpenApiParameter(
@@ -327,14 +326,21 @@ class ProductSearchView(generics.ListAPIView):
         qs = Product.objects.all()
 
         if query:
+            query = query.strip()
+
             ingredient_product_ids = ProductIngredient.objects.filter(
-                Q(ingredient__name__icontains=query)
-            ).values("product_id")
+                ingredient__name__icontains=query
+            ).values_list("product_id", flat=True)
+
+            other_ingredient_product_ids = ProductOtherIngredient.objects.filter(
+                other_ingredient__name__icontains=query
+            ).values_list("product_id", flat=True)
 
             qs = qs.filter(
                 Q(name__icontains=query) |
                 Q(company__icontains=query) |
-                Q(id__in=Subquery(ingredient_product_ids))
+                Q(id__in=ingredient_product_ids) |
+                Q(id__in=other_ingredient_product_ids)
             ).distinct()
 
         if sort == "review_desc":

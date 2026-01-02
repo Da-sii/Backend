@@ -171,6 +171,14 @@
 
         .nav-links a { margin-right: 15px; text-decoration: none; color: #2196f3; }
         .nav-links a:hover { text-decoration: underline; }
+
+        .other-ingredient-chip {
+            background: #e3f2fd;   /* 연한 파랑 */
+            color: #1565c0;
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 13px;
+        }
     </style>
 </head>
 
@@ -180,6 +188,7 @@
     <div class="nav-links">
         <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
         <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
+        <a href="{% url 'admin_other_ingredient_form' %}">기타 성분</a>
         <a href="{% url 'admin_ingredient_form' %}">성분</a>
     </div>
 
@@ -202,7 +211,7 @@
     <input type="text" name="productType" required>
 
     <label>쿠팡 링크</label>
-    <input type="text" name="coupang" required>
+    <input type="text" name="coupang">
 </div>
 
 <!-- 이미지 -->
@@ -239,6 +248,40 @@
     <button type="button" class="btn-add" onclick="addIngredient()">+ 성분 추가</button>
 </div>
 
+<!-- 기타 원료 -->
+<div class="form-section">
+    <h2>기타 원료</h2>
+
+    <!-- 템플릿 -->
+    <select id="otherIngredientTemplate" style="display:none;">
+        <option value="">-- 기타 원료 검색 --</option>
+        {% for oi in other_ingredients %}
+            <option value="{{ oi.id }}">{{ oi.name }}</option>
+        {% endfor %}
+    </select>
+
+    <div id="otherIngredientContainer">
+        <div class="dynamic-item" style="grid-template-columns: minmax(0,1fr) 90px;">
+            <select name="other_ingredient_ids[]" class="other-ingredient-select">
+                <option value="">-- 기타 원료 검색 --</option>
+                {% for oi in other_ingredients %}
+                    <option value="{{ oi.id }}">{{ oi.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="button"
+                    class="btn-remove"
+                    onclick="removeOtherIngredient(this)">
+                삭제
+            </button>
+        </div>
+    </div>
+
+    <button type="button" class="btn-add" onclick="addOtherIngredient()">
+        + 기타 원료 추가
+    </button>
+</div>
+
+
 <!-- 카테고리 -->
 <div class="form-section">
     <h2>카테고리</h2>
@@ -274,41 +317,49 @@
 
 <!-- ================= 제품 리스트 ================= -->
 <div class="product-list">
-<h2>등록된 제품 목록</h2>
+    <h2>등록된 제품 목록</h2>
 
-{% for product in products %}
-<div class="product-item">
-    <div class="product-top">
-        <div class="product-title-area">
-            <div class="product-title">
-                {{ product.name }}
-                <span class="product-id">#{{ product.id }}</span>
+    {% for product in products %}
+    <div class="product-item">
+        <div class="product-top">
+            <div class="product-title-area">
+                <div class="product-title">
+                    {{ product.name }}
+                    <span class="product-id">#{{ product.id }}</span>
+                </div>
+
+                <div class="product-meta">
+                    {{ product.company }} · {{ product.productType }}
+                </div>
             </div>
 
-            <div class="product-meta">
-                {{ product.company }} · {{ product.productType }}
+            <div class="product-actions">
+                <a href="{% url 'admin_product_edit' product.id %}" class="btn-edit">수정</a>
+                <a href="{% url 'admin_product_edit' product.id %}?action=delete" class="btn-delete">삭제</a>
             </div>
         </div>
 
-        <div class="product-actions">
-            <a href="{% url 'admin_product_edit' product.id %}" class="btn-edit">수정</a>
-            <a href="{% url 'admin_product_edit' product.id %}?action=delete" class="btn-delete">삭제</a>
+        {% if product.ingredients.all %}
+        <div class="product-ingredients">
+            {% for pi in product.ingredients.all %}
+            <span class="ingredient-chip">
+                {{ pi.ingredient.name }} <strong>{{ pi.amount }}</strong>
+            </span>
+            {% endfor %}
         </div>
-    </div>
+        {% endif %}
 
-    {% if product.ingredients.all %}
-    <div class="product-ingredients">
-        {% for pi in product.ingredients.all %}
-        <span class="ingredient-chip">
-            {{ pi.ingredient.name }} <strong>{{ pi.amount }}</strong>
-        </span>
-        {% endfor %}
-    </div>
-    {% endif %}
-</div>
-{% endfor %}
-</div>
+        <div class="product-ingredients">
+            {% for poi in product.product_other_ingredients.all %}
+                <span class="other-ingredient-chip">
+                    {{ poi.other_ingredient.name }}
+                </span>
+            {% endfor %}
+        </div>
 
+    </div>
+    {% endfor %}
+    </div>
 </div>
 
 <script>
@@ -390,6 +441,53 @@ function addCategoryField() {
 
 $(document).ready(function () {
     document.querySelectorAll('.ingredient-select').forEach(initSelect2);
+});
+
+function initOtherSelect2(el) {
+    $(el).select2({
+        width: '100%',
+        placeholder: '기타 원료 검색',
+        matcher: matcher
+    });
+}
+
+function removeOtherIngredient(btn) {
+    const container = document.getElementById('otherIngredientContainer');
+    if (container.children.length <= 1) {
+        alert('기타 원료는 최소 1개 이상 필요합니다.');
+        return;
+    }
+    btn.parentElement.remove();
+}
+
+function addOtherIngredient() {
+    const container = document.getElementById('otherIngredientContainer');
+    const template = document.getElementById('otherIngredientTemplate');
+
+    const div = document.createElement('div');
+    div.className = 'dynamic-item';
+    div.style.gridTemplateColumns = 'minmax(0,1fr) 90px';
+
+    const select = document.createElement('select');
+    select.name = 'other_ingredient_ids[]';
+    select.className = 'other-ingredient-select';
+    select.innerHTML = template.innerHTML;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-remove';
+    btn.textContent = '삭제';
+    btn.onclick = () => removeOtherIngredient(btn);
+
+    div.appendChild(select);
+    div.appendChild(btn);
+    container.appendChild(div);
+
+    initOtherSelect2(select);
+}
+
+$(document).ready(function () {
+    document.querySelectorAll('.other-ingredient-select').forEach(initOtherSelect2);
 });
 </script>
 

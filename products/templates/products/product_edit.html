@@ -257,6 +257,52 @@
             <button type="button" class="btn-add" onclick="addIngredient()">+ 성분 추가</button>
         </div>
 
+        <!-- ================= 기타 원료 ================= -->
+        <div class="form-section">
+            <h2>기타 원료</h2>
+
+            <!-- 기타 원료 옵션 템플릿 -->
+            <select id="otherIngredientTemplate" style="display:none;">
+                <option value="">-- 기타 원료 검색 --</option>
+                {% for oi in other_ingredients %}
+                    <option value="{{ oi.id }}">{{ oi.name }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- 기존 기타 원료 -->
+            {% for poi in product.product_other_ingredients.all %}
+            <div class="dynamic-item" style="grid-template-columns:minmax(0,1fr) 90px;">
+                <select name="existing_other_ingredient_ids[]" class="other-ingredient-select">
+                    {% for oi in other_ingredients %}
+                        <option value="{{ oi.id }}"
+                            {% if oi.id == poi.other_ingredient.id %}selected{% endif %}>
+                            {{ oi.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <input type="hidden"
+                       name="existing_product_other_ingredient_ids[]"
+                       value="{{ poi.id }}">
+
+                <button type="button"
+                        class="btn-remove"
+                        onclick="markDeleteOtherIngredient(this, '{{ poi.id }}')">
+                    삭제
+                </button>
+            </div>
+            {% endfor %}
+
+            <!-- 신규 기타 원료 -->
+            <div id="otherIngredientContainer"></div>
+
+            <button type="button"
+                    class="btn-add"
+                    onclick="addOtherIngredient()">
+                + 기타 원료 추가
+            </button>
+        </div>
+
 <div class="form-section">
     <h2>카테고리</h2>
 
@@ -356,44 +402,92 @@
         initSelect2(select);
     }
 
-function addCategory() {
-    const container = document.getElementById('categoryContainer');
+    function addCategory() {
+        const container = document.getElementById('categoryContainer');
 
-    const row = document.createElement('div');
-    row.className = 'dynamic-item';
+        const row = document.createElement('div');
+        row.className = 'dynamic-item';
 
-    row.innerHTML = `
-        <select name="new_category_ids[]">
-            <option value="">-- 카테고리 선택 --</option>
-            {% for cat in small_categories %}
-                <option value="{{ cat.id }}">
-                    [{{ cat.bigCategory.category }}] {{ cat.category }}
-                </option>
-            {% endfor %}
-        </select>
+        row.innerHTML = `
+            <select name="new_category_ids[]">
+                <option value="">-- 카테고리 선택 --</option>
+                {% for cat in small_categories %}
+                    <option value="{{ cat.id }}">
+                        [{{ cat.bigCategory.category }}] {{ cat.category }}
+                    </option>
+                {% endfor %}
+            </select>
 
-        <button type="button"
-                class="btn-remove"
-                onclick="this.parentElement.remove()">
-            삭제
-        </button>
-    `;
+            <button type="button"
+                    class="btn-remove"
+                    onclick="this.parentElement.remove()">
+                삭제
+            </button>
+        `;
 
-    container.appendChild(row);
-}
+        container.appendChild(row);
+    }
 
-function markDeleteCategory(btn, id) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'delete_category_ids[]';
-    input.value = id;
-    btn.closest('form').appendChild(input);
-    btn.parentElement.remove();
-}
+    function markDeleteCategory(btn, id) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'delete_category_ids[]';
+        input.value = id;
+        btn.closest('form').appendChild(input);
+        btn.parentElement.remove();
+    }
 
     $(document).ready(function () {
         $('.ingredient-select').each(function () {
             initSelect2(this);
+        });
+    });
+
+    function initOtherSelect2(el) {
+        $(el).select2({
+            width: '100%',
+            placeholder: '기타 원료 검색',
+            matcher: matcher
+        });
+    }
+
+    function addOtherIngredient() {
+        const container = document.getElementById('otherIngredientContainer');
+        const template = document.getElementById('otherIngredientTemplate');
+
+        const row = document.createElement('div');
+        row.className = 'dynamic-item';
+        row.style.gridTemplateColumns = 'minmax(0,1fr) 90px';
+
+        const select = document.createElement('select');
+        select.name = 'new_other_ingredient_ids[]';
+        select.className = 'other-ingredient-select';
+        select.innerHTML = template.innerHTML;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-remove';
+        btn.textContent = '삭제';
+        btn.onclick = () => row.remove();
+
+        row.append(select, btn);
+        container.appendChild(row);
+
+        initOtherSelect2(select);
+    }
+
+    function markDeleteOtherIngredient(btn, id) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'delete_other_ingredient_ids[]';
+        input.value = id;
+        btn.closest('form').appendChild(input);
+        btn.parentElement.remove();
+    }
+
+    $(document).ready(function () {
+        $('.other-ingredient-select').each(function () {
+            initOtherSelect2(this);
         });
     });
 </script>
