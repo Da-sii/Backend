@@ -2,7 +2,7 @@ from django.urls import path
 from products.admin_views import (
     big_category_form, big_category_edit, small_category_form, small_category_edit,
     product_form, product_edit, ingredient_form, ingredient_edit,
-    big_category_delete, small_category_delete, ingredient_delete
+    big_category_delete, small_category_delete, ingredient_delete, other_ingredient_form, other_ingredient_edit, other_ingredient_delete
 )
 from products.admin_auth import admin_auth_required, admin_logout, admin_login_view
 
@@ -26,5 +26,8 @@ urlpatterns = [
     path("ingredient/<int:ingredient_id>/", admin_auth_required(ingredient_edit), name="admin_ingredient_edit"),
     path("ingredient/<int:ingredient_id>/delete/", admin_auth_required(ingredient_delete), name="admin_ingredient_delete"),
     path("logout/", admin_logout, name="admin_logout"),
+    path("other-ingredient/", admin_auth_required(other_ingredient_form), name="admin_other_ingredient_form"),
+    path("admin/other-ingredient/<int:pk>/edit/", admin_auth_required(other_ingredient_edit), name="admin_other_ingredient_edit"),
+    path("admin/other-ingredient/<int:pk>/delete/", admin_auth_required(other_ingredient_delete), name="admin_other_ingredient_delete"),
 ]
 

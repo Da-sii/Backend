@@ -122,3 +122,41 @@ class ProductIngredient(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.ingredient.name} ({self.amount})"
+
+class OtherIngredient(models.Model):
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        verbose_name="기타 원료명"
+    )
+
+    class Meta:
+        db_table = "other_ingredients"
+
+    def __str__(self):
+        return self.name
+
+class ProductOtherIngredient(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="product_other_ingredients",
+        verbose_name="제품"
+    )
+    other_ingredient = models.ForeignKey(
+        OtherIngredient,
+        on_delete=models.PROTECT,
+        related_name="products",
+        verbose_name="기타 원료"
+    )
+
+    class Meta:
+        db_table = "product_other_ingredients"
+        unique_together = ("product", "other_ingredient")
+        indexes = [
+            models.Index(fields=["product"]),
+            models.Index(fields=["other_ingredient"]),
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.other_ingredient.name}"
