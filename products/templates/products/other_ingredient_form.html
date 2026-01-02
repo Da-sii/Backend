@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>기타 원료 관리</title>
+
+    <style>
+        body {
+            font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+            background-color: #f5f6f8;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .form-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            height: 44px;
+            padding: 0 14px;
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #6a39c0;
+        }
+
+        button {
+            height: 44px;
+            padding: 0 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: #6a39c0;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #5a2fb0;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background-color: #eef3ff;
+            color: #3a5bd9;
+        }
+
+        .message.error {
+            background-color: #fff1f1;
+            color: #d93025;
+        }
+
+        .list-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .ingredient-list {
+            border-top: 1px solid #eaeaea;
+        }
+
+        .ingredient-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 4px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .ingredient-item span {
+            color: #555;
+        }
+
+        .empty {
+            padding: 20px 0;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .nav-links a { margin-right: 15px; text-decoration: none; color: #2196f3; }
+        .nav-links a:hover { text-decoration: underline; }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="nav-links">
+        <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+        <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
+        <a href="{% url 'admin_ingredient_form' %}">성분</a>
+        <a href="{% url 'admin_product_form' %}">제품</a>
+    </div>
+
+    <h1>기타 원료 관리</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-box">
+            <input
+                type="text"
+                name="name"
+                placeholder="기타 원료명을 입력하세요 (예: 이산화규소)"
+            />
+            <button type="submit">추가</button>
+        </div>
+    </form>
+
+    <div class="list-title">등록된 기타 원료</div>
+
+    <div class="ingredient-list">
+        {% for item in other_ingredients %}
+
+            <div class="ingredient-item" style="display:flex; gap:12px;">
+                <span>{{ item.name }}</span>
+
+                <a href="{% url 'admin_other_ingredient_edit' item.id %}"
+                   style="color:#6a39c0;">
+                    수정
+                </a>
+
+                <form method="POST"
+                      action="{% url 'admin_other_ingredient_delete' item.id %}"
+                      onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                    {% csrf_token %}
+                    <button type="submit"
+                            style="background:none; border:none; color:#e74c3c; cursor:pointer;">
+                        삭제
+                    </button>
+                </form>
+            </div>
+        {% empty %}
+            <div class="empty">등록된 기타 원료가 없습니다.</div>
+        {% endfor %}
+    </div>
+
+</div>
+</body>
+</html>
