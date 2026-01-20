@@ -1,4 +1,4 @@
-import boto3, uuid
+import boto3, uuid, os
 from typing import List
 from django.utils import timezone
 from django.db.models import F
@@ -39,7 +39,13 @@ def upload_images_to_s3(product: Product, images: List) -> List[ProductImage]:
     
     uploaded_images = []
     for img in images:
-        filename = f"products/{uuid.uuid4()}_{img.name}"
+        # 확장자만 추출 (안전)
+        _, ext = os.path.splitext(img.name)
+        ext = ext.lower()
+
+        # 완전히 안전한 파일명
+        filename = f"products/{uuid.uuid4().hex}{ext}"
+
         s3.upload_fileobj(
             img,
             settings.AWS_STORAGE_BUCKET_NAME,
