@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>제품 추가 요청 확인</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+
+        h1 { margin-bottom: 30px; }
+
+        .request-list {
+            margin-top: 30px;
+        }
+
+        .request-item {
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            background: #fff;
+        }
+
+        .request-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .request-id {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .request-user {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .request-content {
+            margin-top: 12px;
+            white-space: pre-line;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .request-date {
+            margin-top: 14px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .nav-links a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #2196f3;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .request-actions {
+            margin-top: 16px;
+            text-align: right;
+        }
+
+        .btn-delete {
+            background: #f44336;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-delete:hover {
+            background: #d32f2f;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="nav-links">
+        <a href="{% url 'admin_product_form' %}">제품 관리</a>
+        <a href="{% url 'admin_product_request_list' %}">제품 추가 요청</a>
+    </div>
+
+    <h1>제품 추가 요청 확인</h1>
+
+    <div class="request-list">
+        {% for request in product_requests %}
+        <div class="request-item">
+
+            <div class="request-top">
+                <div class="request-id">
+                    요청 #{{ request.id }}
+                </div>
+
+                <div class="request-user">
+                    {% if request.user %}
+                        요청자: {{ request.user }}
+                    {% else %}
+                        요청자: 비회원
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="request-content">
+                {{ request.content }}
+            </div>
+
+            <div class="request-date">
+                요청일: {{ request.created_at|date:"Y-m-d H:i" }}
+            </div>
+
+            <div class="request-actions">
+                <form method="POST"
+                      action="{% url 'admin_product_request_delete' request.id %}"
+                      onsubmit="return confirm('이 제품 추가 요청을 삭제하시겠습니까?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete">
+                        삭제
+                    </button>
+                </form>
+            </div>
+
+        </div>
+        {% empty %}
+        <p>아직 제품 추가 요청이 없습니다.</p>
+        {% endfor %}
+    </div>
+
+</div>
+</body>
+</html>
