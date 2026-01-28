@@ -332,3 +332,8 @@ class ProductRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductRequest
         fields = ("content", )
+
+    class ProductRequestSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = ProductRequest
+            fields = ("content",)
