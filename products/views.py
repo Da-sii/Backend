@@ -1,6 +1,6 @@
 from rest_framework import generics, parsers
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import NotFound, ValidationError
@@ -11,7 +11,7 @@ from drf_spectacular.types import OpenApiTypes
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
 from products.models import Product, BigCategory, ProductIngredient, ProductImage, ProductOtherIngredient,ProductRequest
-from products.serializers import ProductDetailSerializer, ProductRankingSerializer, ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer
+from products.serializers import ProductDetailSerializer, ProductRankingSerializer, ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer, ProductRequestSerializer
 from products.utils import record_view, upload_images_to_s3
 
 # 제품 상세 (GET /products/<id>/)
@@ -445,6 +445,17 @@ class UploadProductImageView(APIView):
         return Response({"success": True, "message": f"{len(uploaded_images)}개의 이미지가 등록되었습니다."}, status=201)
 
 # 제품 추가 요청
-# class ProductRequestView(generics.CreateAPIView):
-#     queryset = ProductRequest.objects.all()
-#     serializer_class =
+class ProductRequestView(generics.CreateAPIView):
+    queryset = ProductRequest.objects.all()
+    serializer_class = ProductRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="제품 추가 요청",
+        tags=["마이페이지"]
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
