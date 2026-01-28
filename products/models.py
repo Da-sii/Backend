@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 
+from users.models import User
+
 class BigCategory(models.Model):
     category = models.CharField(max_length=100, verbose_name="카테고리")
 
@@ -160,3 +162,23 @@ class ProductOtherIngredient(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.other_ingredient.name}"
+
+class ProductRequest(models.Model):
+    content = models.TextField(verbose_name="제품 정보")
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="product_requests",
+        verbose_name="요청한 사용자"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "product_requests"
+
+    def __str__(self):
+        return f"제품 요청 #{self.id}"
