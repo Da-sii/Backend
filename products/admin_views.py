@@ -218,7 +218,7 @@ def product_form(request):
         'ingredients',
         'category_products__category__bigCategory',
         'product_other_ingredients__other_ingredient'
-    ).order_by('id')  # 전체 제품 표시 (ID 오름차순)
+    ).order_by('-id')  # 전체 제품 표시 (ID 내림차순)
 
     return render(request, 'products/product_form.html', {
         'ingredients': ingredients,
