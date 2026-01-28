@@ -3,7 +3,8 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Count
-from products.models import Product, BigCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, CategoryProduct, OtherIngredient, ProductOtherIngredient
+from products.models import Product, BigCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, \
+    CategoryProduct, OtherIngredient, ProductOtherIngredient, ProductRequest
 from products.utils import upload_images_to_s3
 import json
 
@@ -652,3 +653,27 @@ def other_ingredient_delete(request, pk):
 
     messages.success(request, f'"{name}" 기타 원료가 삭제되었습니다.')
     return redirect("admin_other_ingredient_form")
+
+# Product Request 화면 (템플릿 기반)
+def product_request_list(request):
+    from django.shortcuts import render
+    from products.models import ProductRequest
+
+    product_requests = ProductRequest.objects.select_related(
+        'user'
+    ).order_by('-created_at')
+
+    return render(request, 'products/product_request_list.html', {
+        'product_requests': product_requests
+    })
+
+def admin_product_request_delete(request, request_id):
+    if request.method != "POST":
+        messages.error(request, "잘못된 요청입니다.")
+        return redirect('admin_product_request_list')
+
+    product_request = get_object_or_404(ProductRequest, id=request_id)
+    product_request.delete()
+
+    messages.success(request, "제품 추가 요청이 삭제되었습니다.")
+    return redirect('admin_product_request_list')
