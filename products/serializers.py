@@ -6,7 +6,8 @@ from django.db.models import Sum, Avg
 from django.db import transaction
 from rest_framework import serializers
 
-from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory, OtherIngredient, ProductOtherIngredient
+from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory, OtherIngredient, \
+    ProductOtherIngredient, ProductRequest
 from products.utils import upload_images_to_s3
 
 class ProductIngredientInputSerializer(serializers.Serializer):
@@ -326,4 +327,8 @@ class MainSerializer(serializers.ModelSerializer):
         agg = obj.reviews.aggregate(avg=Avg("rate"))
         value = agg.get("avg")
         return round(float(value), 2) if value is not None else None
-        
+
+class ProductRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductRequest
+        fields = ("content", )

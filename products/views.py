@@ -8,9 +8,9 @@ from django.utils import timezone
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from django.db.models import Sum, Count, Q, Subquery
+from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
-from products.models import Product, BigCategory, ProductIngredient, ProductImage, ProductOtherIngredient
+from products.models import Product, BigCategory, ProductIngredient, ProductImage, ProductOtherIngredient,ProductRequest
 from products.serializers import ProductDetailSerializer, ProductRankingSerializer, ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer
 from products.utils import record_view, upload_images_to_s3
 
@@ -443,3 +443,8 @@ class UploadProductImageView(APIView):
         ProductImage.objects.bulk_create(uploaded_images)
         
         return Response({"success": True, "message": f"{len(uploaded_images)}개의 이미지가 등록되었습니다."}, status=201)
+
+# 제품 추가 요청
+# class ProductRequestView(generics.CreateAPIView):
+#     queryset = ProductRequest.objects.all()
+#     serializer_class =

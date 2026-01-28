@@ -11,4 +11,5 @@ urlpatterns = [
     path("main/", MainView.as_view(), name="product_main"),
     path("<int:id>/images/", UploadProductImageView.as_view(), name="product_image_add"),
     path("<int:id>/", ProductDetailView.as_view(), name="product_detail"),
+    # path("request/", )
 ]
