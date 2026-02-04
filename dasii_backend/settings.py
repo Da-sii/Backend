@@ -14,8 +14,10 @@ from pathlib import Path
 from decouple import config
 from dotenv import load_dotenv
 import os
+import sentry_sdk
 
 from datetime import timedelta
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -272,3 +274,14 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@dasii.kr')
 ADMIN_EMAIL = config('ADMIN_EMAIL', default='admin@dasii.kr')
+
+# Sentry
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+
+if not DEBUG and SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=0.1,
+        send_default_pii=True,
+    )
