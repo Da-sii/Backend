@@ -10,3 +10,4 @@ tzdata==2025.2
 boto3
 django-cors-headers
 git+https://github.com/coolsms/python-sdk.git
+sentry-sdk
