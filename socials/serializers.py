@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from users.models import User
+
 class AppleSigninSerializer(serializers.Serializer):
     identityToken = serializers.CharField(
         help_text="Apple에서 발급받은 identityToken",
@@ -115,4 +117,12 @@ class SocialPreLoginSerializer(serializers.Serializer):
 
         return data
 
-        
+class TermsOfServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['is_terms_agreed']
+
+    def validate_is_terms_agreed(self, value):
+        if value is not True:
+            raise serializers.ValidationError("이용약관 동의는 필수입니다.")
+        return value
