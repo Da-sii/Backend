@@ -1,16 +1,17 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework import status, generics
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.conf import settings
 import logging
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample, extend_schema_view
 from drf_spectacular.openapi import OpenApiResponse
 from rest_framework.views import APIView
 
 from users.models import User
 from users.utils import generate_jwt_tokens_with_metadata
-from socials.serializers import AppleSigninSerializer, AdvertisementInquirySerializer, SocialPreLoginSerializer
+from socials.serializers import AppleSigninSerializer, AdvertisementInquirySerializer, SocialPreLoginSerializer, \
+    TermsOfServiceSerializer
 from socials.utils import verify_identity_token, send_advertisement_inquiry_email
 
 logger = logging.getLogger(__name__)
@@ -330,3 +331,17 @@ class SocialPreLoginView(APIView):
             return Response({
                 "is_new_user": user is None
             })
+
+@extend_schema_view(
+    patch=extend_schema(
+        summary="이용 약관 동의",
+        tags=["소셜 로그인"]
+    )
+)
+class SocialTermsOfServiceView(generics.UpdateAPIView):
+    serializer_class = TermsOfServiceSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["patch"]
+
+    def get_object(self):
+        return self.request.user # 인증 단계에서 토큰의 user_id로 조회된 User 객체
