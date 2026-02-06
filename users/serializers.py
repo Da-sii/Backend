@@ -53,6 +53,8 @@ class SignUpSerializer(serializers.ModelSerializer):
         if 'phoneNumber' in validated_data:
             validated_data['phone_number'] = validated_data.pop('phoneNumber')
 
+        validated_data['is_terms_agreed'] = True
+
         return User.objects.create_user(**validated_data)
 
 class SignInSerializer(serializers.Serializer):
