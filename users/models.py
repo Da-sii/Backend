@@ -39,6 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     google = models.BooleanField(default=False)
     apple = models.BooleanField(default=False)
     apple_sub = models.CharField(max_length=225, blank=True, null=True)
+    is_terms_agreed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)  # 가입일 추가
     # Django 기본 인증 시스템을 위한 필드
     is_active = models.BooleanField(default=True)
