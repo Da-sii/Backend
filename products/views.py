@@ -10,7 +10,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
-from products.models import Product, BigCategory, ProductIngredient, ProductImage, ProductOtherIngredient,ProductRequest
+from products.models import Product, BigCategory, ProductIngredient, ProductImage, ProductOtherIngredient,ProductRequest, SmallCategory
 from products.serializers import ProductDetailSerializer, ProductRankingSerializer, ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer, ProductRequestSerializer
 from products.utils import record_view, upload_images_to_s3
 
@@ -370,14 +370,13 @@ class MainView(APIView):
 
     @extend_schema(
         summary="메인 화면",
-        tags=["제품"]
+        tags=["제품"],
+        description="유저가 로그인하면 user 배열 전달, 로그인하지 않으면 user 배열 전달 X"
     )
     def get(self, request, *args, **kwargs):
         # 소분류별 지난 30일 조회수 합계 순 상위 소분류 목록
         today = timezone.now().date()
         start_date = today - timedelta(days=30)
-
-        from products.models import SmallCategory
 
         small_with_views = (
             SmallCategory.objects
@@ -412,10 +411,18 @@ class MainView(APIView):
 
         serializer = MainSerializer(top_today_products, many=True)
 
-        return Response({
+        response = {
             "topSmallCategories": categories_payload,
             "topProductsToday": serializer.data,
-        })
+        }
+
+        user = request.user
+        if user.is_authenticated:
+            response["user"] = {
+                "isTermsAgreed": user.is_terms_agreed
+            }
+
+        return Response(response)
 
 # 제품 이미지 등록
 class UploadProductImageView(APIView):
