@@ -81,15 +81,6 @@
             margin-bottom: 10px;
         }
 
-        /* Select2 보정 */
-        .select2-container { width: 100% !important; }
-        .select2-container--open { z-index: 9999; }
-        .select2-selection--single {
-            height: 38px;
-            display: flex;
-            align-items: center;
-        }
-
         /* 제품 리스트 */
         .product-list { margin-top: 50px; }
 
@@ -187,6 +178,7 @@
 
     <div class="nav-links">
         <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+        <a href="{% url 'admin_middle_category_form' %}">중분류 카테고리</a>
         <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
         <a href="{% url 'admin_other_ingredient_form' %}">기타 성분</a>
         <a href="{% url 'admin_ingredient_form' %}">성분</a>
@@ -288,14 +280,19 @@
 
     <div id="categoryContainer">
         <div class="dynamic-item">
-            <select name="category_ids[]">
-                <option value="">-- 카테고리 선택 --</option>
+            <select name="category_ids[]" class="small-category-select">
+                <option value="">-- 소분류 선택 --</option>
                 {% for category in small_categories %}
-                <option value="{{ category.id }}">
-                    [{{ category.bigCategory.category }}] {{ category.category }}
+                <option value="{{ category.id }}"
+                        data-middle="{{ category.middle_category.category }}"
+                        data-big="{{ category.middle_category.big_category.category }}">
+                    [{{ category.middle_category.big_category.category }}]
+                    [{{ category.middle_category.category }}]
+                    {{ category.category }}
                 </option>
                 {% endfor %}
             </select>
+
             <button type="button"
                     class="btn-remove"
                     onclick="this.parentElement.remove()">
@@ -423,17 +420,24 @@ function addIngredient() {
 
 function addCategoryField() {
     const container = document.getElementById('categoryContainer');
-    const firstSelect = container.querySelector('select');
+    const firstSelect = container.querySelector('.small-category-select');
 
     const div = document.createElement('div');
-    div.className = 'dynamic-item';
+    div.className = 'dynamic-item category-row';
 
     div.innerHTML = `
-        <select name="category_ids[]">
+        <select name="category_ids[]" class="small-category-select">
             ${firstSelect.innerHTML}
         </select>
-        <button type="button" class="btn-remove"
-                onclick="this.parentElement.remove()">삭제</button>
+
+        <input type="text" class="middle-display" placeholder="중분류" readonly>
+        <input type="text" class="big-display" placeholder="대분류" readonly>
+
+        <button type="button"
+                class="btn-remove"
+                onclick="this.parentElement.remove()">
+            삭제
+        </button>
     `;
 
     container.appendChild(div);
@@ -488,6 +492,21 @@ function addOtherIngredient() {
 
 $(document).ready(function () {
     document.querySelectorAll('.other-ingredient-select').forEach(initOtherSelect2);
+});
+
+document.addEventListener('change', function (e) {
+    if (!e.target.classList.contains('small-category-select')) return;
+
+    const option = e.target.selectedOptions[0];
+    const row = e.target.closest('.category-row');
+
+    if (!option || !row) return;
+
+    row.querySelector('.middle-display').value =
+        option.dataset.middle || '';
+
+    row.querySelector('.big-display').value =
+        option.dataset.big || '';
 });
 </script>
 

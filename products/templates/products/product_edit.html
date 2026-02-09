@@ -308,13 +308,15 @@
 
     <!-- 기존 카테고리 -->
     {% for cp in product.category_products.all %}
-    <div class="dynamic-item">
+    <div class="dynamic-item" style="grid-template-columns:minmax(0,1fr) 90px;">
         <select name="existing_category_ids[]">
-            <option value="">-- 카테고리 선택 --</option>
+            <option value="">-- 소분류 선택 --</option>
             {% for cat in small_categories %}
                 <option value="{{ cat.id }}"
                     {% if cat.id == cp.category.id %}selected{% endif %}>
-                    [{{ cat.bigCategory.category }}] {{ cat.category }}
+                    [{{ cat.middle_category.big_category.category }}]
+                    [{{ cat.middle_category.category }}]
+                    {{ cat.category }}
                 </option>
             {% endfor %}
         </select>
@@ -407,13 +409,16 @@
 
         const row = document.createElement('div');
         row.className = 'dynamic-item';
+        row.style.gridTemplateColumns = 'minmax(0,1fr) 90px';
 
         row.innerHTML = `
             <select name="new_category_ids[]">
-                <option value="">-- 카테고리 선택 --</option>
+                <option value="">-- 소분류 선택 --</option>
                 {% for cat in small_categories %}
                     <option value="{{ cat.id }}">
-                        [{{ cat.bigCategory.category }}] {{ cat.category }}
+                        [{{ cat.middle_category.big_category.category }}]
+                        [{{ cat.middle_category.category }}]
+                        {{ cat.category }}
                     </option>
                 {% endfor %}
             </select>

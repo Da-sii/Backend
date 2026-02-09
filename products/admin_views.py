@@ -3,7 +3,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Count
-from products.models import Product, BigCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, \
+from products.models import Product, BigCategory, MiddleCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, \
     CategoryProduct, OtherIngredient, ProductOtherIngredient, ProductRequest
 from products.utils import upload_images_to_s3
 import json
@@ -52,71 +52,203 @@ def big_category_edit(request, category_id):
         'category': category
     })
 
+# MiddleCategory 입력 화면 (템플릿 기반)
+def middle_category_form(request):
+    if request.method == 'POST':
+        big_category_id = request.POST.get('bigCategory', '').strip()
+        category = request.POST.get('category', '').strip()
+
+        if not big_category_id:
+            messages.error(request, '대분류를 선택해주세요.')
+        elif not category:
+            messages.error(request, '중분류 이름을 입력해주세요.')
+        else:
+            try:
+                big_category = BigCategory.objects.get(id=big_category_id)
+                MiddleCategory.objects.create(
+                    big_category=big_category,
+                    category=category
+                )
+                messages.success(
+                    request,
+                    f'"{big_category.category} - {category}" 중분류가 추가되었습니다.'
+                )
+                return redirect('admin_middle_category_form')
+            except BigCategory.DoesNotExist:
+                messages.error(request, '선택한 대분류를 찾을 수 없습니다.')
+
+    big_categories = BigCategory.objects.all().order_by('id')
+    middle_categories = MiddleCategory.objects.select_related(
+        'big_category'
+    ).order_by('big_category__id', 'id')
+
+    return render(request, 'products/middle_category_form.html', {
+        'big_categories': big_categories,
+        'middle_categories': middle_categories,
+    })
+
+def middle_category_edit(request, category_id):
+    try:
+        middle_category = MiddleCategory.objects.select_related(
+            'big_category'
+        ).get(id=category_id)
+    except MiddleCategory.DoesNotExist:
+        messages.error(request, '중분류를 찾을 수 없습니다.')
+        return redirect('admin_middle_category_form')
+
+    if request.method == 'POST':
+        big_category_id = request.POST.get('bigCategory', '').strip()
+        category_name = request.POST.get('category', '').strip()
+
+        if not big_category_id:
+            messages.error(request, '대분류를 선택해주세요.')
+        elif not category_name:
+            messages.error(request, '중분류 이름을 입력해주세요.')
+        else:
+            try:
+                big_category = BigCategory.objects.get(id=big_category_id)
+                middle_category.big_category = big_category
+                middle_category.category = category_name
+                middle_category.save()
+
+                messages.success(
+                    request,
+                    f'"{big_category.category} - {category_name}" 중분류가 수정되었습니다.'
+                )
+                return redirect('admin_middle_category_form')
+
+            except BigCategory.DoesNotExist:
+                messages.error(request, '선택한 대분류를 찾을 수 없습니다.')
+
+    big_categories = BigCategory.objects.all().order_by('id')
+
+    return render(request, 'products/middle_category_edit.html', {
+        'middle_category': middle_category,
+        'big_categories': big_categories,
+    })
+
+def middle_category_delete(request, category_id):
+    try:
+        middle_category = MiddleCategory.objects.get(id=category_id)
+    except MiddleCategory.DoesNotExist:
+        messages.error(request, '중분류를 찾을 수 없습니다.')
+        return redirect('admin_middle_category_form')
+
+    if request.method == 'POST':
+        category_name = middle_category.category
+
+        # 🔥 중요: 연결된 소분류가 있으면 먼저 정리
+        SmallCategory.objects.filter(
+            middle_category=middle_category
+        ).delete()
+
+        middle_category.delete()
+
+        messages.success(
+            request,
+            f'"{category_name}" 중분류가 삭제되었습니다.'
+        )
+        return redirect('admin_middle_category_form')
+
+    return render(request, 'products/middle_category_delete_confirm.html', {
+        'middle_category': middle_category
+    })
+
 # SmallCategory 입력 화면 (템플릿 기반)
 def small_category_form(request):
     """SmallCategory 데이터 입력 화면"""
     
     if request.method == 'POST':
-        big_category_id = request.POST.get('bigCategory', '').strip()
+        middle_category_id = request.POST.get('middleCategory', '').strip()
         category = request.POST.get('category', '').strip()
-        
-        if not big_category_id:
-            messages.error(request, '대분류를 선택해주세요.')
+
+        if not middle_category_id:
+            messages.error(request, '중분류를 선택해주세요.')
         elif not category:
             messages.error(request, '소분류 이름을 입력해주세요.')
         else:
             try:
-                big_category = BigCategory.objects.get(id=big_category_id)
+                middle_category = MiddleCategory.objects.get(id=middle_category_id)
+
                 SmallCategory.objects.create(
-                    bigCategory=big_category,
+                    middle_category=middle_category,
                     category=category
                 )
-                messages.success(request, f'"{big_category.category} - {category}" 소분류가 성공적으로 추가되었습니다.')
+
+                messages.success(
+                    request,
+                    f'"{middle_category.big_category.category} - '
+                    f'{middle_category.category} - {category}" '
+                    '소분류가 성공적으로 추가되었습니다.'
+                )
                 return redirect('admin_small_category_form')
-            except BigCategory.DoesNotExist:
-                messages.error(request, '선택한 대분류를 찾을 수 없습니다.')
+
+            except MiddleCategory.DoesNotExist:
+                messages.error(request, '선택한 중분류를 찾을 수 없습니다.')
     
     # 기존 데이터 가져오기
-    big_categories = BigCategory.objects.all().order_by('id')
-    small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
-    
+    middle_categories = MiddleCategory.objects.select_related(
+        'big_category'
+    ).order_by('big_category__id', 'id')
+    small_categories = SmallCategory.objects.select_related(
+        'middle_category__big_category'
+    ).order_by(
+        'middle_category__big_category__id',
+        'middle_category__id',
+        'id'
+    )
+
     return render(request, 'products/small_category_form.html', {
-        'big_categories': big_categories,
+        'middle_categories': middle_categories,
         'small_categories': small_categories
     })
 
 def small_category_edit(request, category_id):
     """SmallCategory 수정 화면"""
     try:
-        small_category = SmallCategory.objects.get(id=category_id)
+        small_category = SmallCategory.objects.select_related(
+            'middle_category__big_category'
+        ).get(id=category_id)
     except SmallCategory.DoesNotExist:
         messages.error(request, '소분류를 찾을 수 없습니다.')
         return redirect('admin_small_category_form')
 
     if request.method == 'POST':
-        big_category_id = request.POST.get('bigCategory', '').strip()
+        middle_category_id = request.POST.get('middleCategory', '').strip()
         category_name = request.POST.get('category', '').strip()
-        
-        if not big_category_id:
-            messages.error(request, '대분류를 선택해주세요.')
+
+        if not middle_category_id:
+            messages.error(request, '중분류를 선택해주세요.')
         elif not category_name:
             messages.error(request, '소분류 이름을 입력해주세요.')
         else:
             try:
-                big_category = BigCategory.objects.get(id=big_category_id)
-                small_category.bigCategory = big_category
+                middle_category = MiddleCategory.objects.get(id=middle_category_id)
+
+                small_category.middle_category = middle_category
                 small_category.category = category_name
                 small_category.save()
-                messages.success(request, f'"{big_category.category} - {category_name}" 소분류가 성공적으로 수정되었습니다.')
-                return redirect('admin_small_category_form')
-            except BigCategory.DoesNotExist:
-                messages.error(request, '선택한 대분류를 찾을 수 없습니다.')
 
+                messages.success(
+                    request,
+                    f'"{middle_category.big_category.category} - '
+                    f'{middle_category.category} - {category_name}" '
+                    '소분류가 성공적으로 수정되었습니다.'
+                )
+                return redirect('admin_small_category_form')
+
+            except MiddleCategory.DoesNotExist:
+                messages.error(request, '선택한 중분류를 찾을 수 없습니다.')
+
+    # GET 요청 시 화면에 뿌릴 데이터
     big_categories = BigCategory.objects.all().order_by('id')
-    
+    middle_categories = MiddleCategory.objects.select_related(
+        'big_category'
+    ).all().order_by('big_category__id', 'id')
+
     return render(request, 'products/small_category_edit.html', {
         'small_category': small_category,
-        'big_categories': big_categories
+        'middle_categories': middle_categories,
     })
 
 # Product 입력 화면 (템플릿 기반)
@@ -206,7 +338,11 @@ def product_form(request):
     
     # 기존 데이터 가져오기
     ingredients = Ingredient.objects.all().order_by('id')
-    small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
+    small_categories = SmallCategory.objects.select_related('middle_category__big_category').all().order_by(
+        'middle_category__big_category__id',
+        'middle_category__id',
+        'id'
+    )
     other_ingredients = OtherIngredient.objects.all().order_by("name")
 
     # 제품 정보를 더 자세히 가져오기 (이미지, 성분, 카테고리 개수 포함)
@@ -217,7 +353,7 @@ def product_form(request):
     ).prefetch_related(
         'images',
         'ingredients',
-        'category_products__category__bigCategory',
+        'category_products__category__middle_category__big_category',
         'product_other_ingredients__other_ingredient'
     ).order_by('-id')  # 전체 제품 표시 (ID 내림차순)
 
@@ -385,7 +521,7 @@ def product_edit(request, product_id):
         product = Product.objects.prefetch_related(
             'images',
             'ingredients__ingredient',
-            'category_products__category__bigCategory',
+            'category_products__category__middle_category__big_category',
             'product_other_ingredients__other_ingredient',
             'product_other_ingredients__other_ingredient'
         ).get(id=product_id)
@@ -557,7 +693,11 @@ def product_edit(request, product_id):
 
     # ================= GET =================
     ingredients = Ingredient.objects.all().order_by('id')
-    small_categories = SmallCategory.objects.select_related('bigCategory').all().order_by('bigCategory__id', 'id')
+    small_categories = SmallCategory.objects.select_related('middle_category__big_category').all().order_by(
+        'middle_category__big_category__id',
+        'middle_category__id',
+        'id'
+    )
     other_ingredients = OtherIngredient.objects.all().order_by("name")
 
     return render(request, 'products/product_edit.html', {
