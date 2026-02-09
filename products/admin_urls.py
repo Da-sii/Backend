@@ -1,6 +1,7 @@
 from django.urls import path
 from products.admin_views import (
-    big_category_form, big_category_edit, small_category_form, small_category_edit,
+    big_category_form, big_category_edit, small_category_form, small_category_edit, middle_category_form,
+    middle_category_edit, middle_category_delete,
     product_form, product_edit, ingredient_form, ingredient_edit,
     big_category_delete, small_category_delete, ingredient_delete, other_ingredient_form, other_ingredient_edit,
     other_ingredient_delete, product_request_list, admin_product_request_delete
@@ -18,6 +19,9 @@ urlpatterns = [
     path("big-category/", admin_auth_required(big_category_form), name="admin_big_category_form"),
     path("big-category/<int:category_id>/", admin_auth_required(big_category_edit), name="admin_big_category_edit"),
     path("big-category/<int:category_id>/delete/", admin_auth_required(big_category_delete), name="admin_big_category_delete"),
+    path("middle-category/", admin_auth_required(middle_category_form), name="admin_middle_category_form"),
+    path("middle-category/<int:category_id>/",admin_auth_required(middle_category_edit), name="admin_middle_category_edit"),
+    path("middle-category/<int:category_id>/delete/",admin_auth_required(middle_category_delete),name="admin_middle_category_delete"),
     path("small-category/", admin_auth_required(small_category_form), name="admin_small_category_form"),
     path("small-category/<int:category_id>/", admin_auth_required(small_category_edit), name="admin_small_category_edit"),
     path("small-category/<int:category_id>/delete/", admin_auth_required(small_category_delete), name="admin_small_category_delete"),

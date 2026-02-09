@@ -116,6 +116,7 @@
         <div class="container">
             <div class="back-link">
                 <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+                <a href="{% url 'admin_middle_category_form' %}">중분류 카테고리</a>
                 <a href="{% url 'admin_product_form' %}">제품</a>
                 <a href="{% url 'admin_ingredient_form' %}">성분</a>
             </div>
@@ -133,11 +134,13 @@
             <form method="POST">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label for="bigCategory">대분류 선택:</label>
-                    <select id="bigCategory" name="bigCategory" required>
-                        <option value="">-- 대분류를 선택하세요 --</option>
-                        {% for big_category in big_categories %}
-                        <option value="{{ big_category.id }}">{{ big_category.category }}</option>
+                    <label for="middleCategory">중분류 선택:</label>
+                    <select id="middleCategory" name="middleCategory" required>
+                        <option value="">-- 중분류를 선택하세요 --</option>
+                        {% for middle in middle_categories %}
+                            <option value="{{ middle.id }}">
+                                [{{ middle.big_category.category }}] {{ middle.category }}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
@@ -153,7 +156,10 @@
                 {% if small_categories %} {% for small_category in small_categories %}
                 <div class="category-item">
                     <strong>ID {{ small_category.id }}:</strong>
-                    <span class="big-category-name">[{{ small_category.bigCategory.category }}]</span>
+                    <span class="big-category-name">
+                        [{{ small_category.middle_category.big_category.category }}]
+                        [{{ small_category.middle_category.category }}]
+                    </span>
                     {{ small_category.category }}
                     <div style="display: inline-block; margin-left: 15px; font-size: 0.9em">
                         <a
