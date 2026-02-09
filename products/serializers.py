@@ -7,7 +7,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory, OtherIngredient, \
-    ProductOtherIngredient, ProductRequest
+    ProductOtherIngredient, ProductRequest, MiddleCategory
 from products.utils import upload_images_to_s3
 
 class ProductIngredientInputSerializer(serializers.Serializer):
@@ -276,15 +276,30 @@ class ProductsListSerializer(serializers.ModelSerializer):
         value = agg.get("avg")
         return round(float(value), 2) if value is not None else None
 
-class CategorySerializer(serializers.ModelSerializer):
-    smallCategories = serializers.SerializerMethodField()
+class BigCategorySerializer(serializers.ModelSerializer):
+    middleCategories = serializers.SerializerMethodField()
 
     class Meta:
         model = BigCategory
+        fields = ("category", "middleCategories")
+
+    def get_middleCategories(self, obj):
+        middle_qs = obj.middle_categories.order_by("id")
+        return MiddleCategorySerializer(middle_qs, many=True).data
+
+class MiddleCategorySerializer(serializers.ModelSerializer):
+    smallCategories = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MiddleCategory
         fields = ("category", "smallCategories")
 
     def get_smallCategories(self, obj):
-        return list(obj.smallCategories.order_by("id").values_list("category", flat=True))
+        return list(
+            obj.small_categories
+               .order_by("id")
+               .values_list("category", flat=True)
+        )
 
 class ProductSearchSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
