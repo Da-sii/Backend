@@ -136,24 +136,6 @@ class KakaoLogoutRequestSerializer(serializers.Serializer):
         help_text="카카오에서 발급받은 access_token (선택사항)"
     )
 
-class UserDeleteRequestSerializer(serializers.Serializer):
-    """회원탈퇴 요청 시리얼라이저"""
-    kakao_access_token = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        help_text="카카오에서 발급받은 access_token (카카오 사용자인 경우 필요, refresh 토큰에 포함된 경우 생략 가능)"
-    )
-    refresh = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        help_text="우리 서비스에서 발급한 JWT refresh 토큰 (여기에 포함된 kakao_access_token을 사용)"
-    )
-    apple_user_id = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        help_text="애플 사용자 ID (애플 사용자인 경우 필요)"
-    )
-
 class UserDeleteResponseSerializer(serializers.Serializer):
     """회원탈퇴 응답 시리얼라이저"""
     success = serializers.BooleanField()
