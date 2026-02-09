@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>중분류 카테고리 추가</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 6px; }
+        select, input {
+            width: 100%;
+            padding: 10px;
+        }
+        button {
+            background: #4caf50;
+            color: #fff;
+            padding: 12px 24px;
+            border: none;
+            cursor: pointer;
+        }
+        .category-item {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 3px solid #2196f3;
+        }
+        .big {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="margin-bottom:20px;">
+        <a href="{% url 'admin_big_category_form' %}">대분류 카테고리</a>
+        <a href="{% url 'admin_small_category_form' %}">소분류 카테고리</a>
+        <a href="{% url 'admin_product_form' %}">제품</a>
+    </div>
+
+    <h1>중분류 카테고리 추가</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>대분류 선택</label>
+            <select name="bigCategory" required>
+                <option value="">-- 대분류 선택 --</option>
+                {% for big in big_categories %}
+                    <option value="{{ big.id }}">{{ big.category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>중분류 이름</label>
+            <input type="text" name="category" placeholder="예: 체지방 관리">
+        </div>
+
+        <button type="submit">추가하기</button>
+    </form>
+
+    <hr>
+
+    <h2>등록된 중분류 목록</h2>
+
+    {% for middle in middle_categories %}
+        <div class="category-item">
+            <strong>ID {{ middle.id }}:</strong>
+            <span class="big">[{{ middle.big_category.category }}]</span>
+            {{ middle.category }}
+
+            <div style="margin-top:6px; font-size:0.9em;">
+                <a href="{% url 'admin_middle_category_edit' middle.id %}"
+                   style="color:#2196f3; margin-right:10px;">
+                    수정
+                </a>
+                <a href="{% url 'admin_middle_category_delete' middle.id %}"
+                   style="color:#f44336;"
+                   onclick="return confirm('정말 삭제하시겠습니까?');">
+                    삭제
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>

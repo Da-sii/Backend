@@ -10,8 +10,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
-from products.models import Product, BigCategory, ProductIngredient, ProductImage, ProductOtherIngredient,ProductRequest, SmallCategory
-from products.serializers import ProductDetailSerializer, ProductRankingSerializer, ProductsListSerializer, CategorySerializer, ProductSearchSerializer, MainSerializer, ProductRequestSerializer
+from products.models import Product, BigCategory, ProductIngredient, ProductImage, ProductOtherIngredient,ProductRequest, SmallCategory, CategoryProduct
+from products.serializers import ProductDetailSerializer, ProductRankingSerializer, ProductsListSerializer, BigCategorySerializer, ProductSearchSerializer, MainSerializer, ProductRequestSerializer
 from products.utils import record_view, upload_images_to_s3
 
 # 제품 상세 (GET /products/<id>/)
@@ -50,16 +50,17 @@ class ProductRankingCategoryView(generics.ListAPIView):
         today = timezone.now().date()
         start_date = today - timedelta(days=30)
 
-        from products.models import SmallCategory
-
         small_with_views = (
             SmallCategory.objects
             .exclude(category="전체")
+            .select_related("middle_category__big_category")
             .annotate(
                 totalViews=Coalesce(
                     Sum(
                         "category_products__product__daily_views__views",
-                        filter=Q(category_products__product__daily_views__date__gte=start_date)
+                        filter=Q(
+                            category_products__product__daily_views__date__gte=start_date
+                        )
                     ),
                     0,
                 )
@@ -68,7 +69,11 @@ class ProductRankingCategoryView(generics.ListAPIView):
         )
 
         categories_payload = [
-            {"smallCategory": sc.category, "bigCategory": sc.bigCategory.category}
+            {
+                "smallCategory": sc.category,
+                "middleCategory": sc.middle_category.category,
+                "bigCategory": sc.middle_category.big_category.category
+             }
             for sc in small_with_views
         ]
 
@@ -201,7 +206,14 @@ class ProductListView(generics.ListAPIView):
                 name="bigCategory",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="대분류 카테고리 이름(예: 다이어트 약, 다이어트 보조제, 다이어트 식품 등). 미제공시 모든 제품 조회",
+                description="대분류 카테고리 이름(예: 다이어트 보조제 등). 미제공시 모든 제품 조회",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="middleCategory",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="중분류 카테고리 이름(예: 건강기능식품, 일반 다이어트 보조제 등). 기본: 전체",
                 required=False,
             ),
             OpenApiParameter(
@@ -227,6 +239,7 @@ class ProductListView(generics.ListAPIView):
 
     def get_queryset(self):
         bigCategory = self.request.query_params.get("bigCategory")
+        middleCategory = self.request.query_params.get("middleCategory")
         smallCategory = self.request.query_params.get("smallCategory")
         sort = self.request.query_params.get("sort", "monthly_rank")
 
@@ -237,10 +250,19 @@ class ProductListView(generics.ListAPIView):
         
         # bigCategory가 제공된 경우에만 필터링
         if bigCategory:
-            qs = qs.filter(category_products__category__bigCategory__category=bigCategory).distinct()
+            qs = qs.filter(
+                category_products__category__middle_category__big_category__category=bigCategory
+            ).distinct()
+
+        if middleCategory:
+            qs = qs.filter(
+                category_products__category__middle_category__category=middleCategory
+            ).distinct()
 
         if smallCategory and smallCategory != "전체":
-            qs = qs.filter(category_products__category__category=smallCategory).distinct()
+            qs = qs.filter(
+                category_products__category__category=smallCategory
+            ).distinct()
 
         if sort == "review_desc":
             return (
@@ -266,7 +288,7 @@ class ProductListView(generics.ListAPIView):
 
 # 제품 카테고리 조회
 class ProductCategoryView(generics.ListAPIView):
-    serializer_class = CategorySerializer
+    serializer_class = BigCategorySerializer
     permission_classes = [AllowAny]
 
     @extend_schema(
@@ -277,7 +299,13 @@ class ProductCategoryView(generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return BigCategory.objects.prefetch_related("smallCategories").order_by("id")
+        return (
+            BigCategory.objects
+            .prefetch_related(
+                "middle_categories__small_categories"
+            )
+            .order_by("id")
+        )
 
 # 검색
 class ProductSearchView(generics.ListAPIView):
@@ -336,11 +364,18 @@ class ProductSearchView(generics.ListAPIView):
                 other_ingredient__name__icontains=query
             ).values_list("product_id", flat=True)
 
+            category_product_ids = CategoryProduct.objects.filter(
+                Q(category__category__icontains=query) |
+                Q(category__middle_category__category__icontains=query) |
+                Q(category__middle_category__big_category__category__icontains=query)
+            ).values_list("product_id", flat=True)
+
             qs = qs.filter(
                 Q(name__icontains=query) |
                 Q(company__icontains=query) |
                 Q(id__in=ingredient_product_ids) |
-                Q(id__in=other_ingredient_product_ids)
+                Q(id__in=other_ingredient_product_ids) |
+                Q(id__in=category_product_ids)
             ).distinct()
 
         if sort == "review_desc":
@@ -405,7 +440,11 @@ class MainView(APIView):
         )
 
         categories_payload = [
-            {"smallCategory": sc.category, "bigCategory": sc.bigCategory.category}
+            {
+                "smallCategory": sc.category,
+                "middleCategory": sc.middle_category.category,
+                "bigCategory": sc.middle_category.big_category.category,
+            }
             for sc in small_with_views
         ]
 
