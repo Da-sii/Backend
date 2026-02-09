@@ -8,6 +8,8 @@ from django.db import models
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+import logging
+logger = logging.getLogger(__name__)
 
 from .models import User
 from .serializers import (
@@ -15,7 +17,6 @@ from .serializers import (
     SignInSerializer, 
     KakaoLoginSerializer,
     KakaoLogoutRequestSerializer,
-    UserDeleteRequestSerializer,
     UserDeleteResponseSerializer,
     NicknameUpdateRequestSerializer,
     NicknameUpdateResponseSerializer,
@@ -741,32 +742,37 @@ class KakaoLogoutView(GenericAPIView):
 class UserDeleteView(GenericAPIView):
     """회원탈퇴 API"""
     permission_classes = [IsAuthenticated]
-    serializer_class = UserDeleteRequestSerializer
     
     @extend_schema(
         summary="회원탈퇴",
-        description="현재 로그인한 사용자의 계정을 완전히 삭제합니다. 카카오/애플 연동 계정인 경우 해당 서비스에서도 탈퇴 처리합니다.",
-        request=UserDeleteRequestSerializer,
+        description="현재 로그인한 사용자의 계정을 완전히 삭제합니다.\n\n"
+        "- 일반/애플 로그인 사용자: 추가 정보 없이 탈퇴됩니다.\n"
+        "- 카카오 로그인 사용자: kakao_access_token이 전달되면 카카오 연결 해제를 시도합니다.\n"
+        "  (토큰이 없어도 우리 서비스 탈퇴는 정상 처리됩니다.).",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "kakao_access_token": {
+                        "type": "string",
+                        "description": "카카오 연결 해제를 원하는 경우에만 전달 (선택)"
+                    }
+                }
+            }
+        },
         examples=[
             OpenApiExample(
-                '일반 사용자 탈퇴',
+                name="일반 / 애플 사용자 탈퇴",
                 value={},
-                request_only=True
+                request_only=True,
             ),
             OpenApiExample(
-                '카카오 사용자 탈퇴',
+                name="카카오 사용자 탈퇴 (연결 해제 포함)",
                 value={
                     "kakao_access_token": "카카오에서_발급받은_access_token"
                 },
-                request_only=True
+                request_only=True,
             ),
-            OpenApiExample(
-                '애플 사용자 탈퇴',
-                value={
-                    "apple_user_id": "애플_사용자_ID"
-                },
-                request_only=True
-            )
         ],
         responses={
             200: OpenApiResponse(
@@ -784,149 +790,47 @@ class UserDeleteView(GenericAPIView):
                     )
                 ]
             ),
-            400: OpenApiResponse(
-                description='회원탈퇴 실패',
-                examples=[
-                    OpenApiExample(
-                        '카카오 토큰 필요',
-                        value={
-                            "error": "카카오 사용자는 kakao_access_token이 필요합니다."
-                        }
-                    ),
-                    OpenApiExample(
-                        '애플 사용자 ID 필요',
-                        value={
-                            "error": "애플 사용자는 apple_user_id가 필요합니다."
-                        }
-                    )
-                ]
-            ),
             401: OpenApiResponse(
-                description='인증되지 않은 사용자',
+                description="인증되지 않은 사용자",
                 examples=[
                     OpenApiExample(
-                        '토큰 없음',
+                        name="토큰 없음",
                         value={
                             "detail": "Authentication credentials were not provided."
                         }
                     )
                 ]
-            )
+            ),
         },
         tags=['계정 관리']
     )
     def delete(self, request):
-        """
-        현재 로그인한 사용자의 계정을 완전히 삭제합니다.
-        """
         user = request.user
-        
-        # 요청 데이터 검증
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        # 사용자 정보 저장 (삭제 후 응답에 사용)
         user_id = user.id
         user_email = user.email
+        kakao_access_token = request.data.get('kakao_access_token')
         
-        # 카카오 사용자인 경우 카카오 탈퇴 처리
-        if user.kakao:
-            # 1순위: 요청 바디의 kakao_access_token
-            kakao_access_token = request.data.get('kakao_access_token')
-
-            # 2순위: 클라이언트가 보내온 refresh/access JWT 안에 들어 있는 kakao 토큰 사용
-            # 프론트가 회원탈퇴 요청 시, 본인이 갖고 있는 refresh 토큰을 같이 보내준다고 가정
-            if not kakao_access_token:
-                from .utils import get_kakao_tokens_from_token
-
-                # 요청 바디에서 refresh 토큰 우선 사용
-                refresh_token_string = request.data.get('refresh')
-
-                # 바디에 refresh가 없다면, Authorization 헤더(access 토큰)에서도 시도
-                token_string = None
-                if refresh_token_string:
-                    token_string = refresh_token_string
-                else:
-                    auth_header = request.headers.get('Authorization')
-                    if auth_header and auth_header.startswith('Bearer '):
-                        token_string = auth_header.split(' ', 1)[1]
-
-                if token_string:
-                    kakao_tokens = get_kakao_tokens_from_token(token_string)
-                    if kakao_tokens and kakao_tokens.get('kakao_access_token'):
-                        kakao_access_token = kakao_tokens['kakao_access_token']
-
-            # 위 과정까지 했는데도 카카오 토큰이 없으면 오류 반환
-            if not kakao_access_token:
-                return Response({
-                    'error': '카카오 사용자는 kakao_access_token 또는 JWT(access/refresh)에 포함된 카카오 토큰이 필요합니다.'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
+        # 카카오 unlink
+        if user.kakao and kakao_access_token:
             try:
-                # 카카오 연결 끊기 API 호출
-                kakao_unlink_response = requests.post(
+                requests.post(
                     "https://kapi.kakao.com/v1/user/unlink",
                     headers={"Authorization": f"Bearer {kakao_access_token}"},
                     timeout=5,
                 )
-                if kakao_unlink_response.status_code != 200:
-                    print(f"카카오 연결 끊기 API 오류: {kakao_unlink_response.text}")
-                    # 카카오 API 오류가 있어도 서버에서는 탈퇴 진행
             except Exception as e:
-                print(f"카카오 연결 끊기 처리 중 오류: {str(e)}")
-                # 카카오 API 오류가 있어도 서버에서는 탈퇴 진행
-        
-        # 애플 사용자인 경우 애플 탈퇴 처리
-        if user.apple:
-            apple_user_id = request.data.get('apple_user_id')
-            if not apple_user_id:
-                return Response({
-                    'error': '애플 사용자는 apple_user_id가 필요합니다.'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # 애플 탈퇴는 일반적으로 클라이언트에서 처리
-            # 서버에서는 사용자 정보만 삭제
-            print(f"애플 사용자 탈퇴: {apple_user_id}")
-        
-        # 사용자 및 관련 데이터 완전 삭제
-        try:
-            from django.db import connection
-            
-            with connection.cursor() as cursor:
-                # 1. 사용자가 작성한 리뷰 삭제
-                cursor.execute("DELETE FROM reviews WHERE user_id = %s", [user_id])
-                print(f"리뷰 삭제 완료: user_id={user_id}")
-                
-                # 2. 사용자가 작성한 댓글 삭제 (있다면)
-                try:
-                    cursor.execute("DELETE FROM comments WHERE user_id = %s", [user_id])
-                    print(f"댓글 삭제 완료: user_id={user_id}")
-                except:
-                    print("댓글 테이블이 없거나 삭제할 댓글이 없음")
-                
-                # 3. 사용자가 작성한 기타 관련 데이터 삭제 (필요시 추가)
-                # cursor.execute("DELETE FROM other_table WHERE user_id = %s", [user_id])
-                
-                # 4. 마지막으로 사용자 삭제
-                cursor.execute("DELETE FROM users WHERE id = %s", [user_id])
-                print(f"사용자 삭제 완료: user_id={user_id}")
-            
-            response_data = {
-                'success': True,
-                'message': '회원탈퇴가 완료되었습니다.',
-                'deleted_user_id': user_id,
-                'deleted_email': user_email
-            }
-            
-            response_serializer = UserDeleteResponseSerializer(data=response_data)
-            response_serializer.is_valid(raise_exception=True)
-            
-            return Response(response_serializer.data, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            return Response({
-                'error': f'회원탈퇴 처리 중 오류가 발생했습니다: {str(e)}'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                logger.warning(f"Kakao unlink failed: {(e)}")
+
+        # 애플은 아무 처리 없음
+        # DB 삭제
+        user.delete()
+
+        return Response({
+            "success": True,
+            "message": "회원탈퇴가 완료되었습니다.",
+            "delete_user_id": user_id,
+            "delete_email": user_email,
+        })
 
 class NicknameUpdateView(GenericAPIView):
     permission_classes = [IsAuthenticated]
