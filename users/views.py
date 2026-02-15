@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.conf import settings
 from django.db import models
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter, extend_schema_view
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 import logging
@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 from .models import User
 from .serializers import (
-    SignUpSerializer, 
-    SignInSerializer, 
+    SignUpSerializer,
+    SignInSerializer,
     KakaoLoginSerializer,
     KakaoLogoutRequestSerializer,
     UserDeleteResponseSerializer,
@@ -37,73 +37,75 @@ from .serializers import (
 )
 from .utils import generate_jwt_tokens_with_metadata, get_token_type_from_token
 
+@extend_schema_view(
+        post=extend_schema(
+            summary="회원가입",
+            description="이메일과 비밀번호로 회원가입합니다. 회원가입 시 자동으로 로그인되며 access 토큰과 refresh 토큰(쿠키)이 발급됩니다.",
+            request=SignUpSerializer,
+            examples=[
+                OpenApiExample(
+                    '회원가입 요청',
+                    value={
+                        "email": "user@example.com",
+                        "password": "Test1234!",
+                        "password2": "Test1234!",
+                        "phoneNumber": "010-1234-5678"
+                    },
+                    request_only=True
+                )
+            ],
+            responses={
+                201: OpenApiResponse(
+                    description='회원가입 성공',
+                    examples=[
+                        OpenApiExample(
+                            '회원가입 성공',
+                            value={
+                                "success": True,
+                                "user": {
+                                    "id": 1,
+                                    "email": "user@example.com",
+                                    "nickname": "user123456",
+                                    "phoneNumber": "010-1234-5678"
+                                },
+                                "access": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+                            }
+                        )
+                    ]
+                ),
+                400: OpenApiResponse(
+                    description='회원가입 실패',
+                    examples=[
+                        OpenApiExample(
+                            '이메일 중복',
+                            value={
+                                "email": ["이미 사용 중인 이메일입니다."]
+                            }
+                        ),
+                        OpenApiExample(
+                            '비밀번호 불일치',
+                            value={
+                                "non_field_errors": ["비밀번호가 일치하지 않습니다."]
+                            }
+                        ),
+                        OpenApiExample(
+                            '비밀번호 규칙 위반',
+                            value={
+                                "password": ["비밀번호는 영문,숫자,특수문자를 모두 포함해야 합니다."]
+                            }
+                        )
+                    ]
+                )
+            },
+            tags=['인증']
+        )
+    )
 class SignUpView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = SignUpSerializer
     permission_classes = [AllowAny] # 인증 필요 없음 (누구나 회원가입 가능)
     authentication_classes = []  # 인증 클래스를 비워서 토큰 검증을 완전히 비활성화
 
-    @extend_schema(
-        summary="회원가입",
-        description="이메일과 비밀번호로 회원가입합니다. 회원가입 시 자동으로 로그인되며 access 토큰과 refresh 토큰(쿠키)이 발급됩니다.",
-        request=SignUpSerializer,
-        examples=[
-            OpenApiExample(
-                '회원가입 요청',
-                value={
-                    "email": "user@example.com",
-                    "password": "Test1234!",
-                    "password2": "Test1234!",
-                    "phoneNumber": "010-1234-5678"
-                },
-                request_only=True
-            )
-        ],
-        responses={
-            201: OpenApiResponse(
-                description='회원가입 성공',
-                examples=[
-                    OpenApiExample(
-                        '회원가입 성공',
-                        value={
-                            "success": True,
-                            "user": {
-                                "id": 1,
-                                "email": "user@example.com",
-                                "nickname": "user123456",
-                                "phoneNumber": "010-1234-5678"
-                            },
-                            "access": "eyJ0eXAiOiJKV1QiLCJhbGc..."
-                        }
-                    )
-                ]
-            ),
-            400: OpenApiResponse(
-                description='회원가입 실패',
-                examples=[
-                    OpenApiExample(
-                        '이메일 중복',
-                        value={
-                            "email": ["이미 사용 중인 이메일입니다."]
-                        }
-                    ),
-                    OpenApiExample(
-                        '비밀번호 불일치',
-                        value={
-                            "non_field_errors": ["비밀번호가 일치하지 않습니다."]
-                        }
-                    ),
-                    OpenApiExample(
-                        '비밀번호 규칙 위반',
-                        value={
-                            "password": ["비밀번호는 영문,숫자,특수문자를 모두 포함해야 합니다."]
-                        }
-                    )
-                ]
-            )
-        },
-        tags=['인증']
-    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True) # serializer 안의 validate_* 메서드들이 실행됨
@@ -832,23 +834,26 @@ class UserDeleteView(GenericAPIView):
             "delete_email": user_email,
         })
 
+@extend_schema_view(
+        patch=extend_schema(
+            summary="닉네임 변경",
+            description="현재 로그인한 사용자의 닉네임을 변경합니다.",
+            request=NicknameUpdateRequestSerializer,
+            responses={
+                200: NicknameUpdateResponseSerializer,
+                400: {
+                    'description': '유효성 오류',
+                    'examples': {'application/json': {'nickname': ['이미 사용 중인 닉네임입니다.']}}
+                },
+                401: {'description': '인증 필요'}
+            },
+        tags=['계정 관리']
+        )
+    )
 class NicknameUpdateView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = NicknameUpdateRequestSerializer
 
-    @extend_schema(
-        summary="닉네임 변경",
-        description="현재 로그인한 사용자의 닉네임을 변경합니다.",
-        request=NicknameUpdateRequestSerializer,
-        responses={
-            200: NicknameUpdateResponseSerializer,
-            400: {
-                'description': '유효성 오류',
-                'examples': {'application/json': {'nickname': ['이미 사용 중인 닉네임입니다.']}}
-            },
-            401: {'description': '인증 필요'}
-        },
-    )
     def patch(self, request):
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -913,7 +918,7 @@ class PasswordVerifyView(GenericAPIView):
                 description='인증되지 않은 사용자'
             )
         },
-        tags=['사용자 관리']
+        tags=['계정 관리']
     )
     def post(self, request):
         """
@@ -996,7 +1001,7 @@ class PasswordChangeView(GenericAPIView):
                 description='인증되지 않은 사용자'
             )
         },
-        tags=['사용자 관리']
+        tags=['계정 관리']
     )
     def post(self, request):
         """

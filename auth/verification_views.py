@@ -340,7 +340,8 @@ class DeleteInfoView(APIView):
     구글 배포 규정에 따라 /auth/delete-info/ 경로에서 HTML을 서빙
     """
     permission_classes = [AllowAny]
-    
+
+    @extend_schema(exclude=True)
     def get(self, request):
         """
         delete_info.html 파일을 읽어서 HTML 응답으로 반환
