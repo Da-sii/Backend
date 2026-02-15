@@ -3,8 +3,9 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Count
-from products.models import Product, BigCategory, MiddleCategory, SmallCategory, ProductIngredient, ProductImage, Ingredient, \
-    CategoryProduct, OtherIngredient, ProductOtherIngredient, ProductRequest
+from products.models import Product, BigCategory, MiddleCategory, SmallCategory, ProductIngredient, ProductImage, \
+    Ingredient, \
+    CategoryProduct, OtherIngredient, ProductOtherIngredient, ProductRequest, IngredientGuide
 from products.utils import upload_images_to_s3
 import json
 
@@ -817,3 +818,92 @@ def admin_product_request_delete(request, request_id):
 
     messages.success(request, "제품 추가 요청이 삭제되었습니다.")
     return redirect('admin_product_request_list')
+
+def ingredient_guide_form(request):
+    if request.method == "POST":
+        ingredient_id = request.POST.get("ingredient_id")
+        key_points_raw = request.POST.get("keyPoints", "[]")
+        sources_raw = request.POST.get("sources", "[]")
+
+        try:
+            ingredient = Ingredient.objects.get(id=ingredient_id)
+        except Ingredient.DoesNotExist:
+            messages.error(request, "성분을 찾을 수 없습니다.")
+            return redirect("admin_ingredient_guide_form")
+
+        # 이미 가이드 존재하는지 체크
+        if IngredientGuide.objects.filter(ingredient=ingredient).exists():
+            messages.error(request, "이미 해당 성분의 가이드가 존재합니다.")
+            return redirect("admin_ingredient_guide_form")
+
+        try:
+            key_points = json.loads(key_points_raw)
+        except:
+            key_points = []
+
+        try:
+            sources = json.loads(sources_raw)
+        except:
+            sources = []
+
+        IngredientGuide.objects.create(
+            ingredient=ingredient,
+            keyPoints=key_points,
+            sources=sources
+        )
+
+        messages.success(request, f'"{ingredient.name}" 가이드가 생성되었습니다.')
+        return redirect("admin_ingredient_guide_form")
+
+    ingredients = Ingredient.objects.all().order_by("id")
+    guides = IngredientGuide.objects.select_related("ingredient").order_by("-id")
+
+    return render(request, "products/ingredient_guide_form.html", {
+        "ingredients": ingredients,
+        "guides": guides
+    })
+
+def ingredient_guide_edit(request, pk):
+    guide = get_object_or_404(IngredientGuide, pk=pk)
+
+    if request.method == "POST":
+        key_points_raw = request.POST.get("keyPoints", "[]")
+        sources_raw = request.POST.get("sources", "[]")
+
+        try:
+            key_points = json.loads(key_points_raw)
+        except:
+            key_points = []
+
+        try:
+            sources = json.loads(sources_raw)
+        except:
+            sources = []
+
+        guide.keyPoints = key_points
+        guide.sources = sources
+        guide.save()
+
+        messages.success(request, "가이드가 수정되었습니다.")
+        return redirect("admin_ingredient_guide_form")
+
+    return render(
+        request,
+        "products/ingredient_guide_edit.html",
+        {
+            "guide": guide
+        }
+    )
+
+def ingredient_guide_delete(request, guide_id):
+    guide = get_object_or_404(IngredientGuide, id=guide_id)
+
+    if request.method == "POST":
+        ingredient_name = guide.ingredient.name
+        guide.delete()
+        messages.success(request, f'"{ingredient_name}" 가이드가 삭제되었습니다.')
+        return redirect("admin_ingredient_guide_form")
+
+    return render(request, "products/ingredient_guide_delete_confirm.html", {
+        "guide": guide
+    })
