@@ -10,13 +10,25 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
-from products.models import Product, BigCategory, ProductIngredient, ProductImage, ProductOtherIngredient,ProductRequest, SmallCategory, CategoryProduct
-from products.serializers import ProductDetailSerializer, ProductRankingSerializer, ProductsListSerializer, BigCategorySerializer, ProductSearchSerializer, MainSerializer, ProductRequestSerializer
+
+from products.models import Product, SmallCategory, ProductIngredient, ProductOtherIngredient, CategoryProduct, \
+    ProductImage, ProductRequest, IngredientGuide
+from products.serializers import ProductDetailSerializer, ProductSearchSerializer, ProductRankingSerializer, \
+    ProductsListSerializer, MainSerializer, ProductRequestSerializer
+from products.serializers.ingredient import MainRandomGuideSerializer
 from products.utils import record_view, upload_images_to_s3
+
 
 # 제품 상세 (GET /products/<id>/)
 class ProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.all()
+    queryset = (
+        Product.objects
+        .prefetch_related(
+            "ingredients__ingredient__guide",
+            "images",
+            "reviews",
+        )
+    )
     serializer_class = ProductDetailSerializer
     permission_classes = [AllowAny]
     lookup_field = "id"
@@ -25,7 +37,6 @@ class ProductDetailView(generics.RetrieveAPIView):
         summary="제품 상세 조회",
         tags=["제품"]
     )
-
     def get(self, request, *args, **kwargs):
         product = self.get_object()
 
@@ -73,7 +84,7 @@ class ProductRankingCategoryView(generics.ListAPIView):
                 "smallCategory": sc.category,
                 "middleCategory": sc.middle_category.category,
                 "bigCategory": sc.middle_category.big_category.category
-             }
+            }
             for sc in small_with_views
         ]
 
@@ -87,9 +98,9 @@ class ProductRankingView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
     class RankingPagination(PageNumberPagination):
-        page_size = 10                # 고정 10개
-        page_query_param = "page"     # 페이지 번호만 허용
-        page_size_query_param = None   # 클라이언트가 변경 불가
+        page_size = 10  # 고정 10개
+        page_query_param = "page"  # 페이지 번호만 허용
+        page_size_query_param = None  # 클라이언트가 변경 불가
         max_page_size = 10
 
     pagination_class = RankingPagination
@@ -133,7 +144,8 @@ class ProductRankingView(generics.ListAPIView):
             prev_qs = prev_qs.filter(category_products__category__category=category)
 
         prev_ranked = list(
-            prev_qs.annotate(totalViews=Sum("daily_views__views")).order_by("-totalViews", "id")[:50].values_list("id", flat=True)
+            prev_qs.annotate(totalViews=Sum("daily_views__views")).order_by("-totalViews", "id")[:50].values_list("id",
+                                                                                                                  flat=True)
         )
 
         prev_ranks = {pid: idx + 1 for idx, pid in enumerate(prev_ranked)}
@@ -247,7 +259,7 @@ class ProductListView(generics.ListAPIView):
         start_date = today - timedelta(days=30)
 
         qs = Product.objects.all()
-        
+
         # bigCategory가 제공된 경우에만 필터링
         if bigCategory:
             qs = qs.filter(
@@ -284,27 +296,6 @@ class ProductListView(generics.ListAPIView):
                 )
             )
             .order_by("-totalViews", "id")
-        )
-
-# 제품 카테고리 조회
-class ProductCategoryView(generics.ListAPIView):
-    serializer_class = BigCategorySerializer
-    permission_classes = [AllowAny]
-
-    @extend_schema(
-        summary="카테고리 조회",
-        tags=["제품"]
-    )
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def get_queryset(self):
-        return (
-            BigCategory.objects
-            .prefetch_related(
-                "middle_categories__small_categories"
-            )
-            .order_by("id")
         )
 
 # 검색
@@ -439,6 +430,14 @@ class MainView(APIView):
             .order_by("-todayViews", "id")[:10]
         )
 
+        random_guides = (
+            IngredientGuide.objects
+            .select_related("ingredient")
+            .order_by("?")[:10]
+        )
+
+        guide_serializer = MainRandomGuideSerializer(random_guides, many=True)
+
         categories_payload = [
             {
                 "smallCategory": sc.category,
@@ -453,6 +452,7 @@ class MainView(APIView):
         response = {
             "topSmallCategories": categories_payload,
             "topProductsToday": serializer.data,
+            "randomGuides": guide_serializer.data,
         }
 
         user = request.user
@@ -462,6 +462,7 @@ class MainView(APIView):
             }
 
         return Response(response)
+
 
 # 제품 이미지 등록
 class UploadProductImageView(APIView):
@@ -477,18 +478,19 @@ class UploadProductImageView(APIView):
             product = Product.objects.get(id=id)
         except Product.DoesNotExist:
             raise NotFound("제품을 찾을 수 없습니다.")
-        
+
         # 여러 이미지 파일 받기
         images = request.FILES.getlist('images')
-        
+
         if not images:
             raise ValidationError("이미지 파일이 필요합니다.")
-        
+
         # S3 업로드 및 ProductImage 저장
         uploaded_images = upload_images_to_s3(product, images)
         ProductImage.objects.bulk_create(uploaded_images)
-        
+
         return Response({"success": True, "message": f"{len(uploaded_images)}개의 이미지가 등록되었습니다."}, status=201)
+
 
 # 제품 추가 요청
 class ProductRequestView(generics.CreateAPIView):

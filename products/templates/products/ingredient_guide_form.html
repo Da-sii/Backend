@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>성분 가이드 관리</title>
+
+    {% if messages %}
+        <div style="margin-bottom:20px;">
+            {% for message in messages %}
+                <div style="
+                    padding:12px 16px;
+                    border-radius:6px;
+                    margin-bottom:10px;
+                    color:white;
+                    background-color:
+                        {% if message.tags == 'error' %}#e74c3c
+                        {% elif message.tags == 'success' %}#4caf50
+                        {% else %}#333{% endif %};
+                ">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin-bottom: 30px; }
+
+        .form-group { margin-bottom: 20px; }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .dynamic-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .dynamic-item input[type="text"] {
+            flex: 1;
+        }
+
+        .btn-remove {
+            background-color: #f44336;
+            white-space: nowrap;
+        }
+
+        .btn-add, .btn-remove {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-remove {
+            background-color: #f44336;
+        }
+
+        .guide-item {
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            background: #fff;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        ul { padding-left: 18px; }
+
+        .nav-links a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #2196f3;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .save-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="nav-links">
+        <a href="{% url 'admin_ingredient_form' %}">성분 관리</a>
+        <a href="{% url 'admin_main' %}">관리자 메인</a>
+    </div>
+
+    <h1>성분 가이드 관리</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- 성분 선택 -->
+        <div class="form-group">
+            <label>성분 선택 *</label>
+            <select name="ingredient_id" id="ingredientSelect" required>
+                <option value="">-- 성분 선택 --</option>
+                {% for ing in ingredients %}
+                    <option value="{{ ing.id }}">{{ ing.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- 핵심 포인트 -->
+        <div class="form-group">
+            <label>핵심 포인트</label>
+
+            <div id="pointsContainer">
+                <div class="dynamic-item">
+                    <input type="text" name="points_list[]" placeholder="핵심 포인트 입력">
+                    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn-add" onclick="addPointField()">+ 추가</button>
+            <input type="hidden" id="pointsHidden" name="keyPoints">
+        </div>
+
+        <!-- 출처 -->
+        <div class="form-group">
+            <label>출처</label>
+
+            <div id="sourcesContainer">
+                <div class="dynamic-item">
+                    <input type="text" name="sources_list[]" placeholder="출처 입력">
+                    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn-add" onclick="addSourceField()">+ 추가</button>
+            <input type="hidden" id="sourcesHidden" name="sources">
+        </div>
+
+        <button type="submit" class="btn-add save-btn">저장하기</button>
+    </form>
+
+    <hr>
+
+    <h2>등록된 가이드 목록</h2>
+
+    {% for guide in guides %}
+        <div class="guide-item">
+
+            <!-- 상단 헤더 -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <h3 style="margin:0;">
+                        {{ guide.ingredient.name }}
+                        <span style="font-size:13px; color:#777;">
+                            ({{ guide.ingredient.mainIngredient }})
+                        </span>
+                    </h3>
+                </div>
+
+                <div style="display:flex; gap:8px;">
+                    <a href="{% url 'admin_ingredient_guide_edit' guide.id %}"
+                       style="background:#2196f3; color:white; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:13px;">
+                        수정
+                    </a>
+
+                    <a href="{% url 'admin_ingredient_guide_delete' guide.id %}"
+                       style="background:#e74c3c; color:white; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:13px;">
+                        삭제
+                    </a>
+                </div>
+            </div>
+
+            <!-- 핵심 포인트 -->
+            {% if guide.keyPoints %}
+                <div style="margin-top:15px;">
+                    <div class="section-title">핵심 포인트</div>
+                    <ul>
+                        {% for p in guide.keyPoints %}
+                            <li>{{ p }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- 출처 -->
+            {% if guide.sources %}
+                <div style="margin-top:15px;">
+                    <div class="section-title">출처</div>
+                    <ul>
+                        {% for s in guide.sources %}
+                            <li>{{ s }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+        </div>
+    {% empty %}
+        <p>등록된 가이드가 없습니다.</p>
+    {% endfor %}
+
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#ingredientSelect').select2({
+        placeholder: "성분을 검색하세요",
+        allowClear: true,
+        width: '100%'
+    });
+});
+
+function addPointField() {
+    const container = document.getElementById("pointsContainer");
+    const row = document.createElement("div");
+    row.className = "dynamic-item";
+    row.innerHTML = `
+        <input type="text" name="points_list[]" placeholder="핵심 포인트 입력">
+        <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+    `;
+    container.appendChild(row);
+}
+
+function addSourceField() {
+    const container = document.getElementById("sourcesContainer");
+    const row = document.createElement("div");
+    row.className = "dynamic-item";
+    row.innerHTML = `
+        <input type="text" name="sources_list[]" placeholder="출처 입력">
+        <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+    `;
+    container.appendChild(row);
+}
+
+document.querySelector("form").addEventListener("submit", function () {
+    const pointsData = [...document.getElementsByName("points_list[]")]
+        .map(v => v.value.trim()).filter(v => v);
+
+    const sourcesData = [...document.getElementsByName("sources_list[]")]
+        .map(v => v.value.trim()).filter(v => v);
+
+    document.getElementById("pointsHidden").value = JSON.stringify(pointsData);
+    document.getElementById("sourcesHidden").value = JSON.stringify(sourcesData);
+});
+</script>
+
+</body>
+</html>

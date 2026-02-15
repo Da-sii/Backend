@@ -6,9 +6,10 @@ from django.db.models import Sum, Avg
 from django.db import transaction
 from rest_framework import serializers
 
-from products.models import Product, ProductImage, Ingredient, ProductIngredient, BigCategory, OtherIngredient, \
-    ProductOtherIngredient, ProductRequest, MiddleCategory
+from products.models import Product, ProductImage, Ingredient, ProductIngredient, OtherIngredient, \
+    ProductOtherIngredient, ProductRequest, IngredientGuide
 from products.utils import upload_images_to_s3
+
 
 class ProductIngredientInputSerializer(serializers.Serializer):
     ingredientId = serializers.IntegerField()
@@ -33,7 +34,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         # 이미 리스트인 경우 (JSON 요청)
         if isinstance(value, list):
             return value
-        
+
         # 문자열인 경우 (form-data 요청)
         if isinstance(value, str):
             try:
@@ -45,7 +46,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("ingredients는 배열이어야 합니다.")
 
             return data
-        
+
         raise serializers.ValidationError("ingredients는 배열 또는 JSON 문자열이어야 합니다.")
 
 
@@ -109,10 +110,11 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
     effect = serializers.JSONField(source="ingredient.effect")
     sideEffect = serializers.JSONField(source="ingredient.sideEffect")
     status = serializers.SerializerMethodField()
+    guideId = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductIngredient
-        fields = ("ingredientName", "mainIngredient", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect", "status")
+        fields = ("ingredientName", "mainIngredient", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect", "status", "guideId")
 
     def get_status(self, obj: ProductIngredient) -> str:
         try:
@@ -129,6 +131,10 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
             return "초과"
         else:
             return "적정"
+
+    def get_guideId(self, obj):
+        guide = getattr(obj.ingredient, "guide", None)
+        return guide.id if guide else None
 
 class OtherIngredientDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -187,9 +193,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
         # 이 제품이 속한 모든 소분류 카테고리 수집
         category_pairs = list(
-            obj.category_products.select_related("category__bigCategory").values_list(
+            obj.category_products
+            .select_related("category__middle_category__big_category")
+            .values_list(
                 "category_id",
-                "category__bigCategory__category",
+                "category__middle_category__big_category__category",
                 "category__category",
             )
         )
@@ -276,31 +284,6 @@ class ProductsListSerializer(serializers.ModelSerializer):
         value = agg.get("avg")
         return round(float(value), 2) if value is not None else None
 
-class BigCategorySerializer(serializers.ModelSerializer):
-    middleCategories = serializers.SerializerMethodField()
-
-    class Meta:
-        model = BigCategory
-        fields = ("category", "middleCategories")
-
-    def get_middleCategories(self, obj):
-        middle_qs = obj.middle_categories.order_by("id")
-        return MiddleCategorySerializer(middle_qs, many=True).data
-
-class MiddleCategorySerializer(serializers.ModelSerializer):
-    smallCategories = serializers.SerializerMethodField()
-
-    class Meta:
-        model = MiddleCategory
-        fields = ("category", "smallCategories")
-
-    def get_smallCategories(self, obj):
-        return list(
-            obj.small_categories
-               .order_by("id")
-               .values_list("category", flat=True)
-        )
-
 class ProductSearchSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     reviewCount = serializers.SerializerMethodField()
@@ -346,9 +329,4 @@ class MainSerializer(serializers.ModelSerializer):
 class ProductRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductRequest
-        fields = ("content", )
-
-    class ProductRequestSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = ProductRequest
-            fields = ("content",)
+        fields = ("content",)
