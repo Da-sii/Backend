@@ -16,3 +16,16 @@ class MainRandomGuideSerializer(serializers.ModelSerializer):
     class Meta:
         model = IngredientGuide
         fields = ("id", "name")
+
+class GuideDetailSerializer(serializers.ModelSerializer):
+    ingredient_id = serializers.CharField(source="ingredient.id")
+    name = serializers.CharField(source="ingredient.name")
+    mainIngredients = serializers.CharField(source="ingredient.mainIngredient")
+    productCount = serializers.SerializerMethodField()
+
+    class Meta:
+        model = IngredientGuide
+        fields = ("id", "ingredient_id", "name", "mainIngredients", "keyPoints", "sources", "productCount")
+
+    def get_productCount(self, obj):
+        return obj.ingredient.productIngredients.count()

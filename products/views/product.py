@@ -30,7 +30,6 @@ class ProductDetailView(generics.RetrieveAPIView):
         summary="제품 상세 조회",
         tags=["제품"]
     )
-
     def get(self, request, *args, **kwargs):
         product = self.get_object()
 
