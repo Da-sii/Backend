@@ -34,11 +34,7 @@ class ProductIngredient(models.Model):
         return f"{self.product.name} - {self.ingredient.name} ({self.amount})"
 
 class OtherIngredient(models.Model):
-    name = models.CharField(
-        max_length=255,
-        unique=True,
-        verbose_name="기타 원료명"
-    )
+    name = models.CharField(max_length=255, unique=True, verbose_name="기타 원료명")
 
     class Meta:
         db_table = "other_ingredients"
@@ -70,3 +66,16 @@ class ProductOtherIngredient(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.other_ingredient.name}"
+
+class IngredientGuide(models.Model):
+    ingredient = models.OneToOneField(
+        Ingredient,
+        on_delete=models.CASCADE,
+        related_name="guide",
+    )
+
+    keyPoints = models.JSONField(default=list, verbose_name="핵심 포인트", blank=True)
+    sources = models.JSONField(default=list, verbose_name="출처", blank=True)
+
+    class Meta:
+        db_table = "ingredient_guides"
