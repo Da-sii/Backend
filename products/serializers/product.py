@@ -6,7 +6,8 @@ from django.db.models import Sum, Avg
 from django.db import transaction
 from rest_framework import serializers
 
-from products.models import Product, ProductImage, Ingredient, ProductIngredient, OtherIngredient, ProductOtherIngredient, ProductRequest
+from products.models import Product, ProductImage, Ingredient, ProductIngredient, OtherIngredient, \
+    ProductOtherIngredient, ProductRequest, IngredientGuide
 from products.utils import upload_images_to_s3
 
 
@@ -109,10 +110,11 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
     effect = serializers.JSONField(source="ingredient.effect")
     sideEffect = serializers.JSONField(source="ingredient.sideEffect")
     status = serializers.SerializerMethodField()
+    guideId = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductIngredient
-        fields = ("ingredientName", "mainIngredient", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect", "status")
+        fields = ("ingredientName", "mainIngredient", "amount", "minRecommended", "maxRecommended", "effect", "sideEffect", "status", "guideId")
 
     def get_status(self, obj: ProductIngredient) -> str:
         try:
@@ -129,6 +131,10 @@ class ProductIngredientDetailSerializer(serializers.ModelSerializer):
             return "초과"
         else:
             return "적정"
+
+    def get_guideId(self, obj):
+        guide = getattr(obj.ingredient, "guide", None)
+        return guide.id if guide else None
 
 class OtherIngredientDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -187,9 +193,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
         # 이 제품이 속한 모든 소분류 카테고리 수집
         category_pairs = list(
-            obj.category_products.select_related("category__bigCategory").values_list(
+            obj.category_products
+            .select_related("category__middle_category__big_category")
+            .values_list(
                 "category_id",
-                "category__bigCategory__category",
+                "category__middle_category__big_category__category",
                 "category__category",
             )
         )
@@ -317,7 +325,6 @@ class MainSerializer(serializers.ModelSerializer):
         agg = obj.reviews.aggregate(avg=Avg("rate"))
         value = agg.get("avg")
         return round(float(value), 2) if value is not None else None
-
 
 class ProductRequestSerializer(serializers.ModelSerializer):
     class Meta:

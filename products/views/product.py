@@ -21,7 +21,14 @@ from products.utils import record_view, upload_images_to_s3
 
 # 제품 상세 (GET /products/<id>/)
 class ProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.all()
+    queryset = (
+        Product.objects
+        .prefetch_related(
+            "ingredients__ingredient__guide",
+            "images",
+            "reviews",
+        )
+    )
     serializer_class = ProductDetailSerializer
     permission_classes = [AllowAny]
     lookup_field = "id"
