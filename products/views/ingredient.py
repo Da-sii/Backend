@@ -1,13 +1,13 @@
-from django.db.models import Q, Value, F
-from django.db.models.functions import Replace
+from django.db.models import Q
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 
 from products.models import IngredientGuide
-from products.serializers.ingredient import GuideListSerializer
+from products.serializers.ingredient import GuideListSerializer, GuideDetailSerializer
 
 
 # 성분 가이드 리스트(검색)
@@ -69,3 +69,20 @@ class GuideListView(generics.ListAPIView):
             )
 
         return queryset
+
+# 성분 가이드 상세
+class GuideDetailView(generics.RetrieveAPIView):
+    queryset = IngredientGuide.objects.select_related("ingredient")
+    serializer_class = GuideDetailSerializer
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="성분 가이드 상세",
+        tags=["성분 가이드"]
+    )
+    def get(self, request, *args, **kwargs):
+        ingredient_guide = self.get_object()
+
+        serializer = self.get_serializer(ingredient_guide, context={'request': request})
+
+        return Response(serializer.data)
