@@ -535,7 +535,7 @@ class ReviewImageView(GenericAPIView):
                 ]
             )
         },
-        tags=['리뷰 이미지']
+        tags=['리뷰']
     )
     def post(self, request, review_id):
         # 리뷰 존재 확인 및 권한 체크
@@ -669,7 +669,7 @@ class ReviewImageDeleteView(GenericAPIView):
                 ]
             )
         },
-        tags=['리뷰 이미지']
+        tags=['리뷰']
     )
     def delete(self, request, review_id, image_id):
         """
@@ -779,7 +779,7 @@ class ProductReviewImagesView(GenericAPIView):
                 ]
             )
         },
-        tags=['리뷰 이미지']
+        tags=['리뷰']
     )
     def get(self, request, product_id, image_id):
         """
@@ -911,7 +911,7 @@ class ReviewDetailView(GenericAPIView):
                 ]
             )
         },
-        tags=['리뷰 상세']
+        tags=['리뷰']
     )
     def get(self, request, review_id):
         """
@@ -1020,7 +1020,7 @@ class ProductRatingStatsView(GenericAPIView):
                 ]
             )
         },
-        tags=['리뷰 통계']
+        tags=['리뷰']
     )
     def get(self, request, product_id):
         """
@@ -1122,7 +1122,7 @@ class ReviewImageDetailView(GenericAPIView):
                 ]
             )
         },
-        tags=['리뷰 이미지']
+        tags=['리뷰']
     )
     def get(self, request, image_id):
         """
@@ -1222,7 +1222,7 @@ class UserReviewsView(GenericAPIView):
                 ]
             )
         },
-        tags=['사용자 리뷰']
+        tags=['리뷰']
     )
     def get(self, request, review_id):
         """
@@ -1392,7 +1392,7 @@ class ReviewReportView(GenericAPIView):
             401: OpenApiResponse(description='인증 필요'),
             404: OpenApiResponse(description='리뷰 없음')
         },
-        tags=['리뷰 신고']
+        tags=['리뷰']
     )
     def post(self, request, review_id):
         review = get_object_or_404(Review, id=review_id)
@@ -1498,7 +1498,7 @@ class UserReviewCheckView(GenericAPIView):
                 ]
             )
         },
-        tags=['리뷰 확인']
+        tags=['리뷰']
     )
     def get(self, request, product_id):
         """
@@ -1727,7 +1727,7 @@ class BlockUserReviewsView(GenericAPIView):
                 ]
             )
         },
-        tags=['리뷰 차단']
+        tags=['리뷰']
     )
     def post(self, request, review_id):
         """

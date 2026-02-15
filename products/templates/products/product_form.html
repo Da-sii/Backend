@@ -170,6 +170,14 @@
             border-radius: 16px;
             font-size: 13px;
         }
+
+        .category-row {
+            display: grid;
+            grid-template-columns: minmax(0,1fr) 90px;
+            gap: 12px;
+            align-items: center;
+        }
+
     </style>
 </head>
 
@@ -279,13 +287,12 @@
     <h2>카테고리</h2>
 
     <div id="categoryContainer">
-        <div class="dynamic-item">
+
+    <div class="dynamic-item category-row">
             <select name="category_ids[]" class="small-category-select">
                 <option value="">-- 소분류 선택 --</option>
                 {% for category in small_categories %}
-                <option value="{{ category.id }}"
-                        data-middle="{{ category.middle_category.category }}"
-                        data-big="{{ category.middle_category.big_category.category }}">
+                <option value="{{ category.id }}">
                     [{{ category.middle_category.big_category.category }}]
                     [{{ category.middle_category.category }}]
                     {{ category.category }}
@@ -305,7 +312,6 @@
         카테고리 추가
     </button>
 </div>
-
 
 <button type="submit" style="background:#4caf50;padding:10px 20px;">
     제품 추가하기
@@ -429,9 +435,6 @@ function addCategoryField() {
         <select name="category_ids[]" class="small-category-select">
             ${firstSelect.innerHTML}
         </select>
-
-        <input type="text" class="middle-display" placeholder="중분류" readonly>
-        <input type="text" class="big-display" placeholder="대분류" readonly>
 
         <button type="button"
                 class="btn-remove"

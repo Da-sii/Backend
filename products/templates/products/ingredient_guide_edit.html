@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>성분 가이드 수정</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            max-width: 800px;
+            margin: 40px auto;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 6px; }
+
+        textarea {
+            width: 100%;
+            min-height: 60px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            resize: vertical;
+            font-size: 15px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .dynamic-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .dynamic-item textarea {
+            flex: 1;
+        }
+
+        .btn-add, .btn-remove {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .btn-add { background: #4caf50; }
+        .btn-remove { background: #e74c3c; }
+    </style>
+
+    <script>
+        function addPointField() {
+            const box = document.getElementById("pointsContainer");
+            const div = document.createElement("div");
+            div.className = "dynamic-item";
+            div.innerHTML = `
+                <textarea name="points_list[]"></textarea>
+                <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+            `;
+            box.appendChild(div);
+        }
+
+        function addSourceField() {
+            const box = document.getElementById("sourcesContainer");
+            const div = document.createElement("div");
+            div.className = "dynamic-item";
+            div.innerHTML = `
+                <textarea name="sources_list[]"></textarea>
+                <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+            `;
+            box.appendChild(div);
+        }
+
+        function beforeSubmit() {
+            const points = [...document.getElementsByName("points_list[]")]
+                .map(e => e.value.trim()).filter(v => v);
+
+            const sources = [...document.getElementsByName("sources_list[]")]
+                .map(e => e.value.trim()).filter(v => v);
+
+            document.getElementById("pointsHidden").value = JSON.stringify(points);
+            document.getElementById("sourcesHidden").value = JSON.stringify(sources);
+
+            return true;
+        }
+    </script>
+</head>
+
+<body>
+<div class="container">
+    <h1>성분 가이드 수정</h1>
+    <div>
+        <h3>
+            {{ guide.ingredient.name }}
+            <span style="font-size:13px; color:#777;">
+                ({{ guide.ingredient.mainIngredient }})
+            </span>
+        </h3>
+    </div>
+
+    <form method="POST" onsubmit="return beforeSubmit()">
+        {% csrf_token %}
+
+        <!-- 핵심 포인트 -->
+        <div class="form-group">
+            <label>핵심 포인트</label>
+            <div id="pointsContainer">
+                {% for p in guide.keyPoints %}
+                <div class="dynamic-item">
+                    <textarea name="points_list[]">{{ p }}</textarea>
+                    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="btn-add" onclick="addPointField()">+ 줄 추가</button>
+        </div>
+
+        <!-- 출처 -->
+        <div class="form-group">
+            <label>출처</label>
+            <div id="sourcesContainer">
+                {% for s in guide.sources %}
+                <div class="dynamic-item">
+                    <textarea name="sources_list[]">{{ s }}</textarea>
+                    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="btn-add" onclick="addSourceField()">+ 줄 추가</button>
+        </div>
+
+        <!-- Hidden -->
+        <input type="hidden" name="keyPoints" id="pointsHidden">
+        <input type="hidden" name="sources" id="sourcesHidden">
+
+        <button type="submit" style="margin-top:20px;">저장하기</button>
+    </form>
+</div>
+</body>
+</html>
