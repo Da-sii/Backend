@@ -12,9 +12,10 @@ from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
 
 from products.models import Product, SmallCategory, ProductIngredient, ProductOtherIngredient, CategoryProduct, \
-    ProductImage, ProductRequest
+    ProductImage, ProductRequest, IngredientGuide
 from products.serializers import ProductDetailSerializer, ProductSearchSerializer, ProductRankingSerializer, \
     ProductsListSerializer, MainSerializer, ProductRequestSerializer
+from products.serializers.ingredient import MainRandomGuideSerializer
 from products.utils import record_view, upload_images_to_s3
 
 
@@ -423,6 +424,14 @@ class MainView(APIView):
             .order_by("-todayViews", "id")[:10]
         )
 
+        random_guides = (
+            IngredientGuide.objects
+            .select_related("ingredient")
+            .order_by("?")[:10]
+        )
+
+        guide_serializer = MainRandomGuideSerializer(random_guides, many=True)
+
         categories_payload = [
             {
                 "smallCategory": sc.category,
@@ -437,6 +446,7 @@ class MainView(APIView):
         response = {
             "topSmallCategories": categories_payload,
             "topProductsToday": serializer.data,
+            "randomGuides": guide_serializer.data,
         }
 
         user = request.user
