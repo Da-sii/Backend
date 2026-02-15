@@ -9,3 +9,10 @@ class GuideListSerializer(serializers.ModelSerializer):
     class Meta:
         model = IngredientGuide
         fields = ("id", "ingredient_name")
+
+class MainRandomGuideSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="ingredient.name")
+
+    class Meta:
+        model = IngredientGuide
+        fields = ("id", "name")

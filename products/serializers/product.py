@@ -318,6 +318,7 @@ class MainSerializer(serializers.ModelSerializer):
         value = agg.get("avg")
         return round(float(value), 2) if value is not None else None
 
+
 class ProductRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductRequest
