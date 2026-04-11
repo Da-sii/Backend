@@ -907,3 +907,511 @@ def ingredient_guide_delete(request, guide_id):
     return render(request, "products/ingredient_guide_delete_confirm.html", {
         "guide": guide
     })
+
+"""
+admin_views.py 맨 아래에 추가할 뷰 함수들
+
+상단 import에 아래 추가 필요:
+    from django.http import HttpResponse
+    import csv, io, re, time, requests
+    import xml.etree.ElementTree as ET
+    from rapidfuzz import process, fuzz
+"""
+
+import csv
+import io
+import re
+import time
+import requests
+import xml.etree.ElementTree as ET
+
+from rapidfuzz import process, fuzz
+from django.http import HttpResponse
+
+
+# ------------------------------------------------------------------ #
+#  설정값
+# ------------------------------------------------------------------ #
+API_KEY    = "646f0911e9b341a49cb3"
+SERVICE_ID = "I0030"
+BASE_URL   = f"https://openapi.foodsafetykorea.go.kr/api/{API_KEY}/{SERVICE_ID}/xml"
+BATCH_SIZE = 1000
+GARCINIA_KEYWORDS = ["가르시니아"]
+FUZZY_THRESHOLD   = 85  # 공백 차이도 잡을 수 있도록 90 → 85로 낮춤
+
+# 표준 표기로 통일된 고시형 원료 목록
+STANDARD_INGREDIENTS = [
+    "가르시니아캄보지아 추출물", "녹차추출물", "공액리놀레산",
+    "키토산", "키토올리고당", "바나바잎추출물", "프로바이오틱스",
+    "아연", "비타민A", "비타민B1", "비타민B2", "비타민B6", "비타민B12",
+    "비타민C", "비타민D", "비타민E", "비타민K", "나이아신", "판토텐산",
+    "비오틴", "엽산", "칼슘", "마그네슘", "철", "구리", "망간",
+    "셀레늄", "요오드", "크롬", "몰리브덴", "인", "칼륨",
+    "식이섬유", "난소화성말토덱스트린", "알로에겔", "차전자피식이섬유",
+    "프락토올리고당", "이눌린", "치커리추출물", "대두이소플라본",
+    "코엔자임Q10", "홍삼", "인삼", "밀크시슬추출물", "은행잎추출물",
+    "루테인", "글루코사민", "N-아세틸글루코사민", "히알루론산",
+    "레시틴", "스쿠알렌", "포스콜린", "카테킨", "코로솔산", "조단백질",
+]
+
+EXACT_NAME_MAP = {
+    "hydroxycitric acid":               "가르시니아캄보지아 추출물",
+    "hydroxycitiric acid":              "가르시니아캄보지아 추출물",
+    "hydroxycitiricacid":               "가르시니아캄보지아 추출물",
+    "hydroxycitricacid":                "가르시니아캄보지아 추출물",
+    "hydroxycitric aicd":               "가르시니아캄보지아 추출물",
+    "hca":                              "가르시니아캄보지아 추출물",
+    "hca 함량":                         "가르시니아캄보지아 추출물",
+    "가르시니아캄보지아추출물":          "가르시니아캄보지아 추출물",
+    "가르시니아캄보지아추출물 정":       "가르시니아캄보지아 추출물",
+    "-hydroxycitric acid":              "가르시니아캄보지아 추출물",
+    "프로바이오틱스 수":                "프로바이오틱스",
+    "프로바이오틱스수":                 "프로바이오틱스",
+    "아 연":    "아연",
+    "망 간":    "망간",
+    "셀 렌":    "셀레늄",
+    "셀레 늄":  "셀레늄",
+    "셀렌":     "셀레늄",
+}
+
+INGREDIENT_CATEGORY_MAP = {
+    "가르시니아캄보지아 추출물": [1],
+    "녹차추출물":               [1],
+    "공액리놀레산":             [1],
+    "키토산":                  [1],
+    "키토올리고당":             [1],
+    "바나바잎추출물":           [2],
+    "난소화성말토덱스트린":      [2],
+    "프로바이오틱스":           [3],
+    "알로에겔":                [3],
+    "차전자피식이섬유":          [3],
+    "프락토올리고당":           [3],
+}
+
+
+# ------------------------------------------------------------------ #
+#  정규화 함수 (공백·대소문자 차이 무시)
+# ------------------------------------------------------------------ #
+def _normalize(name: str) -> str:
+    """비교 전 공백 제거 + 소문자 변환"""
+    return re.sub(r'\s+', '', name).lower()
+
+
+# ------------------------------------------------------------------ #
+#  파싱 유틸
+# ------------------------------------------------------------------ #
+def _clean_raw_name(raw_name: str) -> str:
+    name = raw_name.strip()
+    name = re.sub(r'^[\-\s]*[\(\s]*[\d①②③④⑤⑥⑦⑧⑨⑩]+[\)\.\s]+', '', name).strip()
+    name = re.sub(r'^[\(\s]*[가나다라마바사아자차카타파하]+[\)\.\s]+', '', name).strip()
+    name = re.sub(r'^[①②③④⑤⑥⑦⑧⑨⑩]\s*', '', name).strip()
+    name = re.sub(r'^\-\s*', '', name).strip()
+    name = re.sub(r'^[총합\s]+', '', name).strip()
+    name = re.sub(r'\(-\)-?', '', name).strip()
+    name = re.sub(r'\s*[\(\[]\s*[%a-zA-Zμ/g0-9\s]+\s*[\)\]]', '', name).strip()
+    name = re.sub(r'\s*(함량|정제|추출물정)\s*$', '', name).strip()
+    return name.strip()
+
+
+def _format_amount(amount_str: str, unit: str) -> str:
+    clean = amount_str.replace(",", "").strip()
+    try:
+        num = int(float(clean))
+    except ValueError:
+        return f"{amount_str}{unit}"
+    if num >= 100_000_000:
+        억 = num // 100_000_000
+        나머지 = num % 100_000_000
+        return f"{억}억{unit}" if 나머지 == 0 else f"{억}억{나머지}{unit}"
+    return f"{num}{unit}"
+
+
+def _match_ingredient(cleaned_name: str, candidates: list, normalized_map: dict) -> tuple:
+    """
+    1. EXACT_NAME_MAP 정확 매핑
+    2. 정규화 후 candidates와 퍼지매칭
+    반환: (최종 이름, 매칭 방법)
+    """
+    # 1. 정확 매핑
+    exact = EXACT_NAME_MAP.get(cleaned_name.lower().strip())
+    if exact:
+        return exact, "exact"
+
+    # 2. 정규화 후 퍼지매칭
+    normalized_input = _normalize(cleaned_name)
+
+    # normalized_map: {정규화된이름: 원본이름}
+    result = process.extractOne(
+        normalized_input,
+        list(normalized_map.keys()),
+        scorer=fuzz.token_sort_ratio,
+        score_cutoff=FUZZY_THRESHOLD
+    )
+    if result:
+        matched_normalized, score, _ = result
+        original_name = normalized_map[matched_normalized]
+        return original_name, f"fuzzy({score:.0f}%)"
+
+    return cleaned_name, "unmatched"
+
+
+def _parse_spec(spec_text: str, candidates: list, normalized_map: dict) -> list:
+    results = []
+    for line in spec_text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        match = re.search(
+            r'([^:：\n]+?)\s*[:：]\s*표시량[\[(]\s*([0-9,]+(?:\.[0-9]+)?)'
+            r'(?:\([^)]*\))?\s*(mg|g|μg|ug|IU|CFU|%)\s*[/]',
+            line, re.IGNORECASE
+        )
+        if not match:
+            continue
+        raw_name = re.sub(r'^\d+\.\s*', '', match.group(1)).strip()
+        cleaned  = _clean_raw_name(raw_name)
+        name, method = _match_ingredient(cleaned, candidates, normalized_map)
+        results.append({
+            "raw_name": raw_name,
+            "name":     name,
+            "amount":   _format_amount(match.group(2), match.group(3)),
+            "method":   method,
+        })
+    return results
+
+
+def _parse_effect_for_ingredient(effect_text: str, ingredient_name: str) -> list[str]:
+    """
+    PRIMARY_FNCLTY 텍스트에서 특정 성분의 effect만 추출
+
+    지원 형식:
+    - "성분명 : 효과내용"
+    - "[성분명] 효과내용"
+    - "성분명\n효과내용" (단독)
+    """
+    if not effect_text or not ingredient_name:
+        return []
+
+    sentences = []
+    lines = [l.strip() for l in effect_text.split("\n") if l.strip()]
+
+    # 성분명 키워드 (공백 제거 버전도 체크)
+    ing_normalized = _normalize(ingredient_name)
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        line_normalized = _normalize(line)
+
+        # 해당 성분명이 줄에 포함되는지 확인
+        if ingredient_name in line or ing_normalized in line_normalized:
+            # "성분명 : 효과" 또는 "[성분명] 효과" 형식
+            colon_match = re.search(
+                r'(?:\[' + re.escape(ingredient_name) + r'\]|'
+                + re.escape(ingredient_name) + r')\s*[:：\]]\s*(.+)',
+                line
+            )
+            if colon_match:
+                content = colon_match.group(1).strip()
+                parts = re.split(r'\s*[\(\（]\d+[\)\）]\s*|[①②③④⑤⑥]\s*', content)
+                sentences.extend([p.strip() for p in parts if p.strip()])
+            else:
+                # 성분명만 있고 다음 줄에 효과가 있는 경우
+                if i + 1 < len(lines):
+                    next_line = lines[i + 1]
+                    if not any(kw in next_line for kw in [":", "："]):
+                        parts = re.split(r'\s*[\(\（]\d+[\)\）]\s*|[①②③④⑤⑥]\s*', next_line)
+                        sentences.extend([p.strip() for p in parts if p.strip()])
+
+        i += 1
+
+    # 가르시니아 특수 처리 (키워드 기반)
+    if not sentences and "가르시니아" in ingredient_name:
+        for line in lines:
+            if "탄수화물이 지방으로 합성" in line:
+                content = re.sub(r'^[\(\（]\d+[\)\）]\s*|^[①②③④⑤]\s*', '', line).strip()
+                if content:
+                    sentences.append(content)
+
+    # 중복 제거
+    seen, result = set(), []
+    for s in sentences:
+        s = s.strip()
+        if s and s not in seen:
+            seen.add(s)
+            result.append(s)
+
+    return result
+
+
+def _fetch_garcinia_data():
+    """API에서 가르시니아 제품 데이터 수집"""
+    db_names   = list(Ingredient.objects.values_list("name", flat=True))
+    candidates = list(set(db_names + STANDARD_INGREDIENTS))
+
+    # 정규화 맵 생성: {정규화된이름: 원본이름}
+    normalized_map = {_normalize(name): name for name in candidates}
+
+    products, ingredients, pi_rows, unmatched = [], {}, [], []
+    seen_products = set()
+    start, total  = 1, None
+
+    while True:
+        end  = start + BATCH_SIZE - 1
+        resp = requests.get(f"{BASE_URL}/{start}/{end}", timeout=30)
+        root = ET.fromstring(resp.content)
+
+        if total is None:
+            total_el = root.find("total_count")
+            total = int(total_el.text) if total_el is not None else 0
+
+        rows = root.findall("row")
+        if not rows:
+            break
+
+        for row in rows:
+            indiv = row.findtext("INDIV_RAWMTRL_NM") or ""
+            if not any(kw in indiv for kw in GARCINIA_KEYWORDS):
+                continue
+
+            name    = row.findtext("PRDLST_NM") or ""
+            company = row.findtext("BSSH_NM") or ""
+            effect  = row.findtext("PRIMARY_FNCLTY") or ""
+            spec    = row.findtext("STDR_STND") or ""
+
+            if not name or name in seen_products:
+                continue
+            seen_products.add(name)
+
+            parsed = _parse_spec(spec, candidates, normalized_map) if spec else []
+            category_ids = sorted(set(
+                cat_id for item in parsed
+                for cat_id in INGREDIENT_CATEGORY_MAP.get(item["name"], [])
+            )) or [1]
+
+            products.append({
+                "name":         name,
+                "company":      company,
+                "productType":  "건강기능식품",
+                "category_ids": ";".join(map(str, category_ids)),
+            })
+
+            for item in parsed:
+                pi_rows.append({
+                    "product_name":    name,
+                    "ingredient_name": item["name"],
+                    "amount":          item["amount"],
+                    "raw_name":        item["raw_name"],
+                    "method":          item["method"],
+                })
+
+                # ── 성분별 effect 파싱 (최초 1회) ────────────────── #
+                if item["name"] not in ingredients:
+                    effect_list = _parse_effect_for_ingredient(effect, item["name"])
+                    ingredients[item["name"]] = "|".join(effect_list)
+
+                if item["method"] == "unmatched":
+                    unmatched.append({
+                        "raw_name":     item["raw_name"],
+                        "cleaned_name": _clean_raw_name(item["raw_name"]),
+                    })
+
+        start += BATCH_SIZE
+        if start > total:
+            break
+        time.sleep(1)
+
+    return {
+        "products":    products,
+        "ingredients": ingredients,
+        "pi_rows":     pi_rows,
+        "unmatched":   unmatched,
+        "total":       len(products),
+    }
+
+
+def _csv_response(rows, fieldnames, filename):
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(rows)
+    response = HttpResponse(
+        "\ufeff" + output.getvalue(),
+        content_type="text/csv; charset=utf-8"
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+def _read_uploaded_csv(file):
+    decoded = file.read().decode("utf-8-sig")
+    reader  = csv.DictReader(io.StringIO(decoded))
+    return [row for row in reader]
+
+
+# ------------------------------------------------------------------ #
+#  어드민 뷰
+# ------------------------------------------------------------------ #
+def import_csv_view(request):
+    # ── 1. API 수집 ───────────────────────────────────────────────── #
+    if request.method == "POST" and request.POST.get("action") == "fetch":
+        try:
+            data = _fetch_garcinia_data()
+            request.session["import_data"] = data
+            messages.success(
+                request,
+                f"수집 완료 — 제품 {data['total']}개 | "
+                f"성분 {len(data['ingredients'])}종 | "
+                f"매칭 실패 {len(data['unmatched'])}개"
+            )
+        except Exception as e:
+            messages.error(request, f"수집 실패: {e}")
+        return redirect("admin_import_csv")
+
+    # ── 2. CSV 다운로드 ───────────────────────────────────────────── #
+    if request.method == "POST" and request.POST.get("action") == "download_csv":
+        data = request.session.get("import_data")
+        if not data:
+            messages.error(request, "먼저 데이터를 수집해주세요.")
+            return redirect("admin_import_csv")
+
+        file_type = request.POST.get("file_type", "products")
+
+        if file_type == "products":
+            return _csv_response(
+                data["products"],
+                ["name", "company", "productType", "category_ids"],
+                "products.csv"
+            )
+        elif file_type == "ingredients":
+            rows = [{"name": k, "effect": v} for k, v in data["ingredients"].items()]
+            return _csv_response(rows, ["name", "effect"], "ingredients.csv")
+        elif file_type == "product_ingredients":
+            return _csv_response(
+                data["pi_rows"],
+                ["product_name", "ingredient_name", "amount", "raw_name", "method"],
+                "product_ingredients.csv"
+            )
+        elif file_type == "unmatched":
+            return _csv_response(
+                data["unmatched"],
+                ["raw_name", "cleaned_name"],
+                "unmatched_ingredients.csv"
+            )
+
+    # ── 3. CSV 업로드 ─────────────────────────────────────────────── #
+    if request.method == "POST" and request.POST.get("action") == "upload_csv":
+        data = request.session.get("import_data", {
+            "products": [], "ingredients": {}, "pi_rows": [],
+            "unmatched": [], "total": 0
+        })
+
+        upload_type = request.POST.get("upload_type")
+        file        = request.FILES.get("csv_file")
+
+        if not file:
+            messages.error(request, "CSV 파일을 선택해주세요.")
+            return redirect("admin_import_csv")
+
+        try:
+            rows = _read_uploaded_csv(file)
+
+            if upload_type == "products":
+                data["products"] = rows
+                data["total"]    = len(rows)
+                messages.success(request, f"products.csv 업로드 완료 — {len(rows)}개 제품")
+            elif upload_type == "ingredients":
+                data["ingredients"] = {r["name"]: r.get("effect", "") for r in rows}
+                messages.success(request, f"ingredients.csv 업로드 완료 — {len(rows)}개 성분")
+            elif upload_type == "product_ingredients":
+                data["pi_rows"] = rows
+                messages.success(request, f"product_ingredients.csv 업로드 완료 — {len(rows)}개 연결")
+
+            request.session["import_data"] = data
+        except Exception as e:
+            messages.error(request, f"CSV 파싱 실패: {e}")
+
+        return redirect("admin_import_csv")
+
+    # ── 4. DB 저장 ────────────────────────────────────────────────── #
+    if request.method == "POST" and request.POST.get("action") == "import":
+        data = request.session.get("import_data")
+        if not data:
+            messages.error(request, "먼저 데이터를 수집하거나 CSV를 업로드해주세요.")
+            return redirect("admin_import_csv")
+
+        ing_created = ing_skip = 0
+        prod_created = prod_skip = cat_created = pi_created = pi_fail = 0
+
+        # Ingredients
+        for name, effect_str in data["ingredients"].items():
+            effect_list = [e.strip() for e in effect_str.split("|") if e.strip()]
+            defaults = {"effect": effect_list, "sideEffect": []}
+            if name == "가르시니아캄보지아 추출물":
+                defaults.update({
+                    "mainIngredient": "Hydroxycitric acid (HCA)",
+                    "minRecommended": "750mg",
+                    "maxRecommended": "2800mg",
+                })
+            _, created = Ingredient.objects.get_or_create(name=name, defaults=defaults)
+            if created:
+                ing_created += 1
+            else:
+                ing_skip += 1
+
+        # Products + CategoryProduct
+        for row in data["products"]:
+            product, created = Product.objects.get_or_create(
+                name=row["name"],
+                defaults={
+                    "company":     row.get("company", ""),
+                    "productType": row.get("productType", "건강기능식품"),
+                }
+            )
+            if created:
+                prod_created += 1
+            else:
+                prod_skip += 1
+
+            for cat_id in [
+                int(c) for c in row.get("category_ids", "1").split(";")
+                if c.strip().isdigit()
+            ]:
+                try:
+                    category = SmallCategory.objects.get(id=cat_id)
+                    _, cc = CategoryProduct.objects.get_or_create(
+                        product=product, category=category
+                    )
+                    if cc:
+                        cat_created += 1
+                except SmallCategory.DoesNotExist:
+                    pass
+
+        # ProductIngredients
+        for row in data["pi_rows"]:
+            try:
+                product    = Product.objects.get(name=row["product_name"])
+                ingredient = Ingredient.objects.get(name=row["ingredient_name"])
+                ProductIngredient.objects.get_or_create(
+                    product=product,
+                    ingredient=ingredient,
+                    defaults={"amount": row.get("amount", "")}
+                )
+                pi_created += 1
+            except (Product.DoesNotExist, Ingredient.DoesNotExist):
+                pi_fail += 1
+
+        messages.success(
+            request,
+            f"DB 저장 완료 — "
+            f"Ingredient {ing_created}개 생성 / {ing_skip}개 기존 | "
+            f"Product {prod_created}개 생성 / {prod_skip}개 기존 | "
+            f"카테고리 연결 {cat_created}개 | "
+            f"성분 연결 {pi_created}개 (실패 {pi_fail}개)"
+        )
+        del request.session["import_data"]
+        return redirect("admin_import_csv")
+
+    # ── GET ───────────────────────────────────────────────────────── #
+    data = request.session.get("import_data")
+    return render(request, "products/import_csv.html", {"data": data})
