@@ -927,12 +927,13 @@ import xml.etree.ElementTree as ET
 
 from rapidfuzz import process, fuzz
 from django.http import HttpResponse
+from django.conf import settings
 
 
 # ------------------------------------------------------------------ #
 #  설정값
 # ------------------------------------------------------------------ #
-API_KEY    = "646f0911e9b341a49cb3"
+API_KEY = settings.FOOD_API_KEY
 SERVICE_ID = "I0030"
 BASE_URL   = f"https://openapi.foodsafetykorea.go.kr/api/{API_KEY}/{SERVICE_ID}/xml"
 BATCH_SIZE = 1000
