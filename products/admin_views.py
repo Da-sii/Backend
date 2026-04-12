@@ -7,6 +7,7 @@ from products.models import Product, BigCategory, MiddleCategory, SmallCategory,
     Ingredient, \
     CategoryProduct, OtherIngredient, ProductOtherIngredient, ProductRequest, IngredientGuide
 from products.utils import upload_images_to_s3
+from django.conf import settings
 import json
 
 # BigCategory 입력 화면 (템플릿 기반)
@@ -927,7 +928,6 @@ import xml.etree.ElementTree as ET
 
 from rapidfuzz import process, fuzz
 from django.http import HttpResponse
-from django.conf import settings
 
 
 # ------------------------------------------------------------------ #
@@ -1341,10 +1341,10 @@ def import_csv_view(request):
             messages.error(request, "먼저 데이터를 수집하거나 CSV를 업로드해주세요.")
             return redirect("admin_import_csv")
 
-        ing_created = ing_skip = 0
-        prod_created = prod_skip = cat_created = pi_created = pi_fail = 0
+        ing_created = ing_updated = 0
+        prod_created = prod_updated = cat_created = pi_created = pi_updated = pi_fail = 0
 
-        # Ingredients
+        # Ingredients — 동일한 name 기준으로 수정
         for name, effect_str in data["ingredients"].items():
             effect_list = [e.strip() for e in effect_str.split("|") if e.strip()]
             defaults = {"effect": effect_list, "sideEffect": []}
@@ -1354,15 +1354,17 @@ def import_csv_view(request):
                     "minRecommended": "750mg",
                     "maxRecommended": "2800mg",
                 })
-            _, created = Ingredient.objects.get_or_create(name=name, defaults=defaults)
+            _, created = Ingredient.objects.update_or_create(
+                name=name, defaults=defaults
+            )
             if created:
                 ing_created += 1
             else:
-                ing_skip += 1
+                ing_updated += 1
 
-        # Products + CategoryProduct
+        # Products + CategoryProduct — 동일한 name 기준으로 수정
         for row in data["products"]:
-            product, created = Product.objects.get_or_create(
+            product, created = Product.objects.update_or_create(
                 name=row["name"],
                 defaults={
                     "company":     row.get("company", ""),
@@ -1372,7 +1374,7 @@ def import_csv_view(request):
             if created:
                 prod_created += 1
             else:
-                prod_skip += 1
+                prod_updated += 1
 
             for cat_id in [
                 int(c) for c in row.get("category_ids", "1").split(";")
@@ -1388,27 +1390,30 @@ def import_csv_view(request):
                 except SmallCategory.DoesNotExist:
                     pass
 
-        # ProductIngredients
+        # ProductIngredients — product+ingredient 조합 기준으로 amount 수정
         for row in data["pi_rows"]:
             try:
                 product    = Product.objects.get(name=row["product_name"])
                 ingredient = Ingredient.objects.get(name=row["ingredient_name"])
-                ProductIngredient.objects.get_or_create(
+                _, created = ProductIngredient.objects.update_or_create(
                     product=product,
                     ingredient=ingredient,
                     defaults={"amount": row.get("amount", "")}
                 )
-                pi_created += 1
+                if created:
+                    pi_created += 1
+                else:
+                    pi_updated += 1
             except (Product.DoesNotExist, Ingredient.DoesNotExist):
                 pi_fail += 1
 
         messages.success(
             request,
             f"DB 저장 완료 — "
-            f"Ingredient {ing_created}개 생성 / {ing_skip}개 기존 | "
-            f"Product {prod_created}개 생성 / {prod_skip}개 기존 | "
-            f"카테고리 연결 {cat_created}개 | "
-            f"성분 연결 {pi_created}개 (실패 {pi_fail}개)"
+            f"Ingredient 생성: {ing_created} / 수정: {ing_updated} | "
+            f"Product 생성: {prod_created} / 수정: {prod_updated} | "
+            f"카테고리 연결: {cat_created} | "
+            f"성분 연결 생성: {pi_created} / 수정: {pi_updated} (실패: {pi_fail})"
         )
         del request.session["import_data"]
         return redirect("admin_import_csv")
