@@ -7,7 +7,7 @@ from products.admin_views import (
     ingredient_form, ingredient_edit, ingredient_delete,
     other_ingredient_form, other_ingredient_edit, other_ingredient_delete,
     product_request_list, admin_product_request_delete,
-    ingredient_guide_form, ingredient_guide_edit, ingredient_guide_delete
+    ingredient_guide_form, ingredient_guide_edit, ingredient_guide_delete, import_csv_view
 )
 from products.admin_auth import admin_auth_required, admin_logout, admin_login_view
 
@@ -63,4 +63,7 @@ urlpatterns = [
     # ================= 제품 요청 =================
     path("product-requests/", admin_auth_required(product_request_list), name="admin_product_request_list"),
     path("product-requests/<int:request_id>/delete/", admin_auth_required(admin_product_request_delete), name="admin_product_request_delete"),
+
+    # ================== 데이터 수집 ===============
+    path("import-csv/", admin_auth_required(import_csv_view), name="admin_import_csv"),
 ]
