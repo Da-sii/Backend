@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>배너 관리</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { margin-bottom: 30px; }
+        h2 { margin-top: 30px; margin-bottom: 16px; }
+
+        .nav-links a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #2196f3;
+        }
+        .nav-links a:hover { text-decoration: underline; }
+
+        .form-group { margin-bottom: 20px; }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 6px;
+        }
+        input[type="number"] {
+            width: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input[type="file"] {
+            padding: 6px 0;
+        }
+        .btn-submit {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-submit:hover { background-color: #43a047; }
+
+        .banner-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+        .banner-item img {
+            height: 80px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+        .banner-info {
+            flex: 1;
+        }
+        .banner-info span {
+            display: inline-block;
+            margin-right: 12px;
+            font-size: 14px;
+            color: #555;
+        }
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-active { background: #e8f5e9; color: #4caf50; }
+        .badge-inactive { background: #fce4ec; color: #e53935; }
+
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .btn-delete:hover { background-color: #c0392b; }
+
+        {% if messages %}
+        .messages { margin-bottom: 20px; }
+        {% endif %}
+        .message {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            color: white;
+        }
+        .message.success { background-color: #4caf50; }
+        .message.error { background-color: #e74c3c; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="nav-links">
+        <a href="{% url 'admin_main' %}">← 관리자 메인</a>
+    </div>
+
+    <h1>배너 관리</h1>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <h2>배너 추가</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>이미지 파일</label>
+            <input type="file" name="image" accept="image/*" required>
+        </div>
+        <div class="form-group">
+            <label>순서</label>
+            <input type="number" name="order" value="0" min="0">
+        </div>
+        <button type="submit" class="btn-submit">업로드</button>
+    </form>
+
+    <hr>
+
+    <h2>배너 목록</h2>
+    {% for banner in banners %}
+    <div class="banner-item">
+        <img src="{{ banner.image_url }}" alt="배너 이미지">
+        <div class="banner-info">
+            <span>순서: {{ banner.order }}</span>
+            <span class="badge {% if banner.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                {{ banner.is_active|yesno:"활성,비활성" }}
+            </span>
+        </div>
+        <a href="{% url 'admin_banner_delete' banner.id %}" class="btn-delete"
+           onclick="return confirm('정말 삭제하시겠습니까?')">삭제</a>
+    </div>
+    {% empty %}
+    <p>등록된 배너가 없습니다.</p>
+    {% endfor %}
+
+</div>
+</body>
+</html>

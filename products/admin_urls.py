@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from products.admin_views import (
     big_category_form, big_category_edit, big_category_delete,
     middle_category_form, middle_category_edit, middle_category_delete,
@@ -66,4 +66,7 @@ urlpatterns = [
 
     # ================== 데이터 수집 ===============
     path("import-csv/", admin_auth_required(import_csv_view), name="admin_import_csv"),
+
+    # ================= 배너 관리 =================
+    path("banners/", include("common.admin.admin_urls")),
 ]
