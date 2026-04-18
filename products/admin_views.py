@@ -917,6 +917,7 @@ admin_views.py 맨 아래에 추가할 뷰 함수들
     import csv, io, re, time, requests
     import xml.etree.ElementTree as ET
     from rapidfuzz import process, fuzz
+    from products.models import ImportJob
 """
 
 import csv
@@ -938,9 +939,8 @@ SERVICE_ID = "I0030"
 BASE_URL   = f"https://openapi.foodsafetykorea.go.kr/api/{API_KEY}/{SERVICE_ID}/xml"
 BATCH_SIZE = 1000
 GARCINIA_KEYWORDS = ["가르시니아"]
-FUZZY_THRESHOLD   = 85  # 공백 차이도 잡을 수 있도록 90 → 85로 낮춤
+FUZZY_THRESHOLD   = 85
 
-# 표준 표기로 통일된 고시형 원료 목록
 STANDARD_INGREDIENTS = [
     "가르시니아캄보지아 추출물", "녹차추출물", "공액리놀레산",
     "키토산", "키토올리고당", "바나바잎추출물", "프로바이오틱스",
@@ -991,10 +991,9 @@ INGREDIENT_CATEGORY_MAP = {
 
 
 # ------------------------------------------------------------------ #
-#  정규화 함수 (공백·대소문자 차이 무시)
+#  정규화 함수
 # ------------------------------------------------------------------ #
 def _normalize(name: str) -> str:
-    """비교 전 공백 제거 + 소문자 변환"""
     return re.sub(r'\s+', '', name).lower()
 
 
@@ -1027,21 +1026,12 @@ def _format_amount(amount_str: str, unit: str) -> str:
     return f"{num}{unit}"
 
 
-def _match_ingredient(cleaned_name: str, candidates: list, normalized_map: dict) -> tuple:
-    """
-    1. EXACT_NAME_MAP 정확 매핑
-    2. 정규화 후 candidates와 퍼지매칭
-    반환: (최종 이름, 매칭 방법)
-    """
-    # 1. 정확 매핑
+def _match_ingredient(cleaned_name: str, normalized_map: dict) -> tuple:
     exact = EXACT_NAME_MAP.get(cleaned_name.lower().strip())
     if exact:
         return exact, "exact"
 
-    # 2. 정규화 후 퍼지매칭
     normalized_input = _normalize(cleaned_name)
-
-    # normalized_map: {정규화된이름: 원본이름}
     result = process.extractOne(
         normalized_input,
         list(normalized_map.keys()),
@@ -1050,13 +1040,12 @@ def _match_ingredient(cleaned_name: str, candidates: list, normalized_map: dict)
     )
     if result:
         matched_normalized, score, _ = result
-        original_name = normalized_map[matched_normalized]
-        return original_name, f"fuzzy({score:.0f}%)"
+        return normalized_map[matched_normalized], f"fuzzy({score:.0f}%)"
 
     return cleaned_name, "unmatched"
 
 
-def _parse_spec(spec_text: str, candidates: list, normalized_map: dict) -> list:
+def _parse_spec(spec_text: str, normalized_map: dict) -> list:
     results = []
     for line in spec_text.split("\n"):
         line = line.strip()
@@ -1071,7 +1060,7 @@ def _parse_spec(spec_text: str, candidates: list, normalized_map: dict) -> list:
             continue
         raw_name = re.sub(r'^\d+\.\s*', '', match.group(1)).strip()
         cleaned  = _clean_raw_name(raw_name)
-        name, method = _match_ingredient(cleaned, candidates, normalized_map)
+        name, method = _match_ingredient(cleaned, normalized_map)
         results.append({
             "raw_name": raw_name,
             "name":     name,
@@ -1081,32 +1070,16 @@ def _parse_spec(spec_text: str, candidates: list, normalized_map: dict) -> list:
     return results
 
 
-def _parse_effect_for_ingredient(effect_text: str, ingredient_name: str) -> list[str]:
-    """
-    PRIMARY_FNCLTY 텍스트에서 특정 성분의 effect만 추출
-
-    지원 형식:
-    - "성분명 : 효과내용"
-    - "[성분명] 효과내용"
-    - "성분명\n효과내용" (단독)
-    """
+def _parse_effect_for_ingredient(effect_text: str, ingredient_name: str) -> list:
     if not effect_text or not ingredient_name:
         return []
 
     sentences = []
     lines = [l.strip() for l in effect_text.split("\n") if l.strip()]
-
-    # 성분명 키워드 (공백 제거 버전도 체크)
     ing_normalized = _normalize(ingredient_name)
 
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        line_normalized = _normalize(line)
-
-        # 해당 성분명이 줄에 포함되는지 확인
-        if ingredient_name in line or ing_normalized in line_normalized:
-            # "성분명 : 효과" 또는 "[성분명] 효과" 형식
+    for i, line in enumerate(lines):
+        if ingredient_name in line or ing_normalized in _normalize(line):
             colon_match = re.search(
                 r'(?:\[' + re.escape(ingredient_name) + r'\]|'
                 + re.escape(ingredient_name) + r')\s*[:：\]]\s*(.+)',
@@ -1116,17 +1089,12 @@ def _parse_effect_for_ingredient(effect_text: str, ingredient_name: str) -> list
                 content = colon_match.group(1).strip()
                 parts = re.split(r'\s*[\(\（]\d+[\)\）]\s*|[①②③④⑤⑥]\s*', content)
                 sentences.extend([p.strip() for p in parts if p.strip()])
-            else:
-                # 성분명만 있고 다음 줄에 효과가 있는 경우
-                if i + 1 < len(lines):
-                    next_line = lines[i + 1]
-                    if not any(kw in next_line for kw in [":", "："]):
-                        parts = re.split(r'\s*[\(\（]\d+[\)\）]\s*|[①②③④⑤⑥]\s*', next_line)
-                        sentences.extend([p.strip() for p in parts if p.strip()])
+            elif i + 1 < len(lines):
+                next_line = lines[i + 1]
+                if ":" not in next_line and "：" not in next_line:
+                    parts = re.split(r'\s*[\(\（]\d+[\)\）]\s*|[①②③④⑤⑥]\s*', next_line)
+                    sentences.extend([p.strip() for p in parts if p.strip()])
 
-        i += 1
-
-    # 가르시니아 특수 처리 (키워드 기반)
     if not sentences and "가르시니아" in ingredient_name:
         for line in lines:
             if "탄수화물이 지방으로 합성" in line:
@@ -1134,23 +1102,18 @@ def _parse_effect_for_ingredient(effect_text: str, ingredient_name: str) -> list
                 if content:
                     sentences.append(content)
 
-    # 중복 제거
     seen, result = set(), []
     for s in sentences:
         s = s.strip()
         if s and s not in seen:
             seen.add(s)
             result.append(s)
-
     return result
 
 
 def _fetch_garcinia_data():
-    """API에서 가르시니아 제품 데이터 수집"""
-    db_names   = list(Ingredient.objects.values_list("name", flat=True))
-    candidates = list(set(db_names + STANDARD_INGREDIENTS))
-
-    # 정규화 맵 생성: {정규화된이름: 원본이름}
+    db_names      = list(Ingredient.objects.values_list("name", flat=True))
+    candidates    = list(set(db_names + STANDARD_INGREDIENTS))
     normalized_map = {_normalize(name): name for name in candidates}
 
     products, ingredients, pi_rows, unmatched = [], {}, [], []
@@ -1184,7 +1147,7 @@ def _fetch_garcinia_data():
                 continue
             seen_products.add(name)
 
-            parsed = _parse_spec(spec, candidates, normalized_map) if spec else []
+            parsed = _parse_spec(spec, normalized_map) if spec else []
             category_ids = sorted(set(
                 cat_id for item in parsed
                 for cat_id in INGREDIENT_CATEGORY_MAP.get(item["name"], [])
@@ -1205,12 +1168,9 @@ def _fetch_garcinia_data():
                     "raw_name":        item["raw_name"],
                     "method":          item["method"],
                 })
-
-                # ── 성분별 effect 파싱 (최초 1회) ────────────────── #
                 if item["name"] not in ingredients:
                     effect_list = _parse_effect_for_ingredient(effect, item["name"])
                     ingredients[item["name"]] = "|".join(effect_list)
-
                 if item["method"] == "unmatched":
                     unmatched.append({
                         "raw_name":     item["raw_name"],
@@ -1228,6 +1188,29 @@ def _fetch_garcinia_data():
         "pi_rows":     pi_rows,
         "unmatched":   unmatched,
         "total":       len(products),
+    }
+
+
+def _get_job(request):
+    """세션의 job_id로 ImportJob 조회. 없으면 None 반환"""
+    job_id = request.session.get("import_job_id")
+    if not job_id:
+        return None
+    try:
+        from products.models import ImportJob
+        return ImportJob.objects.get(id=job_id)
+    except Exception:
+        return None
+
+
+def _job_to_data(job) -> dict:
+    """ImportJob → 뷰에서 쓰는 data 딕셔너리"""
+    return {
+        "products":    job.products,
+        "ingredients": job.ingredients,
+        "pi_rows":     job.pi_rows,
+        "unmatched":   job.unmatched,
+        "total":       job.total,
     }
 
 
@@ -1254,11 +1237,28 @@ def _read_uploaded_csv(file):
 #  어드민 뷰
 # ------------------------------------------------------------------ #
 def import_csv_view(request):
-    # ── 1. API 수집 ───────────────────────────────────────────────── #
+    from products.models import ImportJob
+
+    # ── 1. API 수집 → ImportJob 생성 ─────────────────────────────── #
     if request.method == "POST" and request.POST.get("action") == "fetch":
         try:
             data = _fetch_garcinia_data()
-            request.session["import_data"] = data
+
+            # 기존 job 있으면 삭제
+            old_job = _get_job(request)
+            if old_job:
+                old_job.delete()
+
+            job = ImportJob.objects.create(
+                status      = "pending",
+                products    = data["products"],
+                ingredients = data["ingredients"],
+                pi_rows     = data["pi_rows"],
+                unmatched   = data["unmatched"],
+                total       = data["total"],
+            )
+            request.session["import_job_id"] = job.id  # ID만 세션에 저장
+
             messages.success(
                 request,
                 f"수집 완료 — 제품 {data['total']}개 | "
@@ -1271,8 +1271,8 @@ def import_csv_view(request):
 
     # ── 2. CSV 다운로드 ───────────────────────────────────────────── #
     if request.method == "POST" and request.POST.get("action") == "download_csv":
-        data = request.session.get("import_data")
-        if not data:
+        job = _get_job(request)
+        if not job:
             messages.error(request, "먼저 데이터를 수집해주세요.")
             return redirect("admin_import_csv")
 
@@ -1280,32 +1280,32 @@ def import_csv_view(request):
 
         if file_type == "products":
             return _csv_response(
-                data["products"],
+                job.products,
                 ["name", "company", "productType", "category_ids"],
                 "products.csv"
             )
         elif file_type == "ingredients":
-            rows = [{"name": k, "effect": v} for k, v in data["ingredients"].items()]
+            rows = [{"name": k, "effect": v} for k, v in job.ingredients.items()]
             return _csv_response(rows, ["name", "effect"], "ingredients.csv")
         elif file_type == "product_ingredients":
             return _csv_response(
-                data["pi_rows"],
+                job.pi_rows,
                 ["product_name", "ingredient_name", "amount", "raw_name", "method"],
                 "product_ingredients.csv"
             )
         elif file_type == "unmatched":
             return _csv_response(
-                data["unmatched"],
+                job.unmatched,
                 ["raw_name", "cleaned_name"],
                 "unmatched_ingredients.csv"
             )
 
-    # ── 3. CSV 업로드 ─────────────────────────────────────────────── #
+    # ── 3. CSV 업로드 → ImportJob 업데이트 ───────────────────────── #
     if request.method == "POST" and request.POST.get("action") == "upload_csv":
-        data = request.session.get("import_data", {
-            "products": [], "ingredients": {}, "pi_rows": [],
-            "unmatched": [], "total": 0
-        })
+        job = _get_job(request)
+        if not job:
+            messages.error(request, "먼저 데이터를 수집해주세요.")
+            return redirect("admin_import_csv")
 
         upload_type = request.POST.get("upload_type")
         file        = request.FILES.get("csv_file")
@@ -1318,17 +1318,18 @@ def import_csv_view(request):
             rows = _read_uploaded_csv(file)
 
             if upload_type == "products":
-                data["products"] = rows
-                data["total"]    = len(rows)
+                job.products = rows
+                job.total    = len(rows)
                 messages.success(request, f"products.csv 업로드 완료 — {len(rows)}개 제품")
             elif upload_type == "ingredients":
-                data["ingredients"] = {r["name"]: r.get("effect", "") for r in rows}
+                job.ingredients = {r["name"]: r.get("effect", "") for r in rows}
                 messages.success(request, f"ingredients.csv 업로드 완료 — {len(rows)}개 성분")
             elif upload_type == "product_ingredients":
-                data["pi_rows"] = rows
+                job.pi_rows = rows
                 messages.success(request, f"product_ingredients.csv 업로드 완료 — {len(rows)}개 연결")
 
-            request.session["import_data"] = data
+            job.save()
+
         except Exception as e:
             messages.error(request, f"CSV 파싱 실패: {e}")
 
@@ -1336,16 +1337,16 @@ def import_csv_view(request):
 
     # ── 4. DB 저장 ────────────────────────────────────────────────── #
     if request.method == "POST" and request.POST.get("action") == "import":
-        data = request.session.get("import_data")
-        if not data:
+        job = _get_job(request)
+        if not job:
             messages.error(request, "먼저 데이터를 수집하거나 CSV를 업로드해주세요.")
             return redirect("admin_import_csv")
 
         ing_created = ing_updated = 0
         prod_created = prod_updated = cat_created = pi_created = pi_updated = pi_fail = 0
 
-        # Ingredients — 동일한 name 기준으로 수정
-        for name, effect_str in data["ingredients"].items():
+        # Ingredients — name 기준 update_or_create
+        for name, effect_str in job.ingredients.items():
             effect_list = [e.strip() for e in effect_str.split("|") if e.strip()]
             defaults = {"effect": effect_list, "sideEffect": []}
             if name == "가르시니아캄보지아 추출물":
@@ -1362,8 +1363,8 @@ def import_csv_view(request):
             else:
                 ing_updated += 1
 
-        # Products + CategoryProduct — 동일한 name 기준으로 수정
-        for row in data["products"]:
+        # Products + CategoryProduct — name 기준 update_or_create
+        for row in job.products:
             product, created = Product.objects.update_or_create(
                 name=row["name"],
                 defaults={
@@ -1390,8 +1391,8 @@ def import_csv_view(request):
                 except SmallCategory.DoesNotExist:
                     pass
 
-        # ProductIngredients — product+ingredient 조합 기준으로 amount 수정
-        for row in data["pi_rows"]:
+        # ProductIngredients — product+ingredient 기준 update_or_create
+        for row in job.pi_rows:
             try:
                 product    = Product.objects.get(name=row["product_name"])
                 ingredient = Ingredient.objects.get(name=row["ingredient_name"])
@@ -1407,6 +1408,15 @@ def import_csv_view(request):
             except (Product.DoesNotExist, Ingredient.DoesNotExist):
                 pi_fail += 1
 
+        # Job 완료 처리
+        job.status = "done"
+        job.products = []
+        job.ingredients = {}
+        job.pi_rows = []
+        job.unmatched = []
+        job.save()
+        del request.session["import_job_id"]
+
         messages.success(
             request,
             f"DB 저장 완료 — "
@@ -1415,9 +1425,9 @@ def import_csv_view(request):
             f"카테고리 연결: {cat_created} | "
             f"성분 연결 생성: {pi_created} / 수정: {pi_updated} (실패: {pi_fail})"
         )
-        del request.session["import_data"]
         return redirect("admin_import_csv")
 
     # ── GET ───────────────────────────────────────────────────────── #
-    data = request.session.get("import_data")
+    job  = _get_job(request)
+    data = _job_to_data(job) if job else None
     return render(request, "products/import_csv.html", {"data": data})
