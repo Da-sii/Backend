@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>데이터 수집 및 임포트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 960px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 6px; }
+        .subtitle { color: #888; font-size: 14px; margin-bottom: 28px; }
+
+        .nav-links { margin-bottom: 20px; }
+        .nav-links a { margin-right: 14px; text-decoration: none; color: #2196f3; font-size: 14px; }
+        .nav-links a:hover { text-decoration: underline; }
+
+        /* 카드 */
+        .card { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 24px; overflow: hidden; }
+        .card-header { background: #f9f9f9; padding: 13px 20px; font-weight: bold; font-size: 15px; border-bottom: 1px solid #ddd; }
+        .card-header.danger  { background: #fff0f0; color: #c62828; border-color: #f44336; }
+        .card-header.warning { background: #fffde7; color: #e65100; border-color: #fbc02d; }
+        .card-body   { padding: 20px; }
+        .card-footer { padding: 10px 20px; background: #fafafa; border-top: 1px solid #eee; font-size: 13px; color: #888; }
+
+        /* 버튼 */
+        .btn {
+            display: inline-block; padding: 9px 18px; border: none;
+            border-radius: 4px; font-size: 14px; cursor: pointer;
+            text-decoration: none; margin-right: 6px; margin-bottom: 6px;
+        }
+        .btn-primary { background: #4caf50; color: white; }
+        .btn-primary:hover { background: #388e3c; }
+        .btn-danger  { background: #f44336; color: white; }
+        .btn-danger:hover  { background: #c62828; }
+        .btn-outline { background: white; border: 1px solid #bbb; color: #333; }
+        .btn-outline:hover { background: #f5f5f5; }
+        .btn-warning { background: #ff9800; color: white; }
+        .btn-blue    { background: #2196f3; color: white; }
+        .btn-blue:hover { background: #1565c0; }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        form.inline { display: inline; }
+
+        /* 통계 */
+        .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; text-align: center; }
+        .stat-box   { padding: 14px; background: #f9f9f9; border-radius: 8px; }
+        .stat-num   { font-size: 26px; font-weight: bold; }
+        .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
+        .c-blue { color: #1976d2; } .c-green { color: #388e3c; }
+        .c-teal { color: #0288d1; } .c-orange { color: #e65100; }
+
+        /* 테이블 */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background: #f5f5f5; padding: 9px 12px; text-align: left; border-bottom: 2px solid #ddd; }
+        td { padding: 7px 12px; border-bottom: 1px solid #eee; }
+        tr:hover td { background: #fafafa; }
+        .table-scroll { max-height: 260px; overflow-y: auto; }
+
+        /* 메시지 */
+        .messages { margin-bottom: 20px; }
+        .msg { padding: 11px 16px; border-radius: 4px; margin-bottom: 8px; font-size: 14px; }
+        .msg-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+        .msg-error   { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
+        .msg-info    { background: #e3f2fd; color: #1565c0; border-left: 4px solid #2196f3; }
+
+        /* 업로드 영역 */
+        .upload-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 0; border-bottom: 1px solid #eee;
+        }
+        .upload-row:last-child { border-bottom: none; }
+        .upload-label { width: 180px; font-size: 14px; font-weight: bold; color: #444; flex-shrink: 0; }
+        .upload-desc  { font-size: 13px; color: #888; flex: 1; }
+        .upload-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+        input[type="file"] { font-size: 13px; }
+
+        .info-box {
+            background: #e3f2fd; border-left: 4px solid #2196f3;
+            padding: 14px 18px; border-radius: 4px; font-size: 14px; color: #1565c0;
+        }
+        .step-desc { font-size: 14px; color: #555; margin-bottom: 14px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="nav-links">
+        <a href="{% url 'admin_main' %}">← 메인</a>
+        <a href="{% url 'admin_product_form' %}">제품</a>
+        <a href="{% url 'admin_ingredient_form' %}">성분</a>
+    </div>
+
+    <h1>데이터 수집 및 임포트</h1>
+    <p class="subtitle">식품안전나라 API에서 가르시니아캄보지아 제품 데이터를 수집하고 DB에 저장합니다.</p>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="msg msg-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ── 1단계: API 수집 ── -->
+    <div class="card">
+        <div class="card-header">1단계 — API 데이터 수집</div>
+        <div class="card-body">
+            <p class="step-desc">
+                식품안전나라 API에서 가르시니아 제품 전체를 수집합니다.<br>
+                약 <strong>5~10분</strong> 소요됩니다. 수집 중에는 페이지를 닫지 마세요.
+            </p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="fetch">
+                <button type="submit" class="btn btn-primary"
+                    onclick="this.disabled=true; this.innerText='수집 중... (5~10분 소요)'; this.form.submit();">
+                    🔄 데이터 수집 시작
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if data %}
+
+    <!-- ── 수집 결과 요약 ── -->
+    <div class="card">
+        <div class="card-header">수집 결과</div>
+        <div class="card-body">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-num c-blue">{{ data.total }}</div>
+                    <div class="stat-label">수집된 제품</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-num c-green">{{ data.ingredients|length }}</div>
+                    <div class="stat-label">성분 종류</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-num c-teal">{{ data.pi_rows|length }}</div>
+                    <div class="stat-label">제품-성분 연결</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-num {% if data.unmatched %}c-orange{% else %}c-green{% endif %}">
+                        {{ data.unmatched|length }}
+                    </div>
+                    <div class="stat-label">매칭 실패</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 2단계: CSV 다운로드 ── -->
+    <div class="card">
+        <div class="card-header">2단계 — CSV 다운로드</div>
+        <div class="card-body">
+            <p class="step-desc">
+                CSV를 다운로드해서 Excel 또는 Numbers로 열어 내용을 확인하고 수정하세요.<br>
+                수정 후 3단계에서 다시 업로드하면 됩니다.
+            </p>
+            <div class="btn-row">
+                <form class="inline" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="download_csv">
+                    <input type="hidden" name="file_type" value="products">
+                    <button class="btn btn-outline">📥 products.csv</button>
+                </form>
+                <form class="inline" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="download_csv">
+                    <input type="hidden" name="file_type" value="ingredients">
+                    <button class="btn btn-outline">📥 ingredients.csv</button>
+                </form>
+                <form class="inline" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="download_csv">
+                    <input type="hidden" name="file_type" value="product_ingredients">
+                    <button class="btn btn-outline">📥 product_ingredients.csv</button>
+                </form>
+                {% if data.unmatched %}
+                <form class="inline" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="download_csv">
+                    <input type="hidden" name="file_type" value="unmatched">
+                    <button class="btn btn-warning">⚠️ 매칭실패.csv ({{ data.unmatched|length }}개)</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 3단계: CSV 업로드 ── -->
+    <div class="card">
+        <div class="card-header">3단계 — 수정된 CSV 업로드 (선택)</div>
+        <div class="card-body">
+            <p class="step-desc">
+                Excel에서 수정한 CSV를 업로드하면 현재 세션 데이터를 덮어씁니다.<br>
+                수정하지 않은 파일은 업로드하지 않아도 됩니다.
+            </p>
+
+            <!-- products.csv 업로드 -->
+            <div class="upload-row">
+                <div class="upload-label">📄 products.csv</div>
+                <div class="upload-desc">제품명, 업소명, 카테고리 id 수정 가능</div>
+                <form class="upload-actions" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload_csv">
+                    <input type="hidden" name="upload_type" value="products">
+                    <input type="file" name="csv_file" accept=".csv" required>
+                    <button type="submit" class="btn btn-blue">업로드</button>
+                </form>
+            </div>
+
+            <!-- ingredients.csv 업로드 -->
+            <div class="upload-row">
+                <div class="upload-label">📄 ingredients.csv</div>
+                <div class="upload-desc">성분명, effect 수정 가능</div>
+                <form class="upload-actions" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload_csv">
+                    <input type="hidden" name="upload_type" value="ingredients">
+                    <input type="file" name="csv_file" accept=".csv" required>
+                    <button type="submit" class="btn btn-blue">업로드</button>
+                </form>
+            </div>
+
+            <!-- product_ingredients.csv 업로드 -->
+            <div class="upload-row">
+                <div class="upload-label">📄 product_ingredients.csv</div>
+                <div class="upload-desc">성분명, amount 수정 가능</div>
+                <form class="upload-actions" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload_csv">
+                    <input type="hidden" name="upload_type" value="product_ingredients">
+                    <input type="file" name="csv_file" accept=".csv" required>
+                    <button type="submit" class="btn btn-blue">업로드</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 미리보기: 제품 ── -->
+    <div class="card">
+        <div class="card-header">제품 미리보기 (상위 20개 / 전체 {{ data.total }}개)</div>
+        <div class="card-body" style="padding:0;">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr><th>제품명</th><th>업소명</th><th>카테고리 id</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data.products|slice:":20" %}
+                        <tr>
+                            <td>{{ row.name }}</td>
+                            <td>{{ row.company }}</td>
+                            <td>{{ row.category_ids }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 미리보기: 성분 ── -->
+    <div class="card">
+        <div class="card-header">성분 목록 (전체 {{ data.ingredients|length }}개)</div>
+        <div class="card-body" style="padding:0;">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr><th>성분명</th><th>effect</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for name, effect in data.ingredients.items %}
+                        <tr>
+                            <td>{{ name }}</td>
+                            <td style="color:#888; font-size:13px;">{{ effect|truncatechars:80 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if data.unmatched %}
+    <!-- ── 매칭 실패 ── -->
+    <div class="card">
+        <div class="card-header warning">⚠️ 매칭 실패 목록 ({{ data.unmatched|length }}개)</div>
+        <div class="card-body" style="padding:0;">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr><th>원본 이름</th><th>정제된 이름</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data.unmatched %}
+                        <tr>
+                            <td>{{ row.raw_name }}</td>
+                            <td style="color:#888;">{{ row.cleaned_name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            매칭 실패 성분은 원본 이름 그대로 저장됩니다.
+            product_ingredients.csv에서 ingredient_name을 직접 수정 후 업로드하세요.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── 4단계: DB 저장 ── -->
+    <div class="card">
+        <div class="card-header danger">4단계 — DB 저장</div>
+        <div class="card-body">
+            <p class="step-desc">
+                위 내용을 모두 확인한 후 DB에 저장하세요.
+                <strong>이 작업은 되돌릴 수 없습니다.</strong>
+            </p>
+            <form method="post"
+                onsubmit="return confirm('DB에 저장하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="import">
+                <button type="submit" class="btn btn-danger">✅ DB에 저장</button>
+            </form>
+        </div>
+    </div>
+
+    {% else %}
+
+    <div class="info-box">
+        아직 수집된 데이터가 없습니다. 1단계에서 데이터를 먼저 수집해주세요.
+    </div>
+
+    {% endif %}
+
+</div>
+</body>
+</html>

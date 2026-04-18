@@ -68,3 +68,18 @@ class ProductRequest(models.Model):
 
     def __str__(self):
         return f"제품 요청 #{self.id}"
+
+class ImportJob(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default="pending")
+    products = models.JSONField(default=list)
+    ingredients = models.JSONField(default=dict)
+    pi_rows = models.JSONField(default=list)
+    unmatched = models.JSONField(default=list)
+    total = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "import_jobs"
+
+    def __str__(self):
+        return f"ImportJob #{self.id} ({self.status}, {self.total}개)"
