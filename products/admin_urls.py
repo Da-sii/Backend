@@ -14,7 +14,9 @@ from products.admin_auth import admin_auth_required, admin_logout, admin_login_v
 
 def admin_main(request):
     from django.shortcuts import render
-    return render(request, 'products/admin_main.html')
+    from users.models import User
+    user_count = User.objects.count()
+    return render(request, 'products/admin_main.html', {'user_count': user_count})
 
 
 urlpatterns = [
