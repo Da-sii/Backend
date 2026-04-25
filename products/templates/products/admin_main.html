@@ -73,6 +73,11 @@
         </div>
         
         <h1>관리자 페이지</h1>
+
+        <div style="margin-bottom: 24px; padding: 16px; background: #f0f8f0; border-radius: 8px; border: 1px solid #c8e6c9;">
+            <span style="font-size: 15px; color: #555;">전체 유저 수</span>
+            <span style="font-size: 20px; font-weight: bold; color: #4caf50; margin-left: 12px;">{{ user_count }}명</span>
+        </div>
         
         <div class="menu-grid">
             <a href="{% url 'admin_big_category_form' %}" class="menu-item">
