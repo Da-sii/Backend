@@ -19,5 +19,6 @@ urlpatterns = [
     path("products/", include("products.urls.product_urls")), # products 앱 라우팅
     path("ingredients/", include("products.urls.ingredient_urls")),
     path("review/", include("review.urls")), # review 앱 라우팅
-    path("banners/", include("common.urls") ),
+    path("banners/", include("common.urls") ), # 메인 배너
+    path('', include('common.urls')) # deep link
 ]
