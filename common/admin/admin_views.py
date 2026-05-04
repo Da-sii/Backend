@@ -5,10 +5,18 @@ from common.utils import upload_banner_to_s3
 def banner_list_view(request):
     if request.method == "POST":
         image = request.FILES.get("image")
+        detail_image = request.FILES.get("detail_image")
         order = request.POST.get("order", 0)
+
         if image:
-            url = upload_banner_to_s3(image)
-            Banner.objects.create(image_url=url, order=order)
+            image_url = upload_banner_to_s3(image)
+            detail_image_url = upload_banner_to_s3(detail_image) if detail_image else None
+            Banner.objects.create(
+                image_url=image_url,
+                detail_image_url=detail_image_url,
+                order=order,
+            )
+
         return redirect("admin_banner_list")
 
     banners = Banner.objects.all().order_by("order")

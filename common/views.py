@@ -15,7 +15,9 @@ class BannerListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        banners = Banner.objects.filter(is_active=True).values('id', 'image_url', 'order')
+        banners = Banner.objects.filter(is_active=True).values(
+            'id', 'image_url', 'detail_image_url', 'order'
+        )
         return Response(list(banners))
 
 def apple_app_site_association(request):
