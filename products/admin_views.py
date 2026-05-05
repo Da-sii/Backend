@@ -1059,13 +1059,13 @@ def _parse_spec(spec_text: str, normalized_map: dict) -> list:
         if not match:
             continue
         raw_name = re.sub(r'^\d+\.\s*', '', match.group(1)).strip()
-        cleaned  = _clean_raw_name(raw_name)
+        cleaned = _clean_raw_name(raw_name)
         name, method = _match_ingredient(cleaned, normalized_map)
         results.append({
             "raw_name": raw_name,
-            "name":     name,
-            "amount":   _format_amount(match.group(2), match.group(3)),
-            "method":   method,
+            "name": name,
+            "amount": _format_amount(match.group(2), match.group(3)),
+            "method": method,
         })
     return results
 
@@ -1112,16 +1112,16 @@ def _parse_effect_for_ingredient(effect_text: str, ingredient_name: str) -> list
 
 
 def _fetch_garcinia_data():
-    db_names      = list(Ingredient.objects.values_list("name", flat=True))
-    candidates    = list(set(db_names + STANDARD_INGREDIENTS))
+    db_names = list(Ingredient.objects.values_list("name", flat=True))
+    candidates = list(set(db_names + STANDARD_INGREDIENTS))
     normalized_map = {_normalize(name): name for name in candidates}
 
     products, ingredients, pi_rows, unmatched = [], {}, [], []
     seen_products = set()
-    start, total  = 1, None
+    start, total = 1, None
 
     while True:
-        end  = start + BATCH_SIZE - 1
+        end = start + BATCH_SIZE - 1
         resp = requests.get(f"{BASE_URL}/{start}/{end}", timeout=30)
         root = ET.fromstring(resp.content)
 
@@ -1138,10 +1138,10 @@ def _fetch_garcinia_data():
             if not any(kw in indiv for kw in GARCINIA_KEYWORDS):
                 continue
 
-            name    = row.findtext("PRDLST_NM") or ""
+            name = row.findtext("PRDLST_NM") or ""
             company = row.findtext("BSSH_NM") or ""
-            effect  = row.findtext("PRIMARY_FNCLTY") or ""
-            spec    = row.findtext("STDR_STND") or ""
+            effect = row.findtext("PRIMARY_FNCLTY") or ""
+            spec = row.findtext("STDR_STND") or ""
 
             if not name or name in seen_products:
                 continue
@@ -1154,26 +1154,26 @@ def _fetch_garcinia_data():
             )) or [1]
 
             products.append({
-                "name":         name,
-                "company":      company,
-                "productType":  "건강기능식품",
+                "name": name,
+                "company": company,
+                "productType": "건강기능식품",
                 "category_ids": ";".join(map(str, category_ids)),
             })
 
             for item in parsed:
                 pi_rows.append({
-                    "product_name":    name,
+                    "product_name": name,
                     "ingredient_name": item["name"],
-                    "amount":          item["amount"],
-                    "raw_name":        item["raw_name"],
-                    "method":          item["method"],
+                    "amount": item["amount"],
+                    "raw_name": item["raw_name"],
+                    "method": item["method"],
                 })
                 if item["name"] not in ingredients:
                     effect_list = _parse_effect_for_ingredient(effect, item["name"])
                     ingredients[item["name"]] = "|".join(effect_list)
                 if item["method"] == "unmatched":
                     unmatched.append({
-                        "raw_name":     item["raw_name"],
+                        "raw_name": item["raw_name"],
                         "cleaned_name": _clean_raw_name(item["raw_name"]),
                     })
 
@@ -1183,11 +1183,11 @@ def _fetch_garcinia_data():
         time.sleep(1)
 
     return {
-        "products":    products,
+        "products": products,
         "ingredients": ingredients,
-        "pi_rows":     pi_rows,
-        "unmatched":   unmatched,
-        "total":       len(products),
+        "pi_rows": pi_rows,
+        "unmatched": unmatched,
+        "total": len(products),
     }
 
 
@@ -1206,11 +1206,11 @@ def _get_job(request):
 def _job_to_data(job) -> dict:
     """ImportJob → 뷰에서 쓰는 data 딕셔너리"""
     return {
-        "products":    job.products,
+        "products": job.products,
         "ingredients": job.ingredients,
-        "pi_rows":     job.pi_rows,
-        "unmatched":   job.unmatched,
-        "total":       job.total,
+        "pi_rows": job.pi_rows,
+        "unmatched": job.unmatched,
+        "total": job.total,
     }
 
 
@@ -1229,8 +1229,76 @@ def _csv_response(rows, fieldnames, filename):
 
 def _read_uploaded_csv(file):
     decoded = file.read().decode("utf-8-sig")
-    reader  = csv.DictReader(io.StringIO(decoded))
+    reader = csv.DictReader(io.StringIO(decoded))
     return [row for row in reader]
+
+
+def import_csv_update_view(request):
+    """
+    인라인 편집 저장 엔드포인트
+    POST JSON: { changes: [{type, index, field, value}, ...] }
+    """
+    import json
+    from products.models import ImportJob
+
+    if request.method != "POST":
+        return HttpResponse(status=405)
+
+    job = _get_job(request)
+    if not job:
+        return HttpResponse(
+            json.dumps({"ok": False, "error": "수집된 데이터가 없습니다."}),
+            content_type="application/json", status=400
+        )
+
+    try:
+        body = json.loads(request.body)
+        changes = body.get("changes", [])
+
+        for change in changes:
+            data_type = change["type"]  # "products" | "ingredients" | "pi_rows"
+            index = change["index"]
+            field = change["field"]
+            value = change["value"]
+
+            if data_type == "products":
+                if 0 <= index < len(job.products):
+                    job.products[index][field] = value
+
+            elif data_type == "ingredients":
+                # ingredients는 dict라서 index로 접근
+                keys = list(job.ingredients.keys())
+                if 0 <= index < len(keys):
+                    old_name = keys[index]
+                    if field == "effect":
+                        job.ingredients[old_name] = value
+                    elif field == "name":
+                        # key 이름 변경: 순서 유지하면서 새 dict 재구성
+                        new_ingredients = {}
+                        for i, (k, v) in enumerate(job.ingredients.items()):
+                            new_key = value if i == index else k
+                            new_ingredients[new_key] = v
+                        job.ingredients = new_ingredients
+                        # pi_rows에서 해당 ingredient_name도 같이 변경
+                        for pi_row in job.pi_rows:
+                            if pi_row.get("ingredient_name") == old_name:
+                                pi_row["ingredient_name"] = value
+
+            elif data_type == "pi_rows":
+                if 0 <= index < len(job.pi_rows):
+                    job.pi_rows[index][field] = value
+
+        job.save()
+        return HttpResponse(
+            json.dumps({"ok": True}),
+            content_type="application/json"
+        )
+
+    except Exception as e:
+        return HttpResponse(
+            json.dumps({"ok": False, "error": str(e)}),
+            content_type="application/json", status=500
+        )
 
 
 # ------------------------------------------------------------------ #
@@ -1250,12 +1318,12 @@ def import_csv_view(request):
                 old_job.delete()
 
             job = ImportJob.objects.create(
-                status      = "pending",
-                products    = data["products"],
-                ingredients = data["ingredients"],
-                pi_rows     = data["pi_rows"],
-                unmatched   = data["unmatched"],
-                total       = data["total"],
+                status="pending",
+                products=data["products"],
+                ingredients=data["ingredients"],
+                pi_rows=data["pi_rows"],
+                unmatched=data["unmatched"],
+                total=data["total"],
             )
             request.session["import_job_id"] = job.id  # ID만 세션에 저장
 
@@ -1308,7 +1376,7 @@ def import_csv_view(request):
             return redirect("admin_import_csv")
 
         upload_type = request.POST.get("upload_type")
-        file        = request.FILES.get("csv_file")
+        file = request.FILES.get("csv_file")
 
         if not file:
             messages.error(request, "CSV 파일을 선택해주세요.")
@@ -1319,7 +1387,7 @@ def import_csv_view(request):
 
             if upload_type == "products":
                 job.products = rows
-                job.total    = len(rows)
+                job.total = len(rows)
                 messages.success(request, f"products.csv 업로드 완료 — {len(rows)}개 제품")
             elif upload_type == "ingredients":
                 job.ingredients = {r["name"]: r.get("effect", "") for r in rows}
@@ -1368,7 +1436,7 @@ def import_csv_view(request):
             product, created = Product.objects.update_or_create(
                 name=row["name"],
                 defaults={
-                    "company":     row.get("company", ""),
+                    "company": row.get("company", ""),
                     "productType": row.get("productType", "건강기능식품"),
                 }
             )
@@ -1394,7 +1462,7 @@ def import_csv_view(request):
         # ProductIngredients — product+ingredient 기준 update_or_create
         for row in job.pi_rows:
             try:
-                product    = Product.objects.get(name=row["product_name"])
+                product = Product.objects.get(name=row["product_name"])
                 ingredient = Ingredient.objects.get(name=row["ingredient_name"])
                 _, created = ProductIngredient.objects.update_or_create(
                     product=product,
@@ -1410,10 +1478,6 @@ def import_csv_view(request):
 
         # Job 완료 처리
         job.status = "done"
-        job.products = []
-        job.ingredients = {}
-        job.pi_rows = []
-        job.unmatched = []
         job.save()
         del request.session["import_job_id"]
 
@@ -1428,6 +1492,6 @@ def import_csv_view(request):
         return redirect("admin_import_csv")
 
     # ── GET ───────────────────────────────────────────────────────── #
-    job  = _get_job(request)
+    job = _get_job(request)
     data = _job_to_data(job) if job else None
     return render(request, "products/import_csv.html", {"data": data})
