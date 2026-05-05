@@ -7,7 +7,7 @@ from products.admin_views import (
     ingredient_form, ingredient_edit, ingredient_delete,
     other_ingredient_form, other_ingredient_edit, other_ingredient_delete,
     product_request_list, admin_product_request_delete,
-    ingredient_guide_form, ingredient_guide_edit, ingredient_guide_delete, import_csv_view
+    ingredient_guide_form, ingredient_guide_edit, ingredient_guide_delete, import_csv_view, import_csv_update_view
 )
 from products.admin_auth import admin_auth_required, admin_logout, admin_login_view
 
@@ -68,6 +68,7 @@ urlpatterns = [
 
     # ================== 데이터 수집 ===============
     path("import-csv/", admin_auth_required(import_csv_view), name="admin_import_csv"),
+    path("import-csv/update/", admin_auth_required(import_csv_update_view), name="admin_import_csv_update"),
 
     # ================= 배너 관리 =================
     path("banners/", include("common.admin.admin_urls")),
