@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
+from django.utils import timezone
 import random
 import string
 
@@ -55,3 +56,39 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = "users"
+
+class PhoneVerification(models.Model):
+    VERIFICATION_TYPE_SMS = "sms"
+    VERIFICATION_TYPE_OCTOMO = "octomo"
+    VERIFICATION_TYPE_CHOICES = [
+        (VERIFICATION_TYPE_SMS, "SMS"),
+        (VERIFICATION_TYPE_OCTOMO, "OCTOMO"),
+    ]
+
+    phone_number = models.CharField(max_length=20)
+    verification_type = models.CharField(max_length=10, choices=VERIFICATION_TYPE_CHOICES, default=VERIFICATION_TYPE_SMS)
+    verification_code = models.CharField(max_length=6, null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    daily_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "phone_verification"
+        indexes = [
+            models.Index(fields=["phone_number", "verification_type"]),
+        ]
+
+    def is_code_expired(self):
+        if not self.sent_at:
+            return True # 발송 기록 없으면 만료
+
+        return (timezone.now() - self.sent_at).total_seconds() > 300 # 5분 초과면 만료
+
+    def is_daily_limit_exceeded(self):
+        if not self.sent_at:
+            return False # 발송 기록 없으면 제한 안 걸림
+
+        if self.sent_at.date() < timezone.now().date():
+            return False # 날짜가 바뀌었으면 리셋 대상
+
+        return self.daily_count >= 10
