@@ -297,7 +297,7 @@ class OctomoVerificationView(APIView):
         # 2. 기존 레코드 조회 또는 생성
         obj, created = PhoneVerification.objects.get_or_create(
             phone_number=parsed_phone,
-            verification_type=PhoneVerification.VERIFICATION_TYPE_SMS,
+            verification_type=PhoneVerification.VERIFICATION_TYPE_OCTOMO,
             defaults={
                 'daily_count': 0,
                 'sent_at': None,
