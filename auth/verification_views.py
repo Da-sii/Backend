@@ -10,6 +10,8 @@ import os
 from users.models import PhoneVerification
 from .serializers import PhoneSendRequestSerializer, PhoneVerifyRequestSerializer
 import random
+import secrets
+import string
 from .verification_service import sms_service
 from .utils import parse_phone_number
 from .token_utils import generate_verification_token
@@ -230,6 +232,107 @@ class VerifyCodeView(APIView):
             'verification_token': token_data['token'],
             'expires_at': token_data['expires_at'],
             'expires_in_seconds': token_data['expires_in_seconds']
+        }, status=status.HTTP_200_OK)
+
+class OctomoVerificationView(APIView):
+    # 인증번호 발급 (Octomo)
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=PhoneSendRequestSerializer,
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'success': {'type': 'boolean'},
+                    'parsed_phone': {'type': 'string'},
+                    'code': {'type': 'string'},
+                    'message': {'type': 'string'},
+                }
+            },
+            400: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'}
+                }
+            },
+            429: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'},
+                    'remaining_requests': {'type': 'integer'}
+                }
+            },
+            500: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'},
+                    'details': {'type': 'string'}
+                }
+            }
+        },
+        tags=['전화번호 인증'],
+        summary='인증코드 발급 (Octomo)',
+        description='Octomo 본인인증용 32자리 인증코드를 발급합니다.'
+    )
+    def post(self, request):
+        phone_number = request.data.get('phone_number')
+
+        if not phone_number:
+            return Response(
+                {'error': '전화번호가 필요합니다.'},
+                status = status.HTTP_400_BAD_REQUEST
+            )
+
+        # 1. 전화번호 파싱
+        parsed_phone = parse_phone_number(phone_number)
+
+        if not parsed_phone:
+            return Response(
+                {'error': '유효하지 않은 전화번호 형식입니다.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. 기존 레코드 조회 또는 생성
+        obj, created = PhoneVerification.objects.get_or_create(
+            phone_number=parsed_phone,
+            verification_type=PhoneVerification.VERIFICATION_TYPE_SMS,
+            defaults={
+                'daily_count': 0,
+                'sent_at': None,
+            }
+        )
+
+        # 3. 하루 제한 확인
+        if obj.is_daily_limit_exceeded():
+            return Response(
+                {
+                    'error': f'하루 최대 {DAILY_LIMIT}회까지만 요청 가능합니다. 내일 다시 시도해주세요.',
+                    'remaining_requests': 0
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+
+        # 4. 날짜 바뀌었으면 daily_count 리셋
+        if obj.sent_at and obj.sent_at.date() < timezone.now().date():
+            obj.daily_count = 0
+
+        # 5. 인증코드 생성
+        chars = string.ascii_uppercase + string.digits
+        verification_code = ''.join(secrets.choice(chars) for _ in range(32))
+
+        # 6. DB 저장
+        obj.verification_code = verification_code
+        obj.sent_at = timezone.now()
+        obj.daily_count += 1
+        obj.save()
+
+        return Response({
+            'success': True,
+            'parsed_phone': parsed_phone,
+            'code': verification_code,
+            'message': '인증코드가 발급되었습니다. Octomo(1666-3538)로 문자를 보내주세요.',
         }, status=status.HTTP_200_OK)
 
 class DeleteInfoView(APIView):

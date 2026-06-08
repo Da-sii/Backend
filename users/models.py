@@ -67,7 +67,7 @@ class PhoneVerification(models.Model):
 
     phone_number = models.CharField(max_length=20)
     verification_type = models.CharField(max_length=10, choices=VERIFICATION_TYPE_CHOICES, default=VERIFICATION_TYPE_SMS)
-    verification_code = models.CharField(max_length=6, null=True, blank=True)
+    verification_code = models.CharField(max_length=32, null=True, blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)
     daily_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
