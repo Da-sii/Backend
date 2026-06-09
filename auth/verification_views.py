@@ -6,6 +6,8 @@ from drf_spectacular.utils import extend_schema
 from django.http import HttpResponse
 from django.utils import timezone
 import os
+import requests
+from django.conf import settings
 
 from users.models import PhoneVerification
 from .serializers import PhoneSendRequestSerializer, PhoneVerifyRequestSerializer
@@ -74,7 +76,7 @@ class PhoneVerificationView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # 1. 전화번호 파싱
+        # 전화번호 파싱
         parsed_phone = parse_phone_number(phone_number)
         
         if not parsed_phone:
@@ -83,7 +85,7 @@ class PhoneVerificationView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. 기존 레코드 조회 또는 생성
+        # 기존 레코드 조회 또는 생성
         obj, created = PhoneVerification.objects.get_or_create(
             phone_number=parsed_phone,
             verification_type=PhoneVerification.VERIFICATION_TYPE_SMS,
@@ -93,7 +95,7 @@ class PhoneVerificationView(APIView):
             }
         )
         
-        # 3. 하루 제한 확인
+        # 하루 제한 확인
         if obj.is_daily_limit_exceeded():
             return Response(
                 {
@@ -103,14 +105,14 @@ class PhoneVerificationView(APIView):
                 status=status.HTTP_429_TOO_MANY_REQUESTS
             )
 
-        # 4. 날짜 바뀌었으면 daily_count 리셋
+        # 날짜 바뀌었으면 daily_count 리셋
         if obj.sent_at and obj.sent_at.date() < timezone.now().date():
             obj.daily_count = 0
         
-        # 5. 인증번호 생성
+        # 인증번호 생성
         verification_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
         
-        # 6. SMS 발송
+        # SMS 발송
         sms_result = sms_service.send_verification_sms(parsed_phone, verification_code)
         
         if not sms_result['success']:
@@ -122,7 +124,7 @@ class PhoneVerificationView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-        # 7. DB 저장
+        # DB 저장
         obj.verification_code = verification_code
         obj.sent_at = timezone.now()
         obj.daily_count += 1
@@ -177,7 +179,7 @@ class VerifyCodeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # 1. 전화번호 파싱
+        # 전화번호 파싱
         parsed_phone = parse_phone_number(phone_number)
         
         if not parsed_phone:
@@ -186,7 +188,7 @@ class VerifyCodeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. DB에서 레코드 조회
+        # DB에서 레코드 조회
         try:
             obj = PhoneVerification.objects.get(
                 phone_number=parsed_phone,
@@ -198,14 +200,14 @@ class VerifyCodeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # 3. 인증번호 존재 여부 확인
+        # 인증번호 존재 여부 확인
         if not obj.verification_code:
             return Response(
                 {'error': '인증번호가 만료되었습니다. 다시 발송해주세요.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # 4. 만료 확인
+        # 만료 확인
         if obj.is_code_expired():
             obj.verification_code = None
             obj.save(update_fields=['verification_code'])
@@ -214,14 +216,14 @@ class VerifyCodeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # 5. 인증번호 검증
+        # 인증번호 검증
         if obj.verification_code != verification_code:
             return Response(
                 {'error': '인증번호가 일치하지 않습니다.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 6. 인증 성공 - 인증번호 삭제 + JWT 발급
+        # 인증 성공 - 인증번호 삭제 + JWT 발급
         obj.delete()
 
         token_data = generate_verification_token(parsed_phone)
@@ -285,7 +287,7 @@ class OctomoVerificationView(APIView):
                 status = status.HTTP_400_BAD_REQUEST
             )
 
-        # 1. 전화번호 파싱
+        # 전화번호 파싱
         parsed_phone = parse_phone_number(phone_number)
 
         if not parsed_phone:
@@ -294,7 +296,7 @@ class OctomoVerificationView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. 기존 레코드 조회 또는 생성
+        # 기존 레코드 조회 또는 생성
         obj, created = PhoneVerification.objects.get_or_create(
             phone_number=parsed_phone,
             verification_type=PhoneVerification.VERIFICATION_TYPE_OCTOMO,
@@ -304,7 +306,7 @@ class OctomoVerificationView(APIView):
             }
         )
 
-        # 3. 하루 제한 확인
+        # 하루 제한 확인
         if obj.is_daily_limit_exceeded():
             return Response(
                 {
@@ -314,15 +316,15 @@ class OctomoVerificationView(APIView):
                 status=status.HTTP_429_TOO_MANY_REQUESTS
             )
 
-        # 4. 날짜 바뀌었으면 daily_count 리셋
+        # 날짜 바뀌었으면 daily_count 리셋
         if obj.sent_at and obj.sent_at.date() < timezone.now().date():
             obj.daily_count = 0
 
-        # 5. 인증코드 생성
+        # 인증코드 생성
         chars = string.ascii_uppercase + string.digits
         verification_code = ''.join(secrets.choice(chars) for _ in range(32))
 
-        # 6. DB 저장
+        # DB 저장
         obj.verification_code = verification_code
         obj.sent_at = timezone.now()
         obj.daily_count += 1
@@ -333,6 +335,130 @@ class OctomoVerificationView(APIView):
             'parsed_phone': parsed_phone,
             'code': verification_code,
             'message': '인증코드가 발급되었습니다. Octomo(1666-3538)로 문자를 보내주세요.',
+        }, status=status.HTTP_200_OK)
+
+class OctomoVerifyView(APIView):
+    # 수신 여부 확인 후 verification_token 발급
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=PhoneSendRequestSerializer,
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'success': {'type': 'boolean'},
+                    'message': {'type': 'string'},
+                    'verification_token': {'type': 'string'},
+                    'expires_at': {'type': 'string'},
+                    'expires_in_seconds': {'type': 'integer'},
+                }
+            },
+            400: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'}
+                }
+            },
+            500: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'}
+                }
+            }
+        },
+        tags=['전화번호 인증'],
+        summary='수신 여부 확인 (Octomo)',
+        description='사용자가 옥토모 번호(1666-3538)로 문자를 보낸 후 인증 여부를 확인합니다.'
+    )
+    def post(self, request):
+        phone_number = request.data.get('phone_number')
+
+        if not phone_number:
+            return Response(
+                {'error': '전화번호가 필요합니다.'},
+                status = status.HTTP_400_BAD_REQUEST
+            )
+
+        # 전화번호 파싱
+        parsed_phone = parse_phone_number(phone_number)
+
+        if not parsed_phone:
+            return Response(
+                {'error': '유효하지 않은 전화번호 형식입니다.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # DB에서 레코드 조회
+        try:
+            obj = PhoneVerification.objects.get(
+                phone_number=parsed_phone,
+                verification_type=PhoneVerification.VERIFICATION_TYPE_OCTOMO,
+            )
+        except PhoneVerification.DoesNotExist:
+            return Response(
+                {'error': '인증코드를 먼저 발급해주세요.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 인증코드 존재 여부 확인
+        if not obj.verification_code:
+            return Response(
+                {'error': '인증코드가 만료되었습니다. 다시 발급해주세요.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 만료 확인
+        if obj.is_code_expired():
+            obj.verification_code = None
+            obj.save(update_fields=['verification_code'])
+
+            return Response(
+                {'error': '인증코드가 만료되었습니다. (5분 초과)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Octomo API 호출
+        try:
+            res = requests.post(
+                'https://api.octoverse.kr/octomo/v1/public/message/exists',
+                headers={
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Octomo {settings.OCTOMO_API_KEY}',
+                },
+                json={
+                    'mobileNum': parsed_phone.replace('-', ''),
+                    'text': obj.verification_code,
+                },
+                timeout=5, # 5초 안에 서버 응답이 없을 경우 에러 발생
+            )
+        except requests.exceptions.RequestException as e:
+            return Response(
+                {'error': f'Octomo API 호출 실패: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        verified = res.json().get('exists', False)
+
+        if not verified:
+            return Response(
+                {'verified': False, 'error': '인증에 실패했습니다. 문자를 보내셨나요?'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 인증 성공 - row 삭제 + JWT 발급
+        obj.delete()
+
+        token_data = generate_verification_token(parsed_phone)
+
+        return Response({
+            'success': True,
+            'message': '인증이 완료되었습니다.',
+            'verification_token': token_data['token'],
+            'expires_at': token_data['expires_at'],
+            'expires_in_seconds': token_data['expires_in_seconds']
         }, status=status.HTTP_200_OK)
 
 class DeleteInfoView(APIView):

@@ -9,8 +9,11 @@ urlpatterns = [
     # 인증번호 검증 API (sms)
     path('verify/', verification_views.VerifyCodeView.as_view(), name='verify-code'),
 
-# 인증코드 발급 API (Octomo)
+    # 인증코드 발급 API (Octomo)
     path('octomo/send/', verification_views.OctomoVerificationView.as_view(), name='octomo-verification-send'),
+
+    # 수신 여부 확인 API (Octomo)
+    path('octomo/verify/', verification_views.OctomoVerifyView.as_view(), name='octomo-verify'),
     
     # 인증 토큰 검증 API
     path('token/verify/', verification_token_views.VerificationTokenView.as_view(), name='verify-token'),
