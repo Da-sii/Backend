@@ -46,6 +46,9 @@ APPLE_KEY_ID = os.getenv("APPLE_KEY_ID", "J3MCT3RYAZ")
 # Openapi
 FOOD_API_KEY = os.getenv("FOOD_API_KEY", "")
 
+# Octomo
+OCTOMO_API_KEY = os.getenv("OCTOMO_API_KEY", "")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -53,7 +56,7 @@ FOOD_API_KEY = os.getenv("FOOD_API_KEY", "")
 SECRET_KEY = "django-insecure-qh4(yxhfzw-@f+9^5-0m&izs@o9g#*#7&*4!-m#dhu11j*xr2k"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["dasii.kr", "www.dasii.kr", "127.0.0.1", "localhost", "10.0.2.2"]
 
