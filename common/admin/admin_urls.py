@@ -4,4 +4,6 @@ from common.admin import admin_views
 urlpatterns = [
     path("", admin_views.banner_list_view, name="admin_banner_list"),
     path("delete/<int:banner_id>/", admin_views.banner_delete_view, name="admin_banner_delete"),
+    path("<int:banner_id>/detail/add/", admin_views.banner_detail_add_view, name="admin_banner_detail_add"),
+    path("detail/delete/<int:detail_id>/", admin_views.banner_detail_delete_view, name="admin_banner_detail_delete"),
 ]
