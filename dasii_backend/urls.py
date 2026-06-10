@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from common import views as common_views
+from common.views import apple_app_site_association, assetlinks
 from . import views
 
 urlpatterns = [
@@ -22,6 +23,7 @@ urlpatterns = [
     path("review/", include("review.urls")), # review 앱 라우팅
     path("banners/", include("common.urls") ), # 메인 배너
 
-    path('', include('common.urls')), # deep link
+    path('.well-known/apple-app-site-association', apple_app_site_association),
+    path('.well-known/assetlinks.json', assetlinks),
     path('product/<int:product_id>/', common_views.product_fallback),
 ]
