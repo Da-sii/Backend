@@ -15,10 +15,20 @@ class BannerListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        banners = Banner.objects.filter(is_active=True).values(
-            'id', 'image_url', 'detail_image_url', 'order'
-        )
-        return Response(list(banners))
+        banners = Banner.objects.filter(is_active=True).prefetch_related('details')
+        data = [
+            {
+                'id': banner.id,
+                'image_url': banner.image_url,
+                'order': banner.order,
+                'detail_images': [
+                    {'id': d.id, 'detail_image_url': d.detail_image_url, 'order': d.order}
+                    for d in banner.details.all()
+                ],
+            }
+            for banner in banners
+        ]
+        return Response(data)
 
 def apple_app_site_association(request):
     data = {
