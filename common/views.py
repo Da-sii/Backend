@@ -21,6 +21,7 @@ class BannerListView(APIView):
                 'id': banner.id,
                 'image_url': banner.image_url,
                 'order': banner.order,
+                'detail_image_url': banner.details.first().detail_image_url if banner.details.exists() else None,
                 'detail_images': [
                     {'id': d.id, 'detail_image_url': d.detail_image_url, 'order': d.order}
                     for d in banner.details.all()
