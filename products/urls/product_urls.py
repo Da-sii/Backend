@@ -1,7 +1,7 @@
 from django.urls import path
 
 from products.views import ProductDetailView, ProductRankingView, ProductRankingCategoryView, ProductListView, \
-    ProductCategoryView, ProductSearchView, MainView, UploadProductImageView, ProductRequestView
+    ProductCategoryView, ProductSearchView, MainView, UploadProductImageView, ProductRequestView, CoupangRedirectView
 
 urlpatterns = [
     path("ranking/", ProductRankingView.as_view(), name="product_ranking"),
@@ -11,6 +11,7 @@ urlpatterns = [
     path("search/", ProductSearchView.as_view(), name="product_search"),
     path("main/", MainView.as_view(), name="product_main"),
     path("<int:id>/images/", UploadProductImageView.as_view(), name="product_image_add"),
+    path("<int:id>/coupang/", CoupangRedirectView.as_view(), name="product_coupang_redirect"),
     path("<int:id>/", ProductDetailView.as_view(), name="product_detail"),
     path("request/", ProductRequestView.as_view(), name="product_request"),
 ]
