@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import NotFound, ValidationError
 from django.utils import timezone
+from django.shortcuts import redirect
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
@@ -17,7 +18,7 @@ from products.serializers import ProductDetailSerializer, ProductSearchSerialize
     ProductsListSerializer, MainSerializer, ProductRequestSerializer
 from products.serializers.ingredient import MainRandomGuideSerializer
 from products.utils import record_view, upload_images_to_s3
-
+from products.coupang import search_top_product_url, debug_search
 
 # 제품 상세 (GET /products/<id>/)
 class ProductDetailView(generics.RetrieveAPIView):
@@ -463,7 +464,6 @@ class MainView(APIView):
 
         return Response(response)
 
-
 # 제품 이미지 등록
 class UploadProductImageView(APIView):
     permission_classes = [AllowAny]
@@ -491,7 +491,6 @@ class UploadProductImageView(APIView):
 
         return Response({"success": True, "message": f"{len(uploaded_images)}개의 이미지가 등록되었습니다."}, status=201)
 
-
 # 제품 추가 요청
 class ProductRequestView(generics.CreateAPIView):
     queryset = ProductRequest.objects.all()
@@ -507,3 +506,34 @@ class ProductRequestView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+# 쿠팡 연동
+class CoupangRedirectView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="쿠팡 파트너스 리다이렉트",
+        description="제품 ID를 받아 쿠팡 rank 1 상품 URL로 리다이렉트 `?debug=1` 추가 시 리다이렉트 없이 요청/응답 전체를 JSON으로 반환.",
+        parameters=[
+            OpenApiParameter("id", OpenApiTypes.INT, OpenApiParameter.PATH, description="제품 ID"),
+            OpenApiParameter("debug", OpenApiTypes.INT, OpenApiParameter.QUERY, description="1이면 리다이렉트 없이 API 요청·응답 JSON 반환", required=False),
+        ],
+        responses={200: None, 302: None, 404: None},
+        tags=["제품"],
+    )
+    def get(self, request, id):
+        product = Product.objects.filter(id=id).values("name", "company").first()
+        if not product:
+            raise NotFound("존재하지 않는 제품입니다.")
+
+        keyword = f"{product['company']} {product['name']}"
+
+        if request.query_params.get("debug"):
+            return Response({"keyword": keyword, **debug_search(keyword)})
+
+        product_url = search_top_product_url(keyword)
+
+        if not product_url:
+            return Response({"error": "쿠팡 검색 결과가 없습니다."}, status=404)
+
+        return redirect(product_url)

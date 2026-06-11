@@ -3,7 +3,6 @@ from django.db import IntegrityError
 from common.models import Banner, BannerDetail
 from common.utils import upload_banner_to_s3
 
-
 def banner_list_view(request):
     error = None
 
@@ -22,12 +21,10 @@ def banner_list_view(request):
     banners = Banner.objects.prefetch_related('details').all()
     return render(request, "common/admin_banner.html", {"banners": banners, "error": error})
 
-
 def banner_delete_view(request, banner_id):
     banner = get_object_or_404(Banner, id=banner_id)
     banner.delete()
     return redirect("admin_banner_list")
-
 
 def banner_detail_add_view(request, banner_id):
     banner = get_object_or_404(Banner, id=banner_id)
@@ -47,7 +44,6 @@ def banner_detail_add_view(request, banner_id):
 
     banners = Banner.objects.prefetch_related('details').all()
     return render(request, "common/admin_banner.html", {"banners": banners, "error": error, "error_banner_id": banner_id})
-
 
 def banner_detail_delete_view(request, detail_id):
     detail = get_object_or_404(BannerDetail, id=detail_id)
