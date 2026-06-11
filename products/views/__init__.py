@@ -1,2 +1,2 @@
-from .product import ProductDetailView, ProductRankingView, ProductRankingCategoryView, ProductListView, ProductSearchView, MainView, UploadProductImageView, ProductRequestView
+from .product import ProductDetailView, ProductRankingView, ProductRankingCategoryView, ProductListView, ProductSearchView, MainView, UploadProductImageView, ProductRequestView, CoupangRedirectView
 from .category import ProductCategoryView

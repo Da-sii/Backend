@@ -49,6 +49,10 @@ FOOD_API_KEY = os.getenv("FOOD_API_KEY", "")
 # Octomo
 OCTOMO_API_KEY = os.getenv("OCTOMO_API_KEY", "")
 
+# Coupang Partners
+COUPANG_ACCESS_KEY = os.getenv("COUPANG_ACCESS_KEY", "")
+COUPANG_SECRET_KEY = os.getenv("COUPANG_SECRET_KEY", "")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
