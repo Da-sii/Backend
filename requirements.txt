@@ -12,3 +12,5 @@ django-cors-headers
 git+https://github.com/coolsms/python-sdk.git
 requests==2.31.0
 sentry-sdk==2.51.0
+google-genai
+python-dotenv
