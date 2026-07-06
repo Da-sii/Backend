@@ -182,3 +182,8 @@ AuthKey_*.p8
 
 # Claude Code
 CLAUDE.md
+
+# DB export 결과물
+ingredients_export.json
+products_export.json
+products/management/commands/export_data.py
