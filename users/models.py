@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 import random
 import string
 
@@ -92,3 +94,72 @@ class PhoneVerification(models.Model):
             return False # 날짜가 바뀌었으면 리셋 대상
 
         return self.daily_count >= 10
+
+GOAL_CHOICES = [
+    "체지방 감소", "근육 증가", "피로 회복",
+    "면역 강화", "소화 개선", "혈당 관리", "기타",
+]
+
+AGE_RANGE_CHOICES = [
+    ("10s", "10대"), ("20s", "20대"), ("30s", "30대"),
+    ("40s", "40대"), ("50s", "50대"), ("60s+", "60대 이상"),
+]
+
+GENDER_CHOICES = [("M", "남성"), ("F", "여성"), ("N", "선택 안 함")]
+
+EXERCISE_CHOICES = [
+    ("none", "거의 안 함"), ("1_2", "주 1~2회"), ("3_plus", "주 3회 이상"),
+]
+
+CAFFEINE_CHOICES = [
+    ("sensitive", "예민한 편"), ("normal", "보통"), ("none", "상관없음"),
+]
+
+SLEEP_CHOICES = [
+    ("8_plus", "8시간 이상"), ("5_7", "5~7시간"), ("1_4", "1~4시간"),
+]
+
+MEAL_CHOICES = [
+    ("regular", "규칙적"), ("irregular", "불규칙한 편"), ("diet", "다이어트 중"),
+]
+
+ALCOHOL_CHOICES = [
+    ("none", "거의 안 함"), ("1_2", "주 1~2회"), ("3_plus", "주 3회 이상"),
+]
+
+SMOKING_CHOICES = [
+    ("none", "비흡연"), ("smoking", "흡연"), ("quitting", "금연 중"),
+]
+
+def validate_goals(value):
+    invalid = [goal for goal in value if goal not in GOAL_CHOICES]
+    if invalid:
+        raise ValidationError(f"허용되지 않는 목표입니다: {invalid}")
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile"
+    )
+
+    goals = models.JSONField(default=list, validators=[validate_goals])
+    age_range = models.CharField(max_length=10, choices=AGE_RANGE_CHOICES)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    exercise_frequency = models.CharField(max_length=10, choices=EXERCISE_CHOICES)
+    caffeine_sensitivity = models.CharField(max_length=10, choices=CAFFEINE_CHOICES)
+    sleep_hours = models.CharField(max_length=10, choices=SLEEP_CHOICES)
+    meal_regularity = models.CharField(max_length=10, choices=MEAL_CHOICES)
+    alcohol_frequency = models.CharField(max_length=10, choices=ALCOHOL_CHOICES)
+    smoking_status = models.CharField(max_length=10, choices=SMOKING_CHOICES)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "user_profiles"
+        verbose_name = "사용자 프로필"
+        verbose_name_plural = "사용자 프로필 목록"
+
+    def __str__(self):
+        return f"{self.user.email}의 프로필"
