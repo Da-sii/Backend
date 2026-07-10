@@ -535,46 +535,53 @@ def product_list(request):
                         upload_images_to_s3(product, image_files)
                     )
 
-                # 성분 + 용량 → ProductIngredient
+                # 성분 + 용량 → ProductIngredient (같은 성분 중복 선택 시 unique 위반 방지)
                 ingredient_ids = request.POST.getlist("ingredient_ids[]")
                 amounts = request.POST.getlist("amounts[]")
+                seen_ing = set()
                 for ingredient_id, amount in zip(ingredient_ids, amounts):
                     ingredient_id = ingredient_id.strip()
                     amount = amount.strip()
-                    if ingredient_id and amount:
-                        try:
-                            ingredient = Ingredient.objects.get(id=ingredient_id)
-                        except (Ingredient.DoesNotExist, ValueError):
-                            continue
-                        ProductIngredient.objects.create(
-                            product=product,
-                            ingredient=ingredient,
-                            amount=amount,
-                        )
+                    if not (ingredient_id and amount) or ingredient_id in seen_ing:
+                        continue
+                    try:
+                        ingredient = Ingredient.objects.get(id=ingredient_id)
+                    except (Ingredient.DoesNotExist, ValueError):
+                        continue
+                    seen_ing.add(ingredient_id)
+                    ProductIngredient.objects.create(
+                        product=product,
+                        ingredient=ingredient,
+                        amount=amount,
+                    )
 
-                # 기타 원료 → ProductOtherIngredient
+                # 기타 원료 → ProductOtherIngredient (같은 원료 중복 선택 시 unique 위반 방지)
+                seen_oi = set()
                 for oi_id in request.POST.getlist("other_ingredient_ids[]"):
                     oi_id = oi_id.strip()
-                    if not oi_id:
+                    if not oi_id or oi_id in seen_oi:
                         continue
                     try:
                         oi = OtherIngredient.objects.get(id=oi_id)
                     except (OtherIngredient.DoesNotExist, ValueError):
                         continue
+                    seen_oi.add(oi_id)
                     ProductOtherIngredient.objects.create(
                         product=product,
                         other_ingredient=oi,
                     )
 
-                # 소분류 카테고리 → CategoryProduct
+                # 소분류 카테고리 → CategoryProduct (같은 카테고리 중복 선택 시 unique 위반 방지)
+                seen_cat = set()
                 for category_id in request.POST.getlist("category_ids[]"):
                     category_id = category_id.strip()
-                    if not category_id:
+                    if not category_id or category_id in seen_cat:
                         continue
                     try:
                         category = SmallCategory.objects.get(id=category_id)
                     except (SmallCategory.DoesNotExist, ValueError):
                         continue
+                    seen_cat.add(category_id)
                     CategoryProduct.objects.create(
                         product=product,
                         category=category,
