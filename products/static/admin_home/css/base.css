@@ -1,0 +1,156 @@
+/* =============================================================
+   base.css — reset + 폰트 로드 + 기본 타이포 + 텍스트 유틸
+   ⚠️ 18px floor: 어떤 요소도 18px 미만 폰트를 쓰지 않는다.
+   ============================================================= */
+
+/* ---------------------------------------------------------
+   @font-face — Nanum Square Neo Variable
+   폰트 파일이 아직 없어도 fallback 스택으로 정상 렌더된다.
+   (파일을 products/static/admin_home/fonts/ 에 넣으면 자동 적용)
+   --------------------------------------------------------- */
+@font-face {
+  font-family: "NanumSquareNeo";
+  src: url("../fonts/NanumSquareNeo-Variable.woff2") format("woff2-variations"),
+    url("../fonts/NanumSquareNeo-Variable.woff2") format("woff2");
+  font-weight: 400 800; /* Variable: Regular ~ Extrabold */
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------------------------------------------------------
+   Reset (최소한)
+   --------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-base);
+  /* 기본 body 텍스트 = text-sm(18px) : floor */
+  font-size: var(--fs-text-sm);
+  line-height: var(--lh-text-sm);
+  font-weight: var(--font-weight-regular);
+  color: var(--text-default);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+svg {
+  max-width: 100%;
+  display: block;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  /* 폼 요소도 18px floor */
+  font-size: var(--fs-text-sm);
+  line-height: var(--lh-text-sm);
+  color: inherit;
+}
+
+/* placeholder / 각주 / 툴팁 등 작은 텍스트도 18px 미만 금지 */
+::placeholder {
+  font-size: var(--fs-text-sm);
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------
+   타이포 유틸 클래스 (컴포넌트/템플릿에서 사용하는 공개 API)
+   --------------------------------------------------------- */
+.text-display {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  font-weight: var(--font-weight-regular); /* ref1: hero는 가벼운 웨이트 */
+  letter-spacing: -0.01em;
+}
+.text-title-lg {
+  font-size: var(--fs-title-lg);
+  line-height: var(--lh-title-lg);
+  font-weight: var(--font-weight-extrabold);
+}
+.text-title-md {
+  font-size: var(--fs-title-md);
+  line-height: var(--lh-title-md);
+  font-weight: var(--font-weight-bold);
+}
+.text-title-sm {
+  font-size: var(--fs-title-sm);
+  line-height: var(--lh-title-sm);
+  font-weight: var(--font-weight-bold);
+}
+.text-body-lg {
+  font-size: var(--fs-text-lg);
+  line-height: var(--lh-text-lg);
+  font-weight: var(--font-weight-regular);
+}
+.text-body {
+  font-size: var(--fs-text-md);
+  line-height: var(--lh-text-md);
+  font-weight: var(--font-weight-regular);
+}
+.text-body-sm {
+  font-size: var(--fs-text-sm);
+  line-height: var(--lh-text-sm);
+  font-weight: var(--font-weight-regular);
+}
+.text-caption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: var(--font-weight-regular);
+}
+
+/* 웨이트 유틸 */
+.fw-regular { font-weight: var(--font-weight-regular); }
+.fw-bold { font-weight: var(--font-weight-bold); }
+.fw-extrabold { font-weight: var(--font-weight-extrabold); }
+
+/* 색 유틸 */
+.text-strong { color: var(--text-strong); }
+.text-muted { color: var(--text-muted); }
+.text-on-glass { color: var(--text-on-glass); }
+.text-brand { color: var(--brand-primary); }
+
+/* ---------------------------------------------------------
+   접근성: 키보드 포커스 링 (모든 상호작용 요소 공통)
+   --------------------------------------------------------- */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}

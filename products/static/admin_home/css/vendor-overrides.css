@@ -1,0 +1,75 @@
+/* =============================================================
+   vendor-overrides.css — CDN 위젯 유리 테마 오버라이드
+   현재 일부 폼에서 select2(jsdelivr)를 쓰므로, 그 위젯을
+   /admin/home 유리 테마 + 18px 폰트에 맞춰 오버라이드한다.
+   ⚠️ raw hex 금지: 토큰만 참조.
+   ============================================================= */
+
+/* 선택 컨테이너(닫힌 상태) */
+.admin-home .select2-container--default .select2-selection--single,
+.admin-home .select2-container--default .select2-selection--multiple {
+  min-height: calc(var(--space-6) + var(--space-1));
+  padding: var(--space-1) var(--space-2);
+  background: var(--glass-bg-subtle);
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--text-on-glass);
+}
+
+.admin-home .select2-container--default .select2-selection--single .select2-selection__rendered {
+  font-size: var(--fs-text-sm); /* 18px floor */
+  line-height: var(--lh-text-sm);
+  color: var(--text-on-glass);
+}
+
+.admin-home .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 100%;
+}
+
+/* 드롭다운 패널 */
+.select2-dropdown {
+  background: var(--glass-bg-fallback);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-glass);
+}
+
+/* 검색 입력 */
+.select2-container--default .select2-search--dropdown .select2-search__field {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-text-sm); /* 18px floor */
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-default);
+}
+
+/* 옵션 항목 */
+.select2-container--default .select2-results__option {
+  font-size: var(--fs-text-sm); /* 18px floor */
+  line-height: var(--lh-text-sm);
+  color: var(--text-default);
+  padding: var(--space-2) var(--space-3);
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background: var(--brand-primary);
+  color: var(--color-green-950);
+}
+.select2-container--default .select2-results__option[aria-selected="true"] {
+  background: var(--color-green-100);
+  color: var(--text-strong);
+}
+
+/* 다중선택 태그 */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background: var(--brand-primary);
+  color: var(--color-green-950);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-text-sm); /* 18px floor */
+  padding: var(--space-1) var(--space-2);
+}

@@ -1,0 +1,14 @@
+{% comment %}
+  부분 로딩(AJAX) 전용 셸 — 전체 HTML 문서/상단 탭 바 없이,
+  #ah-content 안에 들어갈 내용만 렌더한다.
+  X-Partial-Nav 헤더가 붙은 요청일 때 admin_home 뷰가 base 대신 이 템플릿으로 확장한다.
+  (base.html 과 동일한 블록 이름을 사용 → 페이지 템플릿은 수정 없이 그대로 재사용된다.)
+
+  포함 순서: 제목 마커 → 페이지 전용 CSS(extra_head) → 콘텐츠 → 페이지 전용 JS(extra_js).
+  partial-nav.js 가 스왑 후 data-ah-title 로 document.title 을 갱신하고,
+  삽입된 <script> 를 재실행한다. (<style> 은 innerHTML 삽입만으로 적용됨)
+{% endcomment %}
+<span data-ah-title="{% block title %}Admin Home{% endblock %}" hidden></span>
+{% block extra_head %}{% endblock %}
+{% block content %}{% endblock %}
+{% block extra_js %}{% endblock %}
