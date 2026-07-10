@@ -11,16 +11,6 @@
 {% block title %}제품 · DASII{% endblock %}
 
 {% block content %}
-<section class="glass-panel reveal" style="margin-bottom: var(--space-6);">
-  <p class="text-caption" style="color: var(--glass-highlight);">제품 관리</p>
-  <h1 class="text-title-lg">제품 리스트</h1>
-  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 60ch;">
-    등록된 제품을 확인하고 새 제품을 추가합니다. 제품 수정·삭제는 기존 admin 편집기에서 진행합니다.
-  </p>
-  <div style="margin-top: var(--space-3); display:flex; gap: var(--space-2); flex-wrap: wrap;">
-    <button type="button" class="btn btn-primary" data-modal-open="product-create-modal">제품 추가</button>
-  </div>
-</section>
 
 {# 제품 추가 모달 — 위 "제품 추가" 버튼 클릭 시 열림(interactions.js). #}
 <div class="ah-modal" id="product-create-modal" aria-hidden="true">
