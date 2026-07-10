@@ -1,0 +1,201 @@
+{% extends base_template|default:"admin_home/base.html" %}
+{% comment %}
+  /admin/home 랜딩(홈). 로그인 후 진입 지점.
+  신규 관리자 기능은 이 아래(/admin/home/<name>/)에 추가된다.
+{% endcomment %}
+
+{% block title %}Admin Home · DASII{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* 가입 추이 미니 차트 — 토큰만 사용, 외부 라이브러리 없음 */
+  .sc-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+  }
+  .sc-stat {
+    flex: 1 1 160px;
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+  }
+  .sc-stat__label { color: var(--glass-highlight); }
+  .sc-stat__value { margin-top: var(--space-1); }
+
+  .sc-chart { margin-top: var(--space-4); }
+  .sc-chart__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+
+  /* 신규 가입 막대 */
+  .sc-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-1);
+    height: 140px;
+    padding-top: var(--space-2);
+  }
+  .sc-bar {
+    flex: 1 1 0;
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+    min-width: 0;
+  }
+  .sc-bar__fill {
+    width: 100%;
+    min-height: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--gradient-bar);
+    transition: opacity var(--transition-base);
+  }
+  .sc-bar:hover .sc-bar__fill { opacity: 0.75; }
+
+  /* 누적 총합 스파크라인 */
+  .sc-spark { margin-top: var(--space-6); }
+  .sc-spark__svg {
+    display: block;
+    width: 100%;
+    height: 64px;
+  }
+  .sc-spark__area { fill: var(--color-green-500); opacity: 0.14; }
+  .sc-spark__line {
+    fill: none;
+    stroke: var(--color-green-500);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .sc-axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-2);
+    color: var(--glass-highlight);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="glass-panel reveal" style="margin-bottom: var(--space-6);">
+  <p class="text-caption" style="color: var(--glass-highlight);">DASII Admin</p>
+  <h1 class="text-display">Admin Home</h1>
+  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 46ch;">
+    관리자 홈입니다. 앞으로 새 관리 기능은 이 화면 아래(<b>/admin/home</b>)에 하나씩 추가됩니다.
+  </p>
+</section>
+
+<section class="ah-grid" data-reveal-stagger>
+  {# Style Guide 카드 → 제품 추가 요청 카드로 교체. 클릭 시 목록 모달을 연다. #}
+  <button type="button" class="glass-card reveal" data-modal-open="pr-modal"
+          style="text-align:left; cursor:pointer; font-family:inherit; width:100%;">
+    <h3 class="glass-card__title">제품 추가 요청</h3>
+    <p class="glass-card__desc">사용자가 보낸 제품 추가 요청을 확인합니다. ({{ product_requests|length }}건)</p>
+    <div class="glass-card__icon" aria-hidden="true">📨</div>
+  </button>
+  {% include "admin_home/components/_card.html" with title="곧 추가됩니다" desc="신규 관리 기능이 여기에 배치됩니다." icon="✨" %}
+</section>
+
+{# 가입 추이 미니 차트 — 최근 30일 신규 가입(막대) + 누적 총 회원(스파크라인) #}
+<section class="glass-panel reveal" style="margin-top: var(--space-6);">
+  <div class="sc-chart__head">
+    <h2 class="text-title-md">가입 추이</h2>
+    <span class="text-body-sm" style="color: var(--glass-highlight);">
+      최근 {{ signup_chart.days }}일 · KST 기준
+    </span>
+  </div>
+
+  <div class="sc-stats">
+    <div class="sc-stat">
+      <p class="sc-stat__label text-body-sm">최근 {{ signup_chart.days }}일 신규</p>
+      <p class="sc-stat__value text-title-lg">{{ signup_chart.new_total }}<span class="text-body-sm">명</span></p>
+    </div>
+    <div class="sc-stat">
+      <p class="sc-stat__label text-body-sm">오늘 신규</p>
+      <p class="sc-stat__value text-title-lg">{{ signup_chart.today_new }}<span class="text-body-sm">명</span></p>
+    </div>
+    <div class="sc-stat">
+      <p class="sc-stat__label text-body-sm">누적 총 회원</p>
+      <p class="sc-stat__value text-title-lg">{{ signup_chart.grand_total }}<span class="text-body-sm">명</span></p>
+    </div>
+  </div>
+
+  <div class="sc-chart">
+    <div class="sc-chart__head">
+      <span class="text-body-sm">일자별 신규 가입</span>
+    </div>
+    <div class="sc-bars" role="img"
+         aria-label="최근 {{ signup_chart.days }}일 일자별 신규 가입 수 막대 그래프">
+      {% for p in signup_chart.points %}
+      <div class="sc-bar"
+           title="{{ p.date|date:'n/j' }} · 신규 {{ p.new }}명 · 누적 {{ p.total }}명">
+        <div class="sc-bar__fill" style="height: {{ p.bar_pct }}%;"></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="sc-axis">
+      <span class="text-caption">{{ signup_chart.start_date|date:'n/j' }}</span>
+      <span class="text-caption">{{ signup_chart.end_date|date:'n/j' }}</span>
+    </div>
+  </div>
+
+  <div class="sc-spark">
+    <div class="sc-chart__head">
+      <span class="text-body-sm">누적 총 회원</span>
+    </div>
+    <svg class="sc-spark__svg" viewBox="0 0 {{ signup_chart.spark_w }} {{ signup_chart.spark_h }}"
+         preserveAspectRatio="none" role="img"
+         aria-label="최근 {{ signup_chart.days }}일 누적 총 회원 수 추이">
+      {% if signup_chart.spark_area %}
+      <polygon class="sc-spark__area" points="{{ signup_chart.spark_area }}"></polygon>
+      {% endif %}
+      <polyline class="sc-spark__line" vector-effect="non-scaling-stroke"
+                points="{{ signup_chart.spark_points }}"></polyline>
+    </svg>
+  </div>
+</section>
+
+{# 제품 추가 요청 목록 모달 — 카드 클릭 시 열림(interactions.js) #}
+<div class="ah-modal" id="pr-modal" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="pr-modal-title">
+    <div class="ah-modal__head">
+      <h2 id="pr-modal-title" class="text-title-md">제품 추가 요청</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      {% for req in product_requests %}
+      <article class="ah-request">
+        <div class="ah-request__top">
+          <span class="ah-request__id text-body-sm">요청 #{{ req.id }}</span>
+          <span class="ah-request__user text-body-sm">
+            {% if req.user %}요청자: {{ req.user }}{% else %}요청자: 비회원{% endif %}
+          </span>
+        </div>
+        <p class="ah-request__content text-body-sm">{{ req.content }}</p>
+        <div class="ah-request__foot">
+          <span class="ah-request__date text-caption">요청일: {{ req.created_at|date:"Y-m-d H:i" }}</span>
+          <form method="POST" action="{% url 'admin_home' %}"
+                onsubmit="return confirm('이 제품 추가 요청을 삭제하시겠습니까?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="id" value="{{ req.id }}" />
+            <button type="submit" class="btn btn-danger">삭제</button>
+          </form>
+        </div>
+      </article>
+      {% empty %}
+      <p class="text-body-sm">아직 제품 추가 요청이 없습니다.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
