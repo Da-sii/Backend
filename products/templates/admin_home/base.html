@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Admin Home{% endblock %}</title>
+
+  {# ── 디자인 시스템: 토큰 → base → glass → components → toast → animations → vendor ── #}
+  <link rel="stylesheet" href="{% static 'admin_home/css/tokens.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/base.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/glass.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/components.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/toast.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/animations.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/vendor-overrides.css' %}" />
+
+  <style>
+    /* 배경은 토큰으로 분리 → 페이지/이미지 교체가 쉽도록 */
+    html, body { min-height: 100%; }
+    body.admin-home {
+      background-color: var(--admin-bg-color);
+      background-image: var(--admin-bg-image), var(--admin-bg-gradient);
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: var(--text-on-glass);
+    }
+    .admin-home__main {
+      min-height: 100vh;
+      padding: var(--space-6) 0 var(--space-8);
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="admin-home">
+  {# 토스트 알림 — Django messages 를 우측 상단에서 잠시 보여주고 자동으로 닫는다 #}
+  <div class="ah-toast-container" aria-live="polite" aria-atomic="true">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="ah-toast" data-toast-tag="{{ message.tags }}" role="status">
+      <span class="ah-toast__msg">{{ message }}</span>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  <main class="admin-home__main">
+    <div class="ah-container">
+      {# 상단 탭 + 로그아웃 바 — 페이지 전환(부분 로딩) 후에도 항상 유지되는 영역 #}
+      {% block topbar %}
+      <header class="reveal reveal--fade" style="margin-bottom: var(--space-6); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2);">
+        <nav class="glass-nav" id="ah-topnav">
+          <span class="glass-nav__indicator" aria-hidden="true"></span>
+          <a class="glass-nav__item {% if request.resolver_match.url_name == 'admin_home' %}is-active{% endif %}" href="{% url 'admin_home' %}">Home</a>
+          <a class="glass-nav__item {% if 'admin_home_category' in request.resolver_match.url_name|default:'' %}is-active{% endif %}" href="{% url 'admin_home_category' %}">Category</a>
+          <a class="glass-nav__item {% if request.resolver_match.url_name == 'admin_home_product' %}is-active{% endif %}" href="{% url 'admin_home_product' %}">Product</a>
+          <a class="glass-nav__item {% if 'admin_home_ingredient' in request.resolver_match.url_name|default:'' %}is-active{% endif %}" href="{% url 'admin_home_ingredient' %}">Ingredient</a>
+          <a class="glass-nav__item {% if 'admin_home_banner' in request.resolver_match.url_name|default:'' %}is-active{% endif %}" href="{% url 'admin_home_banner' %}">Banner</a>
+          <a class="glass-nav__item" href="{% url 'admin_main' %}" data-no-partial>기존 Admin</a>
+          {% block topbar_extra %}{% endblock %}
+        </nav>
+        <a class="btn btn-glass" href="{% url 'admin_logout' %}" data-no-partial>로그아웃</a>
+      </header>
+      {% endblock %}
+
+      {# 부분 로딩 시 이 영역의 내용만 교체된다(상단 탭 바는 그대로 유지) #}
+      <div id="ah-content">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </main>
+
+  {# 디자인 시스템 인터랙션 스크립트 #}
+  <script src="{% static 'admin_home/js/reveal.js' %}" defer></script>
+  <script src="{% static 'admin_home/js/interactions.js' %}" defer></script>
+  <script src="{% static 'admin_home/js/partial-nav.js' %}" defer></script>
+  <script src="{% static 'admin_home/js/toast.js' %}" defer></script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

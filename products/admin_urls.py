@@ -72,4 +72,7 @@ urlpatterns = [
 
     # ================= 배너 관리 =================
     path("banners/", include("common.admin.admin_urls")),
+
+    # ================= /admin/home 디자인 시스템 (신규) =================
+    path("home/", include("products.admin_home_urls")),
 ]

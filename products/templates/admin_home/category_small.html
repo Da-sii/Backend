@@ -1,0 +1,120 @@
+{% extends base_template|default:"admin_home/base.html" %}
+{% comment %}
+  카테고리 · 소분류(SmallCategory) 관리 — 목록/추가/수정/삭제.
+  단일 뷰(category_small)에서 POST action(create/update/delete)으로 분기한다.
+  소분류는 항상 중분류에 소속되므로 "대분류 - 중분류" 라벨의 단일 select 로 선택한다.
+{% endcomment %}
+
+{% block title %}카테고리 · 소분류 · DASII{% endblock %}
+
+{% block content %}
+{% include "admin_home/components/_category_subnav.html" %}
+
+{# 서브내비 아래 영역 — 대/중/소분류 전환 시 이 안쪽만 부분 교체된다(서브내비는 유지) #}
+<div id="ah-subcontent">
+<section class="glass-panel reveal" style="margin-bottom: var(--space-6);">
+  <p class="text-caption" style="color: var(--glass-highlight);">카테고리 관리</p>
+  <h1 class="text-title-lg">소분류</h1>
+  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 52ch;">
+    소분류(Small Category)를 추가·수정·삭제합니다. 소분류는 중분류에 소속되며, 삭제하면 해당 소분류에 연결된 제품 매핑도 함께 제거됩니다.
+  </p>
+</section>
+
+<section class="glass-card reveal"
+         style="margin-bottom: var(--space-6); display:flex; align-items:center; justify-content:space-between; gap: var(--space-4); flex-wrap:wrap;">
+  <div>
+    <h2 class="text-title-sm">소분류 추가</h2>
+    {% if middle_categories %}
+    <p class="text-body-sm" style="margin-top: var(--space-1);">새 소분류를 추가합니다.</p>
+    {% else %}
+    <p class="ah-record-empty text-body" style="margin-top: var(--space-1);">
+      먼저 <a class="text-brand" href="{% url 'admin_home_category_middle' %}">중분류</a>를 추가해야 소분류를 만들 수 있습니다.
+    </p>
+    {% endif %}
+  </div>
+  {% if middle_categories %}
+  <button type="button" class="btn btn-primary" data-modal-open="small-category-create-modal">추가</button>
+  {% endif %}
+</section>
+
+{% if middle_categories %}
+{# 소분류 추가 모달 — 위 "추가" 버튼 클릭 시 열림(interactions.js) #}
+<div class="ah-modal" id="small-category-create-modal" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="small-category-create-modal-title">
+    <div class="ah-modal__head">
+      <h2 id="small-category-create-modal-title" class="text-title-md">소분류 추가</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      <form method="post" class="ah-stack">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create" />
+        <div class="ah-field">
+          <label class="ah-label" for="new-middle">중분류</label>
+          <select class="ah-select" id="new-middle" name="middle_category" required>
+            {% for mc in middle_categories %}
+            <option value="{{ mc.id }}">{{ mc.big_category.category }} - {{ mc.category }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="ah-field">
+          <label class="ah-label" for="new-category">소분류 이름</label>
+          <input class="ah-input" type="text" id="new-category" name="category"
+                 maxlength="100" placeholder="예: 임산부용" required />
+        </div>
+        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" class="btn btn-primary">추가</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<section class="reveal">
+  <h2 class="text-title-sm" style="margin-bottom: var(--space-3);">
+    소분류 목록 <span class="text-muted">({{ smalls|length }})</span>
+  </h2>
+
+  {% if smalls %}
+  <div class="ah-records" data-reveal-stagger>
+    {% for small in smalls %}
+    <div class="ah-record reveal">
+      <span class="ah-record__id text-body-sm">#{{ small.id }}</span>
+
+      <form method="post" class="ah-record__edit">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update" />
+        <input type="hidden" name="id" value="{{ small.id }}" />
+        <select class="ah-select" name="middle_category" aria-label="중분류" required>
+          {% for mc in middle_categories %}
+          <option value="{{ mc.id }}" {% if mc.id == small.middle_category_id %}selected{% endif %}>{{ mc.big_category.category }} - {{ mc.category }}</option>
+          {% endfor %}
+        </select>
+        <input class="ah-input" type="text" name="category" value="{{ small.category }}"
+               maxlength="100" aria-label="소분류 이름" required />
+        <button type="submit" class="btn btn-glass">수정</button>
+      </form>
+
+      <div class="ah-record__actions">
+        <span class="ah-badge ah-badge--neutral" title="연결된 제품 수">제품 {{ small.product_count }}</span>
+        <form method="post"
+              onsubmit="return confirm('이 소분류와 연결된 제품 매핑이 모두 삭제됩니다. 계속할까요?');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete" />
+          <input type="hidden" name="id" value="{{ small.id }}" />
+          <button type="submit" class="btn btn-danger">삭제</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="ah-record-empty text-body">등록된 소분류가 없습니다. 위에서 첫 소분류를 추가해보세요.</p>
+  {% endif %}
+</section>
+</div>
+{% endblock %}

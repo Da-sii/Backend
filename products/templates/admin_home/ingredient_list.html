@@ -1,0 +1,291 @@
+{% extends base_template|default:"admin_home/base.html" %}
+{% comment %}
+  원료 · 기능성 원료(Ingredient) 관리 — 목록/추가/삭제 + 상세 모달(조회·수정).
+  단일 뷰(ingredient_list)에서 POST action(create/update/delete)으로 분기한다.
+  · 목록 행의 "상세" 클릭 → 성분별 모달(효과/부작용 JSON 편집 + 성분 가이드 편집).
+  · 제품이 사용 중인 성분은 PROTECT 로 삭제가 막히며, 사용 중인 제품 수를 안내한다.
+  리스트 편집 UI(효과/부작용/핵심 포인트/출처)는 제출 직전 JSON 배열로 직렬화된다.
+{% endcomment %}
+
+{% block title %}원료 · 기능성 원료 · DASII{% endblock %}
+
+{% block content %}
+{% include "admin_home/components/_ingredient_subnav.html" %}
+
+{# 서브내비 아래 영역 — 기능성/기타 전환 시 이 안쪽만 부분 교체된다(서브내비는 유지) #}
+<div id="ah-subcontent">
+<section class="glass-panel reveal" style="margin-bottom: var(--space-6);">
+  <p class="text-caption" style="color: var(--glass-highlight);">원료 관리</p>
+  <h1 class="text-title-lg">기능성 원료</h1>
+  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 52ch;">
+    기능성 원료(Ingredient)를 추가·삭제하고, 각 항목의 "상세"에서 효과·부작용과 성분 가이드를 편집합니다.
+    제품이 사용 중인 성분은 삭제할 수 없습니다.
+  </p>
+</section>
+
+<section class="glass-card reveal" style="margin-bottom: var(--space-6);">
+  <h2 class="text-title-sm">기능성 원료 추가</h2>
+  <form method="post" class="ah-recordbar">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create" />
+    <div class="ah-field">
+      <label class="ah-label" for="new-name">성분 이름</label>
+      <input class="ah-input" type="text" id="new-name" name="name"
+             placeholder="예: 비타민C" required />
+    </div>
+    <div class="ah-field">
+      <label class="ah-label" for="new-main">주성분</label>
+      <input class="ah-input" type="text" id="new-main" name="mainIngredient"
+             maxlength="100" placeholder="예: 아스코르브산" />
+    </div>
+    <div class="ah-field">
+      <label class="ah-label" for="new-min">최소 권장량</label>
+      <input class="ah-input" type="text" id="new-min" name="minRecommended"
+             maxlength="50" placeholder="예: 100mg" />
+    </div>
+    <div class="ah-field">
+      <label class="ah-label" for="new-max">최대 권장량</label>
+      <input class="ah-input" type="text" id="new-max" name="maxRecommended"
+             maxlength="50" placeholder="예: 1000mg" />
+    </div>
+    <button type="submit" class="btn btn-primary">추가</button>
+  </form>
+</section>
+
+<section class="reveal">
+  <h2 class="text-title-sm" style="margin-bottom: var(--space-3);">
+    기능성 원료 목록 <span class="text-muted">({{ ingredients|length }})</span>
+  </h2>
+
+  {% if ingredients %}
+  <div class="ah-records" data-reveal-stagger>
+    {% for ing in ingredients %}
+    <div class="ah-record reveal">
+      <span class="ah-record__id text-body-sm">#{{ ing.id }}</span>
+
+      <div class="ah-record__edit" style="flex-wrap: wrap;">
+        <span class="text-body">{{ ing.name }}</span>
+        {% if ing.mainIngredient %}
+        <span class="text-body-sm text-muted">· {{ ing.mainIngredient }}</span>
+        {% endif %}
+        {% if ing.minRecommended or ing.maxRecommended %}
+        <span class="text-body-sm text-muted">
+          · 권장 {{ ing.minRecommended|default:"-" }} ~ {{ ing.maxRecommended|default:"-" }}
+        </span>
+        {% endif %}
+      </div>
+
+      <div class="ah-record__actions">
+        <span class="ah-badge ah-badge--neutral" title="사용 중인 제품 수">제품 {{ ing.product_count }}</span>
+        <button type="button" class="btn btn-glass" data-modal-open="ing-modal-{{ ing.id }}">상세</button>
+        {% if ing.product_count %}
+        {# 제품이 사용 중이면 PROTECT — 삭제 버튼을 비활성화하고 안내한다. #}
+        <button type="button" class="btn btn-danger" disabled
+                title="제품 {{ ing.product_count }}개에서 사용 중이라 삭제할 수 없습니다.">삭제</button>
+        {% else %}
+        <form method="post" onsubmit="return confirm('이 성분을 삭제할까요?');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete" />
+          <input type="hidden" name="id" value="{{ ing.id }}" />
+          <button type="submit" class="btn btn-danger">삭제</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {# 성분 상세/수정 모달 — 목록 행의 "상세" 클릭 시 열림(interactions.js) #}
+    <div class="ah-modal" id="ing-modal-{{ ing.id }}" aria-hidden="true">
+      <div class="ah-modal__overlay" data-modal-close></div>
+      <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+           aria-labelledby="ing-modal-{{ ing.id }}-title">
+        <div class="ah-modal__head">
+          <h2 id="ing-modal-{{ ing.id }}-title" class="text-title-md">성분 상세 · #{{ ing.id }}</h2>
+          <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+        </div>
+        <div class="ah-modal__body">
+          <form method="post" data-ingredient-form class="ah-stack">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update" />
+            <input type="hidden" name="id" value="{{ ing.id }}" />
+
+            <div class="ah-field">
+              <label class="ah-label">성분 이름</label>
+              <input class="ah-input" type="text" name="name" value="{{ ing.name }}"
+                     aria-label="성분 이름" required />
+            </div>
+            <div class="ah-field">
+              <label class="ah-label">주성분</label>
+              <input class="ah-input" type="text" name="mainIngredient" maxlength="100"
+                     value="{{ ing.mainIngredient|default:'' }}" aria-label="주성분" />
+            </div>
+            <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
+              <div class="ah-field" style="flex:1 1 160px;">
+                <label class="ah-label">최소 권장량</label>
+                <input class="ah-input" type="text" name="minRecommended" maxlength="50"
+                       value="{{ ing.minRecommended|default:'' }}" aria-label="최소 권장량" />
+              </div>
+              <div class="ah-field" style="flex:1 1 160px;">
+                <label class="ah-label">최대 권장량</label>
+                <input class="ah-input" type="text" name="maxRecommended" maxlength="50"
+                       value="{{ ing.maxRecommended|default:'' }}" aria-label="최대 권장량" />
+              </div>
+            </div>
+
+            {# 효과 (JSON 리스트) #}
+            <div class="ah-field">
+              <label class="ah-label">효과</label>
+              <div class="ah-listedit" data-listedit>
+                <div class="ah-listedit__rows">
+                  {% for e in ing.effect %}
+                  <div class="ah-listedit__row">
+                    <textarea class="ah-textarea text-body" data-listedit-item
+                              rows="2" aria-label="효과 항목">{{ e }}</textarea>
+                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                  </div>
+                  {% endfor %}
+                </div>
+                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <input type="hidden" name="effect" data-listedit-target />
+              </div>
+            </div>
+
+            {# 부작용 (JSON 리스트) #}
+            <div class="ah-field">
+              <label class="ah-label">부작용</label>
+              <div class="ah-listedit" data-listedit>
+                <div class="ah-listedit__rows">
+                  {% for s in ing.sideEffect %}
+                  <div class="ah-listedit__row">
+                    <textarea class="ah-textarea text-body" data-listedit-item
+                              rows="2" aria-label="부작용 항목">{{ s }}</textarea>
+                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                  </div>
+                  {% endfor %}
+                </div>
+                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <input type="hidden" name="sideEffect" data-listedit-target />
+              </div>
+            </div>
+
+            {# 성분 가이드(IngredientGuide, 1:1) — 핵심 포인트 / 출처 #}
+            <div class="ah-formsection">
+              <h3 class="text-title-sm">성분 가이드</h3>
+              <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
+                성분별 핵심 포인트와 출처를 관리합니다. (저장 시 없으면 자동 생성)
+              </p>
+            </div>
+
+            <div class="ah-field">
+              <label class="ah-label">핵심 포인트</label>
+              <div class="ah-listedit" data-listedit>
+                <div class="ah-listedit__rows">
+                  {% for kp in ing.guide.keyPoints %}
+                  <div class="ah-listedit__row">
+                    <textarea class="ah-textarea text-body" data-listedit-item
+                              rows="2" aria-label="핵심 포인트 항목">{{ kp }}</textarea>
+                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                  </div>
+                  {% endfor %}
+                </div>
+                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <input type="hidden" name="keyPoints" data-listedit-target />
+              </div>
+            </div>
+
+            <div class="ah-field">
+              <label class="ah-label">출처</label>
+              <div class="ah-listedit" data-listedit>
+                <div class="ah-listedit__rows">
+                  {% for src in ing.guide.sources %}
+                  <div class="ah-listedit__row">
+                    <textarea class="ah-textarea text-body" data-listedit-item
+                              rows="2" aria-label="출처 항목">{{ src }}</textarea>
+                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                  </div>
+                  {% endfor %}
+                </div>
+                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <input type="hidden" name="sources" data-listedit-target />
+              </div>
+            </div>
+
+            <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+              <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+              <button type="submit" class="btn btn-primary">저장</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="ah-record-empty text-body">등록된 기능성 원료가 없습니다. 위에서 첫 성분을 추가해보세요.</p>
+  {% endif %}
+</section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /* 리스트 편집기 + 제출 직전 JSON 직렬화.
+     document 위임(멱등) — 부분 로딩으로 콘텐츠가 교체돼도 재배선이 필요 없다. */
+  (function () {
+    if (document._ahIngredientWired) return;
+    document._ahIngredientWired = "1";
+
+    function makeRow() {
+      var row = document.createElement("div");
+      row.className = "ah-listedit__row";
+      var ta = document.createElement("textarea");
+      ta.className = "ah-textarea text-body";
+      ta.setAttribute("data-listedit-item", "");
+      ta.setAttribute("rows", "2");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-glass";
+      btn.setAttribute("data-listedit-remove", "");
+      btn.textContent = "삭제";
+      row.appendChild(ta);
+      row.appendChild(btn);
+      return row;
+    }
+
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest) return;
+      var add = e.target.closest("[data-listedit-add]");
+      if (add) {
+        var group = add.closest("[data-listedit]");
+        var rows = group && group.querySelector(".ah-listedit__rows");
+        if (rows) {
+          var row = makeRow();
+          rows.appendChild(row);
+          var ta = row.querySelector("[data-listedit-item]");
+          if (ta) ta.focus();
+        }
+        return;
+      }
+      var rm = e.target.closest("[data-listedit-remove]");
+      if (rm) {
+        var target = rm.closest(".ah-listedit__row");
+        if (target) target.remove();
+      }
+    });
+
+    // 제출 직전 각 편집기의 항목을 JSON 배열로 hidden 필드에 직렬화한다.
+    document.addEventListener("submit", function (e) {
+      var form = e.target.closest ? e.target.closest("[data-ingredient-form]") : null;
+      if (!form) return;
+      form.querySelectorAll("[data-listedit]").forEach(function (group) {
+        var items = [];
+        group.querySelectorAll("[data-listedit-item]").forEach(function (el) {
+          var v = (el.value || "").trim();
+          if (v) items.push(v);
+        });
+        var target = group.querySelector("[data-listedit-target]");
+        if (target) target.value = JSON.stringify(items);
+      });
+    });
+  })();
+</script>
+{% endblock %}

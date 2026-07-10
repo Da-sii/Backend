@@ -1,0 +1,11 @@
+{% comment %}
+  카테고리 서브내비 — 대분류 / 중분류 / 소분류 전환.
+  글로벌 상단 nav 와 동일한 glass-nav(슬라이딩 pill) 컴포넌트를 재사용한다.
+  활성 탭은 현재 url_name 으로 판별한다.
+{% endcomment %}
+<nav class="glass-nav ah-subnav reveal">
+  <span class="glass-nav__indicator" aria-hidden="true"></span>
+  <a class="glass-nav__item {% if request.resolver_match.url_name == 'admin_home_category' %}is-active{% endif %}" href="{% url 'admin_home_category' %}">대분류</a>
+  <a class="glass-nav__item {% if request.resolver_match.url_name == 'admin_home_category_middle' %}is-active{% endif %}" href="{% url 'admin_home_category_middle' %}">중분류</a>
+  <a class="glass-nav__item {% if request.resolver_match.url_name == 'admin_home_category_small' %}is-active{% endif %}" href="{% url 'admin_home_category_small' %}">소분류</a>
+</nav>
