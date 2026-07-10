@@ -50,9 +50,11 @@
     <div class="ah-container">
       {# 상단 탭 + 로그아웃 바 — 페이지 전환(부분 로딩) 후에도 항상 유지되는 영역 #}
       {% block topbar %}
-      {# 상단 탭 바는 persistent shell — 진입 애니메이션(reveal)을 붙이지 않는다.
-         backdrop-filter(.glass-nav) 위에 will-change 레이어가 얹히면 초기 페인트 때
-         inset 하이라이트가 딱딱한 흰 seam으로 렌더되므로, 첫 프레임부터 안정적으로 그린다. #}
+      {% comment %}
+        상단 탭 바는 persistent shell — 진입 애니메이션(reveal)을 붙이지 않는다.
+        backdrop-filter(.glass-nav) 위에 will-change 레이어가 얹히면 초기 페인트 때
+        inset 하이라이트가 딱딱한 흰 seam으로 렌더되므로, 첫 프레임부터 안정적으로 그린다.
+      {% endcomment %}
       <header style="margin-bottom: var(--space-6); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2);">
         <nav class="glass-nav" id="ah-topnav">
           <span class="glass-nav__indicator" aria-hidden="true"></span>
