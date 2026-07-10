@@ -130,14 +130,18 @@
     <h2 class="text-title-sm">
       제품 목록 <span class="text-muted">({{ products|length }})</span>
     </h2>
-    <input
-      class="ah-input"
-      type="search"
-      id="product-search"
-      placeholder="이름 또는 브랜드로 검색"
-      style="max-width: 32ch;"
-      aria-label="제품 검색"
-    />
+    <div style="display:flex; align-items:center; gap: var(--space-2); flex-wrap: wrap;">
+      <input
+        class="ah-input"
+        type="search"
+        id="product-search"
+        placeholder="이름 또는 브랜드로 검색"
+        style="max-width: 32ch;"
+        aria-label="제품 검색"
+      />
+      <button type="button" class="btn btn-primary" data-modal-open="product-create-modal"
+              title="제품 추가" aria-label="제품 추가">＋</button>
+    </div>
   </div>
 
   {% if products %}
