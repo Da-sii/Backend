@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 
 from django.contrib import messages
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Max, ProtectedError
+from django.db.models import Count, Max, Prefetch, ProtectedError
 from django.db.models.functions import TruncDate
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -266,7 +266,7 @@ def styleguide(request):
 
 
 # ---------------------------------------------------------------------------
-# 카테고리 관리 — 대분류(BigCategory)
+# 카테고리 관리 — 대/중/소 통합 트리(category_tree) + 공통 헬퍼
 # ---------------------------------------------------------------------------
 def _get_big_category(request):
     """POST 의 id 로 BigCategory 를 찾고, 없으면 메시지를 남기고 None 반환."""
@@ -277,18 +277,40 @@ def _get_big_category(request):
         return None
 
 
-def category_big(request):
-    """카테고리 · 대분류 관리 (목록/추가/수정/삭제).
+def _get_parent_big(request):
+    """생성 대상의 상위 대분류(parent id)를 찾고, 없으면 메시지 후 None 반환."""
+    try:
+        return BigCategory.objects.get(id=request.POST.get("parent", ""))
+    except (BigCategory.DoesNotExist, ValueError):
+        messages.error(request, "상위 대분류를 찾을 수 없습니다.")
+        return None
 
-    POST 의 action(create/update/delete)으로 분기하는 단일 뷰다.
-    삭제 시 CategoryProduct 의 PROTECT 제약 때문에 하위 소분류의 연결 행을 먼저 지운 뒤
-    BigCategory 를 삭제하면 CASCADE 로 중분류·소분류가 함께 정리된다.
+
+def _get_parent_middle(request):
+    """생성 대상의 상위 중분류(parent id)를 찾고, 없으면 메시지 후 None 반환."""
+    try:
+        return MiddleCategory.objects.select_related("big_category").get(
+            id=request.POST.get("parent", "")
+        )
+    except (MiddleCategory.DoesNotExist, ValueError):
+        messages.error(request, "상위 중분류를 찾을 수 없습니다.")
+        return None
+
+
+def _handle_category_post(request):
+    """트리 페이지의 생성/수정/삭제 POST 를 level+action 으로 분기 처리한다.
+
+    level: big/middle/small, action: create/update/delete.
+    이름 중복은 같은 부모 범위 안에서만 검사한다(대분류는 전역). 수정은 이름 변경만(이동 없음).
+    삭제는 PROTECT(CategoryProduct) 때문에 하위 소분류-제품 연결을 먼저 지운 뒤 대상을
+    삭제하면 CASCADE 로 하위가 정리된다.
     """
-    if request.method == "POST":
-        action = request.POST.get("action", "")
+    level = request.POST.get("level", "")
+    action = request.POST.get("action", "")
+    name = request.POST.get("category", "").strip()
 
+    if level == "big":
         if action == "create":
-            name = request.POST.get("category", "").strip()
             if not name:
                 messages.error(request, "대분류 이름을 입력해주세요.")
             elif BigCategory.objects.filter(category=name).exists():
@@ -296,50 +318,159 @@ def category_big(request):
             else:
                 BigCategory.objects.create(category=name)
                 messages.success(request, f'"{name}" 대분류가 추가되었습니다.')
-            return redirect("admin_home_category")
-
-        if action == "update":
+        elif action == "update":
             cat = _get_big_category(request)
-            if cat is None:
-                return redirect("admin_home_category")
-            name = request.POST.get("category", "").strip()
-            if not name:
-                messages.error(request, "대분류 이름을 입력해주세요.")
-            elif BigCategory.objects.filter(category=name).exclude(id=cat.id).exists():
-                messages.error(request, f'"{name}" 대분류가 이미 존재합니다.')
-            else:
-                cat.category = name
-                cat.save()
-                messages.success(request, f'"{name}" 대분류가 수정되었습니다.')
-            return redirect("admin_home_category")
-
-        if action == "delete":
+            if cat is not None:
+                if not name:
+                    messages.error(request, "대분류 이름을 입력해주세요.")
+                elif (
+                    BigCategory.objects.filter(category=name)
+                    .exclude(id=cat.id)
+                    .exists()
+                ):
+                    messages.error(request, f'"{name}" 대분류가 이미 존재합니다.')
+                else:
+                    cat.category = name
+                    cat.save()
+                    messages.success(request, f'"{name}" 대분류가 수정되었습니다.')
+        elif action == "delete":
             cat = _get_big_category(request)
-            if cat is None:
-                return redirect("admin_home_category")
-            name = cat.category
-            # PROTECT(CategoryProduct) 때문에 소분류-제품 연결을 먼저 제거해야 삭제 가능
-            small_cats = SmallCategory.objects.filter(middle_category__big_category=cat)
-            CategoryProduct.objects.filter(category__in=small_cats).delete()
-            cat.delete()  # CASCADE 로 중분류·소분류 정리
-            messages.success(request, f'"{name}" 대분류가 삭제되었습니다.')
-            return redirect("admin_home_category")
+            if cat is not None:
+                label = cat.category
+                # PROTECT(CategoryProduct) 때문에 소분류-제품 연결을 먼저 제거해야 삭제 가능
+                small_cats = SmallCategory.objects.filter(
+                    middle_category__big_category=cat
+                )
+                CategoryProduct.objects.filter(category__in=small_cats).delete()
+                cat.delete()  # CASCADE 로 중분류·소분류 정리
+                messages.success(request, f'"{label}" 대분류가 삭제되었습니다.')
+        else:
+            messages.error(request, "알 수 없는 요청입니다.")
 
+    elif level == "middle":
+        if action == "create":
+            big = _get_parent_big(request)
+            if big is not None:
+                if not name:
+                    messages.error(request, "중분류 이름을 입력해주세요.")
+                elif MiddleCategory.objects.filter(
+                    big_category=big, category=name
+                ).exists():
+                    messages.error(
+                        request, f'"{big.category} - {name}" 중분류가 이미 존재합니다.'
+                    )
+                else:
+                    MiddleCategory.objects.create(big_category=big, category=name)
+                    messages.success(
+                        request, f'"{big.category} - {name}" 중분류가 추가되었습니다.'
+                    )
+        elif action == "update":
+            mid = _get_middle_category(request)
+            if mid is not None:
+                if not name:
+                    messages.error(request, "중분류 이름을 입력해주세요.")
+                elif (
+                    MiddleCategory.objects.filter(
+                        big_category=mid.big_category, category=name
+                    )
+                    .exclude(id=mid.id)
+                    .exists()
+                ):
+                    messages.error(
+                        request,
+                        f'"{mid.big_category.category} - {name}" 중분류가 이미 존재합니다.',
+                    )
+                else:
+                    mid.category = name
+                    mid.save()
+                    messages.success(
+                        request,
+                        f'"{mid.big_category.category} - {name}" 중분류가 수정되었습니다.',
+                    )
+        elif action == "delete":
+            mid = _get_middle_category(request)
+            if mid is not None:
+                label = f"{mid.big_category.category} - {mid.category}"
+                small_cats = SmallCategory.objects.filter(middle_category=mid)
+                CategoryProduct.objects.filter(category__in=small_cats).delete()
+                mid.delete()  # CASCADE 로 소분류 정리
+                messages.success(request, f'"{label}" 중분류가 삭제되었습니다.')
+        else:
+            messages.error(request, "알 수 없는 요청입니다.")
+
+    elif level == "small":
+        if action == "create":
+            mid = _get_parent_middle(request)
+            if mid is not None:
+                if not name:
+                    messages.error(request, "소분류 이름을 입력해주세요.")
+                elif SmallCategory.objects.filter(
+                    middle_category=mid, category=name
+                ).exists():
+                    messages.error(request, f'"{name}" 소분류가 이미 존재합니다.')
+                else:
+                    SmallCategory.objects.create(middle_category=mid, category=name)
+                    messages.success(request, f'"{name}" 소분류가 추가되었습니다.')
+        elif action == "update":
+            small = _get_small_category(request)
+            if small is not None:
+                if not name:
+                    messages.error(request, "소분류 이름을 입력해주세요.")
+                elif (
+                    SmallCategory.objects.filter(
+                        middle_category=small.middle_category, category=name
+                    )
+                    .exclude(id=small.id)
+                    .exists()
+                ):
+                    messages.error(request, f'"{name}" 소분류가 이미 존재합니다.')
+                else:
+                    small.category = name
+                    small.save()
+                    messages.success(request, f'"{name}" 소분류가 수정되었습니다.')
+        elif action == "delete":
+            small = _get_small_category(request)
+            if small is not None:
+                label = small.category
+                # PROTECT(CategoryProduct) 때문에 제품 연결을 먼저 제거해야 삭제 가능
+                CategoryProduct.objects.filter(category=small).delete()
+                small.delete()
+                messages.success(request, f'"{label}" 소분류가 삭제되었습니다.')
+        else:
+            messages.error(request, "알 수 없는 요청입니다.")
+
+    else:
         messages.error(request, "알 수 없는 요청입니다.")
-        return redirect("admin_home_category")
 
-    categories = BigCategory.objects.annotate(
-        middle_count=Count("middle_categories", distinct=True),
+    return redirect("admin_home_category")
+
+
+def category_tree(request):
+    """카테고리 · 대/중/소 통합 트리 (목록 + 생성/수정/삭제).
+
+    GET 은 대→중→소를 항상 펼친 트리로 조립해 렌더한다(빈 가지 포함, 소분류엔 제품 연결 수).
+    POST 는 _handle_category_post 로 위임한다.
+    """
+    if request.method == "POST":
+        return _handle_category_post(request)
+
+    bigs = BigCategory.objects.prefetch_related(
+        Prefetch(
+            "middle_categories",
+            queryset=MiddleCategory.objects.order_by("id"),
+        ),
+        Prefetch(
+            "middle_categories__small_categories",
+            queryset=SmallCategory.objects.order_by("id").annotate(
+                product_count=Count("category_products", distinct=True)
+            ),
+        ),
     ).order_by("id")
-    return _ah_render(
-        request,
-        "admin_home/category_big.html",
-        {"categories": categories},
-    )
+    return _ah_render(request, "admin_home/category_tree.html", {"bigs": bigs})
 
 
 # ---------------------------------------------------------------------------
-# 카테고리 관리 — 중분류(MiddleCategory)
+# 카테고리 관리 — 중/소분류 조회 헬퍼 (위 category_tree POST 처리에서 사용)
 # ---------------------------------------------------------------------------
 def _get_middle_category(request):
     """POST 의 id 로 MiddleCategory 를 찾고, 없으면 메시지를 남기고 None 반환."""
@@ -352,104 +483,6 @@ def _get_middle_category(request):
         return None
 
 
-def _get_big_category_for_middle(request):
-    """POST 의 big_category id 로 BigCategory 를 찾고, 없으면 메시지 후 None 반환."""
-    try:
-        return BigCategory.objects.get(id=request.POST.get("big_category", ""))
-    except (BigCategory.DoesNotExist, ValueError):
-        messages.error(request, "대분류를 선택해주세요.")
-        return None
-
-
-def category_middle(request):
-    """카테고리 · 중분류 관리 (목록/추가/수정/삭제).
-
-    중분류는 항상 대분류(BigCategory)에 소속된다.
-    이름 중복 검사는 "같은 대분류 안에서" 만 적용한다(다른 대분류의 동명 중분류는 허용).
-    삭제 시 소분류의 CategoryProduct(PROTECT)를 먼저 지운 뒤 MiddleCategory 를 삭제하면
-    CASCADE 로 소분류가 함께 정리된다.
-    """
-    if request.method == "POST":
-        action = request.POST.get("action", "")
-
-        if action == "create":
-            big = _get_big_category_for_middle(request)
-            name = request.POST.get("category", "").strip()
-            if big is None:
-                pass  # 메시지는 헬퍼가 남김
-            elif not name:
-                messages.error(request, "중분류 이름을 입력해주세요.")
-            elif MiddleCategory.objects.filter(
-                big_category=big, category=name
-            ).exists():
-                messages.error(
-                    request, f'"{big.category} - {name}" 중분류가 이미 존재합니다.'
-                )
-            else:
-                MiddleCategory.objects.create(big_category=big, category=name)
-                messages.success(
-                    request, f'"{big.category} - {name}" 중분류가 추가되었습니다.'
-                )
-            return redirect("admin_home_category_middle")
-
-        if action == "update":
-            mid = _get_middle_category(request)
-            if mid is None:
-                return redirect("admin_home_category_middle")
-            big = _get_big_category_for_middle(request)
-            name = request.POST.get("category", "").strip()
-            if big is None:
-                pass
-            elif not name:
-                messages.error(request, "중분류 이름을 입력해주세요.")
-            elif (
-                MiddleCategory.objects.filter(big_category=big, category=name)
-                .exclude(id=mid.id)
-                .exists()
-            ):
-                messages.error(
-                    request, f'"{big.category} - {name}" 중분류가 이미 존재합니다.'
-                )
-            else:
-                mid.big_category = big
-                mid.category = name
-                mid.save()
-                messages.success(
-                    request, f'"{big.category} - {name}" 중분류가 수정되었습니다.'
-                )
-            return redirect("admin_home_category_middle")
-
-        if action == "delete":
-            mid = _get_middle_category(request)
-            if mid is None:
-                return redirect("admin_home_category_middle")
-            label = f"{mid.big_category.category} - {mid.category}"
-            # PROTECT(CategoryProduct) 때문에 소분류-제품 연결을 먼저 제거해야 삭제 가능
-            small_cats = SmallCategory.objects.filter(middle_category=mid)
-            CategoryProduct.objects.filter(category__in=small_cats).delete()
-            mid.delete()  # CASCADE 로 소분류 정리
-            messages.success(request, f'"{label}" 중분류가 삭제되었습니다.')
-            return redirect("admin_home_category_middle")
-
-        messages.error(request, "알 수 없는 요청입니다.")
-        return redirect("admin_home_category_middle")
-
-    big_categories = BigCategory.objects.all().order_by("id")
-    middles = (
-        MiddleCategory.objects.select_related("big_category")
-        .annotate(small_count=Count("small_categories", distinct=True))
-        .order_by("big_category__id", "id")
-    )
-    return _ah_render(
-        request,
-        "admin_home/category_middle.html",
-        {"middles": middles, "big_categories": big_categories},
-    )
-
-
-# ---------------------------------------------------------------------------
-# 카테고리 관리 — 소분류(SmallCategory)
-# ---------------------------------------------------------------------------
 def _get_small_category(request):
     """POST 의 id 로 SmallCategory 를 찾고, 없으면 메시지를 남기고 None 반환."""
     try:
@@ -459,97 +492,6 @@ def _get_small_category(request):
     except (SmallCategory.DoesNotExist, ValueError):
         messages.error(request, "소분류를 찾을 수 없습니다.")
         return None
-
-
-def _get_middle_for_small(request):
-    """POST 의 middle_category id 로 MiddleCategory 를 찾고, 없으면 메시지 후 None 반환."""
-    try:
-        return MiddleCategory.objects.select_related("big_category").get(
-            id=request.POST.get("middle_category", "")
-        )
-    except (MiddleCategory.DoesNotExist, ValueError):
-        messages.error(request, "중분류를 선택해주세요.")
-        return None
-
-
-def category_small(request):
-    """카테고리 · 소분류 관리 (목록/추가/수정/삭제).
-
-    소분류는 항상 중분류(MiddleCategory)에 소속된다.
-    이름 중복 검사는 "같은 중분류 안에서" 만 적용한다.
-    삭제 시 자신의 CategoryProduct(PROTECT) 연결을 먼저 지운 뒤 SmallCategory 를 삭제한다.
-    """
-    if request.method == "POST":
-        action = request.POST.get("action", "")
-
-        if action == "create":
-            mid = _get_middle_for_small(request)
-            name = request.POST.get("category", "").strip()
-            if mid is None:
-                pass  # 메시지는 헬퍼가 남김
-            elif not name:
-                messages.error(request, "소분류 이름을 입력해주세요.")
-            elif SmallCategory.objects.filter(
-                middle_category=mid, category=name
-            ).exists():
-                messages.error(request, f'"{name}" 소분류가 이미 존재합니다.')
-            else:
-                SmallCategory.objects.create(middle_category=mid, category=name)
-                messages.success(request, f'"{name}" 소분류가 추가되었습니다.')
-            return redirect("admin_home_category_small")
-
-        if action == "update":
-            small = _get_small_category(request)
-            if small is None:
-                return redirect("admin_home_category_small")
-            mid = _get_middle_for_small(request)
-            name = request.POST.get("category", "").strip()
-            if mid is None:
-                pass
-            elif not name:
-                messages.error(request, "소분류 이름을 입력해주세요.")
-            elif (
-                SmallCategory.objects.filter(middle_category=mid, category=name)
-                .exclude(id=small.id)
-                .exists()
-            ):
-                messages.error(request, f'"{name}" 소분류가 이미 존재합니다.')
-            else:
-                small.middle_category = mid
-                small.category = name
-                small.save()
-                messages.success(request, f'"{name}" 소분류가 수정되었습니다.')
-            return redirect("admin_home_category_small")
-
-        if action == "delete":
-            small = _get_small_category(request)
-            if small is None:
-                return redirect("admin_home_category_small")
-            name = small.category
-            # PROTECT(CategoryProduct) 때문에 제품 연결을 먼저 제거해야 삭제 가능
-            CategoryProduct.objects.filter(category=small).delete()
-            small.delete()
-            messages.success(request, f'"{name}" 소분류가 삭제되었습니다.')
-            return redirect("admin_home_category_small")
-
-        messages.error(request, "알 수 없는 요청입니다.")
-        return redirect("admin_home_category_small")
-
-    middle_categories = (
-        MiddleCategory.objects.select_related("big_category")
-        .all()
-        .order_by("big_category__id", "id")
-    )
-    smalls = (
-        SmallCategory.objects.select_related("middle_category__big_category")
-        .annotate(product_count=Count("category_products", distinct=True))
-        .order_by("middle_category__big_category__id", "middle_category__id", "id")
-    )
-    return _ah_render(
-        request,
-        "admin_home/category_small.html",
-        {"smalls": smalls, "middle_categories": middle_categories},
-    )
 
 
 # ---------------------------------------------------------------------------
