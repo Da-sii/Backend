@@ -1,10 +1,12 @@
 {% extends base_template|default:"admin_home/base.html" %}
 {% comment %}
-  원료 · 기타 원료(OtherIngredient) 관리 — 목록/추가/수정/삭제.
+  원료 · 기타 원료(OtherIngredient) 관리 — 목록/추가/수정/삭제 (전부 모달, 기능성 원료와 통일).
   단일 뷰(ingredient_other)에서 POST action(create/update/delete)으로 분기한다.
-  이름 한 필드만 있는 단순 모델이라 상세 모달 없이 인라인 수정 폼(ah-record__edit)을 쓴다.
-  ProductOtherIngredient.other_ingredient 는 PROTECT 이므로, 제품이 사용 중인
-  기타 원료는 삭제 버튼을 비활성화하고 사용 중인 제품 수를 안내한다.
+  · 목록 헤더 ＋ 버튼 → 추가 모달(#oi-create-modal).
+  · 목록 항목 클릭 → 수정 모달(#oi-modal-<id>), 삭제 버튼도 모달 안에.
+  · 모달은 #ah-subcontent 직속(비-transform)에 두어 position:fixed 가 뷰포트 기준으로 동작하게 한다.
+  ProductOtherIngredient.other_ingredient 는 PROTECT 이므로, 제품이 사용 중인 기타 원료는
+  삭제 버튼을 비활성화하고 사용 중인 제품 수를 안내한다.
 {% endcomment %}
 
 {% block title %}원료 · 기타 원료 · DASII{% endblock %}
@@ -14,70 +16,108 @@
 
 {# 서브내비 아래 영역 — 기능성/기타 전환 시 이 안쪽만 부분 교체된다(서브내비는 유지) #}
 <div id="ah-subcontent">
-<section class="glass-panel reveal" style="margin-bottom: var(--space-6);">
-  <p class="text-caption" style="color: var(--glass-highlight);">원료 관리</p>
-  <h1 class="text-title-lg">기타 원료</h1>
-  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 52ch;">
-    기타 원료(Other Ingredient)를 추가·수정·삭제합니다.
-    제품이 사용 중인 기타 원료는 삭제할 수 없습니다.
-  </p>
-</section>
 
-<section class="glass-card reveal" style="margin-bottom: var(--space-6);">
-  <h2 class="text-title-sm">기타 원료 추가</h2>
-  <form method="post" class="ah-recordbar">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="create" />
-    <div class="ah-field">
-      <label class="ah-label" for="new-name">기타 원료 이름</label>
-      <input class="ah-input" type="text" id="new-name" name="name"
-             maxlength="255" placeholder="예: 정제수" required />
-    </div>
-    <button type="submit" class="btn btn-primary">추가</button>
-  </form>
-</section>
-
-<section class="reveal">
-  <h2 class="text-title-sm" style="margin-bottom: var(--space-3);">
-    기타 원료 목록 <span class="text-muted">({{ others|length }})</span>
-  </h2>
-
-  {% if others %}
-  <div class="ah-records" data-reveal-stagger>
-    {% for oi in others %}
-    <div class="ah-record reveal">
-      <span class="ah-record__id text-body-sm">#{{ oi.id }}</span>
-
-      <form method="post" class="ah-record__edit">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="update" />
-        <input type="hidden" name="id" value="{{ oi.id }}" />
-        <input class="ah-input" type="text" name="name" value="{{ oi.name }}"
-               maxlength="255" aria-label="기타 원료 이름" required />
-        <button type="submit" class="btn btn-glass">수정</button>
-      </form>
-
-      <div class="ah-record__actions">
-        <span class="ah-badge ah-badge--neutral" title="사용 중인 제품 수">제품 {{ oi.product_count }}</span>
-        {% if oi.product_count %}
-        {# 제품이 사용 중이면 PROTECT — 삭제 버튼을 비활성화하고 안내한다. #}
-        <button type="button" class="btn btn-danger" disabled
-                title="제품 {{ oi.product_count }}개에서 사용 중이라 삭제할 수 없습니다.">삭제</button>
-        {% else %}
-        <form method="post" onsubmit="return confirm('이 기타 원료를 삭제할까요?');">
+  {# 추가 모달 — 목록 헤더 ＋ 버튼으로 열림 #}
+  <div class="ah-modal" id="oi-create-modal" aria-hidden="true">
+    <div class="ah-modal__overlay" data-modal-close></div>
+    <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+         aria-labelledby="oi-create-modal-title">
+      <div class="ah-modal__head">
+        <h2 id="oi-create-modal-title" class="text-title-md">기타 원료 추가</h2>
+        <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+      </div>
+      <div class="ah-modal__body">
+        <form method="post" class="ah-stack">
           {% csrf_token %}
-          <input type="hidden" name="action" value="delete" />
-          <input type="hidden" name="id" value="{{ oi.id }}" />
-          <button type="submit" class="btn btn-danger">삭제</button>
+          <input type="hidden" name="action" value="create" />
+          <div class="ah-field">
+            <label class="ah-label" for="new-name">기타 원료 이름</label>
+            <input class="ah-input" type="text" id="new-name" name="name"
+                   maxlength="255" placeholder="예: 정제수" required />
+          </div>
+          <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+            <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+            <button type="submit" class="btn btn-primary">추가</button>
+          </div>
         </form>
-        {% endif %}
       </div>
     </div>
-    {% endfor %}
   </div>
-  {% else %}
-  <p class="ah-record-empty text-body">등록된 기타 원료가 없습니다. 위에서 첫 기타 원료를 추가해보세요.</p>
-  {% endif %}
-</section>
+
+  {# 수정/삭제 모달 — 목록 항목 클릭 시 열림 #}
+  {% for oi in others %}
+  <div class="ah-modal" id="oi-modal-{{ oi.id }}" aria-hidden="true">
+    <div class="ah-modal__overlay" data-modal-close></div>
+    <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+         aria-labelledby="oi-modal-{{ oi.id }}-title">
+      <div class="ah-modal__head">
+        <h2 id="oi-modal-{{ oi.id }}-title" class="text-title-md">기타 원료 · #{{ oi.id }}</h2>
+        <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+      </div>
+      <div class="ah-modal__body">
+        <form method="post" class="ah-stack">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update" />
+          <input type="hidden" name="id" value="{{ oi.id }}" />
+          <div class="ah-field">
+            <label class="ah-label">기타 원료 이름</label>
+            <input class="ah-input" type="text" name="name" value="{{ oi.name }}"
+                   maxlength="255" aria-label="기타 원료 이름" required />
+          </div>
+          <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+            <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+            <button type="submit" class="btn btn-primary">저장</button>
+          </div>
+        </form>
+
+        {# 삭제 — update 폼과 중첩되지 않도록 별도 폼. PROTECT 시 비활성화. #}
+        <div style="margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--glass-border); display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap;">
+          <span class="ah-badge ah-badge--neutral" title="사용 중인 제품 수">사용 중 제품 {{ oi.product_count }}</span>
+          {% if oi.product_count %}
+          <button type="button" class="btn btn-danger" disabled
+                  title="제품 {{ oi.product_count }}개에서 사용 중이라 삭제할 수 없습니다.">삭제</button>
+          {% else %}
+          <form method="post" onsubmit="return confirm('이 기타 원료를 삭제할까요?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="id" value="{{ oi.id }}" />
+            <button type="submit" class="btn btn-danger">이 기타 원료 삭제</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  {# ── 목록 ── #}
+  <section class="reveal">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
+      <h2 class="text-title-sm">
+        기타 원료 목록 <span class="text-muted">({{ others|length }})</span>
+      </h2>
+      <button type="button" class="btn btn-primary" data-modal-open="oi-create-modal"
+              title="기타 원료 추가" aria-label="기타 원료 추가">＋</button>
+    </div>
+
+    {% if others %}
+    <div class="ah-records" data-reveal-stagger>
+      {% for oi in others %}
+      <div class="ah-record reveal" data-modal-open="oi-modal-{{ oi.id }}"
+           style="cursor:pointer;" title="클릭하여 수정">
+        <span class="ah-record__id text-body-sm">#{{ oi.id }}</span>
+        <div class="ah-record__edit" style="flex-wrap: wrap;">
+          <span class="text-body">{{ oi.name }}</span>
+        </div>
+        <div class="ah-record__actions">
+          <span class="ah-badge ah-badge--neutral" title="사용 중인 제품 수">제품 {{ oi.product_count }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="ah-record-empty text-body">등록된 기타 원료가 없습니다. 위 ＋ 로 첫 기타 원료를 추가해보세요.</p>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}
