@@ -1,0 +1,273 @@
+{% extends base_template|default:"admin_home/base.html" %}
+{% comment %}
+  제품 관리 — 목록 + 제품 추가(모달).
+  "제품 추가" 버튼 → .ah-modal 오버레이의 폼(action=create, multipart)을 그대로 전체 페이지 POST 한다.
+  성분(ingredient_ids[]/amounts[])·기타 원료(other_ingredient_ids[])·카테고리(category_ids[])는
+  각각 행 단위 동적 리스트(.ah-listedit, extra_js 의 data-row-* 델리게이트)로 추가/삭제한다.
+  수정/삭제는 이번 범위가 아니다. 각 항목의 "수정"은 기존 admin 편집기(admin_product_edit)로 링크만 건다.
+  목록 쿼리는 admin_home_views.product_list 에서 기존 admin_views.product_form 목록 쿼리와 동일한 형태를 재사용한다.
+{% endcomment %}
+
+{% block title %}제품 · DASII{% endblock %}
+
+{% block content %}
+<section class="glass-panel reveal" style="margin-bottom: var(--space-6);">
+  <p class="text-caption" style="color: var(--glass-highlight);">제품 관리</p>
+  <h1 class="text-title-lg">제품 리스트</h1>
+  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 60ch;">
+    등록된 제품을 확인하고 새 제품을 추가합니다. 제품 수정·삭제는 기존 admin 편집기에서 진행합니다.
+  </p>
+  <div style="margin-top: var(--space-3); display:flex; gap: var(--space-2); flex-wrap: wrap;">
+    <button type="button" class="btn btn-primary" data-modal-open="product-create-modal">제품 추가</button>
+    <a class="btn btn-glass" href="{% url 'admin_product_form' %}">기존 편집기에서 추가</a>
+  </div>
+</section>
+
+{# 제품 추가 모달 — 위 "제품 추가" 버튼 클릭 시 열림(interactions.js). #}
+<div class="ah-modal" id="product-create-modal" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="product-create-modal-title" style="width: min(860px, 100%);">
+    <div class="ah-modal__head">
+      <h2 id="product-create-modal-title" class="text-title-md">제품 추가</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      <form method="post" enctype="multipart/form-data" class="ah-stack">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create" />
+
+        <div class="ah-grid">
+          <div class="ah-field">
+            <label class="ah-label" for="pc-name">제품명</label>
+            <input class="ah-input" type="text" id="pc-name" name="name" required />
+          </div>
+          <div class="ah-field">
+            <label class="ah-label" for="pc-company">제조사</label>
+            <input class="ah-input" type="text" id="pc-company" name="company" required />
+          </div>
+          <div class="ah-field">
+            <label class="ah-label" for="pc-type">제품 유형</label>
+            <input class="ah-input" type="text" id="pc-type" name="productType"
+                   placeholder="예: 건강기능식품" required />
+          </div>
+          <div class="ah-field">
+            <label class="ah-label" for="pc-coupang">쿠팡 링크</label>
+            <input class="ah-input" type="text" id="pc-coupang" name="coupang" placeholder="https://..." />
+          </div>
+        </div>
+
+        <div class="ah-field">
+          <label class="ah-label" for="pc-images">제품 이미지</label>
+          <input class="ah-input" type="file" id="pc-images" name="image_files" multiple accept="image/*" />
+        </div>
+
+        {# 성분 — 성분 선택 + 용량, 행 단위로 함께 추가/삭제된다(ingredient_ids[] / amounts[] 인덱스 대응) #}
+        <div class="ah-formsection">
+          <h3 class="text-title-sm">성분</h3>
+          <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
+            성분을 선택하고 용량을 입력합니다.
+          </p>
+        </div>
+        <div class="ah-listedit" data-row-group>
+          <div class="ah-listedit__rows" data-row-list>
+            <div class="ah-listedit__row" data-row>
+              <select class="ah-select" name="ingredient_ids[]" aria-label="성분 선택">
+                <option value="">성분 선택</option>
+                {% for ing in ingredients %}
+                <option value="{{ ing.id }}">{{ ing.name }}</option>
+                {% endfor %}
+              </select>
+              <input class="ah-input" type="text" name="amounts[]" placeholder="예: 1000mg" aria-label="용량" />
+              <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-glass" data-row-add>+ 성분 추가</button>
+        </div>
+
+        {# 기타 원료 #}
+        <div class="ah-formsection">
+          <h3 class="text-title-sm">기타 원료</h3>
+        </div>
+        <div class="ah-listedit" data-row-group>
+          <div class="ah-listedit__rows" data-row-list>
+            <div class="ah-listedit__row" data-row>
+              <select class="ah-select" name="other_ingredient_ids[]" aria-label="기타 원료 선택">
+                <option value="">기타 원료 선택</option>
+                {% for oi in other_ingredients %}
+                <option value="{{ oi.id }}">{{ oi.name }}</option>
+                {% endfor %}
+              </select>
+              <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-glass" data-row-add>+ 기타 원료 추가</button>
+        </div>
+
+        {# 소분류 카테고리 #}
+        <div class="ah-formsection">
+          <h3 class="text-title-sm">카테고리(소분류)</h3>
+        </div>
+        <div class="ah-listedit" data-row-group>
+          <div class="ah-listedit__rows" data-row-list>
+            <div class="ah-listedit__row" data-row>
+              <select class="ah-select" name="category_ids[]" aria-label="소분류 선택">
+                <option value="">소분류 선택</option>
+                {% for sc in small_categories %}
+                <option value="{{ sc.id }}">
+                  {{ sc.middle_category.big_category.category }} &gt;
+                  {{ sc.middle_category.category }} &gt;
+                  {{ sc.category }}
+                </option>
+                {% endfor %}
+              </select>
+              <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-glass" data-row-add>+ 카테고리 추가</button>
+        </div>
+
+        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" class="btn btn-primary">제품 추가</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<section class="reveal">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
+    <h2 class="text-title-sm">
+      제품 목록 <span class="text-muted">({{ products|length }})</span>
+    </h2>
+    <input
+      class="ah-input"
+      type="search"
+      id="product-search"
+      placeholder="이름 또는 브랜드로 검색"
+      style="max-width: 32ch;"
+      aria-label="제품 검색"
+    />
+  </div>
+
+  {% if products %}
+  <div class="ah-records" id="product-records" data-reveal-stagger>
+    {% for product in products %}
+    <div class="ah-record reveal" data-search="{{ product.name|lower }} {{ product.company|lower }}">
+      <span class="ah-record__id text-body-sm">#{{ product.id }}</span>
+
+      <div class="ah-product__info">
+        <p class="text-body">{{ product.name }}</p>
+        <p class="text-body-sm text-muted">{{ product.company }} · {{ product.productType }}</p>
+
+        <div class="ah-product__chips">
+          <span class="ah-badge ah-badge--neutral" title="등록된 이미지 수">이미지 {{ product.image_count }}</span>
+          <span class="ah-badge ah-badge--neutral" title="연결된 성분 수">성분 {{ product.ingredient_count }}</span>
+          <span class="ah-badge ah-badge--neutral" title="연결된 카테고리 수">카테고리 {{ product.category_count }}</span>
+          {% for pi in product.ingredients.all %}
+          <span class="ah-badge ah-badge--neutral">{{ pi.ingredient.name }} {{ pi.amount }}</span>
+          {% endfor %}
+          {% for poi in product.product_other_ingredients.all %}
+          <span class="ah-badge ah-badge--neutral">{{ poi.other_ingredient.name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="ah-record__actions">
+        <a class="btn btn-glass" href="{% url 'admin_product_edit' product.id %}">수정</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="ah-record-empty text-body">등록된 제품이 없습니다.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* 제품 정보 블록: 이름/브랜드·타입/성분 칩을 세로로 쌓고, 레코드 안에서 넓게 차지한다. */
+  .ah-product__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    flex: 1 1 480px;
+  }
+  .ah-product__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin-top: var(--space-1);
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // 클라이언트 사이드 검색 — 제품명/브랜드로 표시되는 행만 필터링한다 (서버 요청 없음).
+  (function () {
+    var input = document.getElementById("product-search");
+    var records = document.querySelectorAll("#product-records .ah-record");
+    if (!input || !records.length) return;
+
+    input.addEventListener("input", function () {
+      var term = input.value.trim().toLowerCase();
+      records.forEach(function (row) {
+        var haystack = row.getAttribute("data-search") || "";
+        row.style.display = haystack.indexOf(term) === -1 ? "none" : "";
+      });
+    });
+  })();
+
+  // 제품 추가 모달의 동적 행(성분+용량 / 기타 원료 / 카테고리) 추가·삭제.
+  // 각 [data-row-group] 은 [data-row-list] 안에 최소 1개의 [data-row] 를 갖고 시작한다.
+  // "행 추가"는 그 첫 행을 복제(값 초기화)해서 붙이고, "행 삭제"는 마지막 한 줄이면
+  // 지우지 않고 값만 초기화한다(각 배열 name="...[]" 은 zip 되므로 행 단위 유지가 중요).
+  // document 위임(멱등) — 부분 로딩으로 콘텐츠가 교체돼도 재배선이 필요 없다.
+  (function () {
+    if (document._ahProductRowsWired) return;
+    document._ahProductRowsWired = "1";
+
+    function resetRow(row) {
+      row.querySelectorAll("select").forEach(function (el) {
+        el.selectedIndex = 0;
+      });
+      row.querySelectorAll("input").forEach(function (el) {
+        el.value = "";
+      });
+    }
+
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest) return;
+
+      var addBtn = e.target.closest("[data-row-add]");
+      if (addBtn) {
+        var group = addBtn.closest("[data-row-group]");
+        var list = group && group.querySelector("[data-row-list]");
+        var template = list && list.querySelector("[data-row]");
+        if (list && template) {
+          var clone = template.cloneNode(true);
+          resetRow(clone);
+          list.appendChild(clone);
+        }
+        return;
+      }
+
+      var rmBtn = e.target.closest("[data-row-remove]");
+      if (rmBtn) {
+        var row = rmBtn.closest("[data-row]");
+        var list = row && row.closest("[data-row-list]");
+        if (row && list) {
+          if (list.children.length > 1) {
+            row.remove();
+          } else {
+            resetRow(row);
+          }
+        }
+      }
+    });
+  })();
+</script>
+{% endblock %}
