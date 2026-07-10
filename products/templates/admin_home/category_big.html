@@ -1,0 +1,97 @@
+{% extends base_template|default:"admin_home/base.html" %}
+{% comment %}
+  카테고리 · 대분류(BigCategory) 관리 — 목록/추가/수정/삭제.
+  단일 뷰(category_big)에서 POST action(create/update/delete)으로 분기한다.
+  목록/행 스타일은 components.css 의 공통 컴포넌트(.ah-record*)를 사용한다.
+{% endcomment %}
+
+{% block title %}카테고리 · 대분류 · DASII{% endblock %}
+
+{% block content %}
+{% include "admin_home/components/_category_subnav.html" %}
+
+{# 서브내비 아래 영역 — 대/중/소분류 전환 시 이 안쪽만 부분 교체된다(서브내비는 유지) #}
+<div id="ah-subcontent">
+<section class="glass-panel reveal" style="margin-bottom: var(--space-6);">
+  <p class="text-caption" style="color: var(--glass-highlight);">카테고리 관리</p>
+  <h1 class="text-title-lg">대분류</h1>
+  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 52ch;">
+    대분류(Big Category)를 추가·수정·삭제합니다. 대분류를 삭제하면 하위 중분류·소분류와 제품 연결도 함께 제거됩니다.
+  </p>
+</section>
+
+<section class="glass-card reveal"
+         style="margin-bottom: var(--space-6); display:flex; align-items:center; justify-content:space-between; gap: var(--space-4); flex-wrap:wrap;">
+  <div>
+    <h2 class="text-title-sm">대분류 추가</h2>
+    <p class="text-body-sm" style="margin-top: var(--space-1);">새 대분류를 추가합니다.</p>
+  </div>
+  <button type="button" class="btn btn-primary" data-modal-open="big-category-create-modal">추가</button>
+</section>
+
+{# 대분류 추가 모달 — 위 "추가" 버튼 클릭 시 열림(interactions.js) #}
+<div class="ah-modal" id="big-category-create-modal" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="big-category-create-modal-title">
+    <div class="ah-modal__head">
+      <h2 id="big-category-create-modal-title" class="text-title-md">대분류 추가</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      <form method="post" class="ah-stack">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create" />
+        <div class="ah-field">
+          <label class="ah-label" for="new-category">대분류 이름</label>
+          <input class="ah-input" type="text" id="new-category" name="category"
+                 maxlength="100" placeholder="예: 비타민" required />
+        </div>
+        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" class="btn btn-primary">추가</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<section class="reveal">
+  <h2 class="text-title-sm" style="margin-bottom: var(--space-3);">
+    대분류 목록 <span class="text-muted">({{ categories|length }})</span>
+  </h2>
+
+  {% if categories %}
+  <div class="ah-records" data-reveal-stagger>
+    {% for cat in categories %}
+    <div class="ah-record reveal">
+      <span class="ah-record__id text-body-sm">#{{ cat.id }}</span>
+
+      <form method="post" class="ah-record__edit">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update" />
+        <input type="hidden" name="id" value="{{ cat.id }}" />
+        <input class="ah-input" type="text" name="category" value="{{ cat.category }}"
+               maxlength="100" aria-label="대분류 이름" required />
+        <button type="submit" class="btn btn-glass">수정</button>
+      </form>
+
+      <div class="ah-record__actions">
+        <span class="ah-badge ah-badge--neutral" title="하위 중분류 수">중분류 {{ cat.middle_count }}</span>
+        <form method="post"
+              onsubmit="return confirm('이 대분류와 하위 중·소분류, 제품 연결이 모두 삭제됩니다. 계속할까요?');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete" />
+          <input type="hidden" name="id" value="{{ cat.id }}" />
+          <button type="submit" class="btn btn-danger">삭제</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="ah-record-empty text-body">등록된 대분류가 없습니다. 위에서 첫 대분류를 추가해보세요.</p>
+  {% endif %}
+</section>
+</div>
+{% endblock %}
