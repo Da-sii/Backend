@@ -10,9 +10,7 @@ from django.urls import path
 from products.admin_auth import admin_auth_required
 from products.admin_home_views import (
     banner_list,
-    category_big,
-    category_middle,
-    category_small,
+    category_tree,
     home,
     ingredient_list,
     ingredient_other,
@@ -23,20 +21,8 @@ from products.admin_home_views import (
 urlpatterns = [
     # /admin/home 랜딩 (로그인 후 진입 지점)
     path("", admin_auth_required(home), name="admin_home"),
-    # 카테고리 · 대분류 관리 (목록/추가/수정/삭제)
-    path("category/", admin_auth_required(category_big), name="admin_home_category"),
-    # 카테고리 · 중분류 관리 (목록/추가/수정/삭제)
-    path(
-        "category/middle/",
-        admin_auth_required(category_middle),
-        name="admin_home_category_middle",
-    ),
-    # 카테고리 · 소분류 관리 (목록/추가/수정/삭제)
-    path(
-        "category/small/",
-        admin_auth_required(category_small),
-        name="admin_home_category_small",
-    ),
+    # 카테고리 · 대/중/소 통합 트리 (목록 + 생성/수정/삭제)
+    path("category/", admin_auth_required(category_tree), name="admin_home_category"),
     # 제품 관리 · 읽기 전용 목록 (추가/수정/삭제는 기존 admin 편집기로 링크)
     path("product/", admin_auth_required(product_list), name="admin_home_product"),
     # 원료 · 기능성 원료(Ingredient) 관리 (목록/추가/삭제)

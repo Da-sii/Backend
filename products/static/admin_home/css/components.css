@@ -523,3 +523,96 @@
 
 /* 모달이 열려 있을 때 본문 스크롤 잠금 */
 body.ah-modal-open { overflow: hidden; }
+
+/* =========================================================
+   Category Tree — 대/중/소 항상 펼침 중첩 트리 (옵시디언 탐색기 톤)
+   커넥터선: 자식 컨테이너의 세로 가이드(border-left) + 각 행의 가로 tick(::before).
+   색/여백은 전부 토큰. 노드 액션은 hover/focus-within 시 노출(18px floor 준수).
+   ========================================================= */
+.ah-tree,
+.ah-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ah-tree__children {
+  margin-left: var(--space-4);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--glass-border);
+}
+.ah-tree__item {
+  position: relative;
+}
+.ah-tree__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-base);
+}
+.ah-tree__row:hover {
+  background: var(--glass-bg);
+}
+/* 자식 행/빈 안내 앞의 짧은 가로 커넥터 tick */
+.ah-tree__children > .ah-tree__item > .ah-tree__row::before,
+.ah-tree__children > .ah-tree__empty::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--space-3) * -1);
+  top: 50%;
+  width: var(--space-3);
+  height: 1px;
+  background: var(--glass-border);
+}
+.ah-tree__icon {
+  flex: none;
+  font-size: var(--fs-text-sm); /* 18px floor */
+  line-height: 1;
+}
+.ah-tree__name {
+  font-weight: var(--font-weight-bold);
+}
+.ah-tree__actions {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin-left: var(--space-2);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+.ah-tree__row:hover .ah-tree__actions,
+.ah-tree__row:focus-within .ah-tree__actions {
+  opacity: 1;
+}
+.ah-tree__btn {
+  flex: none;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-text-sm); /* 18px floor */
+  line-height: 1;
+  color: var(--text-on-glass);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base);
+}
+.ah-tree__btn:hover {
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border-strong);
+}
+.ah-tree__btn--danger {
+  color: var(--color-error);
+}
+.ah-tree__empty {
+  position: relative;
+  padding: var(--space-1) var(--space-2);
+  color: var(--glass-highlight);
+}
