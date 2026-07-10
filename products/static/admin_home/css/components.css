@@ -407,12 +407,21 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-modal);
-  display: none;
+  display: flex;
   padding: var(--space-4);
   align-items: center;
   justify-content: center;
+  /* 숨김은 display 대신 opacity/visibility 로 → 닫힘도 트랜지션됨 */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--transition-base), visibility var(--transition-base);
 }
-.ah-modal.is-open { display: flex; }
+.ah-modal.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
 
 .ah-modal__overlay {
   position: absolute;
@@ -430,6 +439,12 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* 진입 시 살짝 확대되며 들어온다(닫힐 때 축소) */
+  transform: scale(0.96);
+  transition: transform var(--transition-base);
+}
+.ah-modal.is-open .ah-modal__dialog {
+  transform: scale(1);
 }
 
 .ah-modal__head {
