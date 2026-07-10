@@ -525,67 +525,75 @@
 body.ah-modal-open { overflow: hidden; }
 
 /* =========================================================
-   Category Tree — 대/중/소 항상 펼침 중첩 트리 (옵시디언 탐색기 톤)
-   커넥터선: 자식 컨테이너의 세로 가이드(border-left) + 각 행의 가로 tick(::before).
-   색/여백은 전부 토큰. 노드 액션은 hover/focus-within 시 노출(18px floor 준수).
+   Category Map — 대/중/소 3열 마인드맵
+   1col 대분류 · 2col 중분류 · 3col 소분류. 열 간 커넥터는 border-left 세로선.
+   대분류는 자기 중분류 묶음에 세로 중앙 정렬. 색/여백 전부 토큰, 18px floor 준수.
    ========================================================= */
-.ah-tree,
-.ah-tree ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.ah-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
 }
-.ah-tree__children {
-  margin-left: var(--space-4);
+.ah-map__group {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) 1fr;
+  align-items: center;
+  gap: var(--space-4);
+}
+.ah-map__branches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border-left: 2px solid var(--glass-border); /* 대 → 중 커넥터 */
+  padding-left: var(--space-4);
+}
+.ah-map__branch {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) 1fr;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ah-map__smalls {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: var(--space-2);
+  border-left: 2px solid var(--glass-border); /* 중 → 소 커넥터 */
   padding-left: var(--space-3);
-  border-left: 1px solid var(--glass-border);
 }
-.ah-tree__item {
-  position: relative;
-}
-.ah-tree__row {
+.ah-map__node {
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   transition: background var(--transition-base);
 }
-.ah-tree__row:hover {
-  background: var(--glass-bg);
+.ah-map__node--big {
+  background: var(--glass-bg-strong);
 }
-/* 자식 행/빈 안내 앞의 짧은 가로 커넥터 tick */
-.ah-tree__children > .ah-tree__item > .ah-tree__row::before,
-.ah-tree__children > .ah-tree__empty::before {
-  content: "";
-  position: absolute;
-  left: calc(var(--space-3) * -1);
-  top: 50%;
-  width: var(--space-3);
-  height: 1px;
-  background: var(--glass-border);
+.ah-map__node:hover {
+  background: var(--glass-bg-strong);
 }
-.ah-tree__icon {
-  flex: none;
-  font-size: var(--fs-text-sm); /* 18px floor */
-  line-height: 1;
-}
-.ah-tree__name {
+.ah-map__name {
   font-weight: var(--font-weight-bold);
 }
-.ah-tree__actions {
+.ah-map__actions {
   display: inline-flex;
   gap: var(--space-1);
-  margin-left: var(--space-2);
+  margin-left: auto;
+  padding-left: var(--space-2);
   opacity: 0;
   transition: opacity var(--transition-base);
 }
-.ah-tree__row:hover .ah-tree__actions,
-.ah-tree__row:focus-within .ah-tree__actions {
+.ah-map__node:hover .ah-map__actions,
+.ah-map__node:focus-within .ah-map__actions {
   opacity: 1;
 }
-.ah-tree__btn {
+.ah-map__btn {
   flex: none;
   min-width: 34px;
   height: 34px;
@@ -604,15 +612,14 @@ body.ah-modal-open { overflow: hidden; }
     background var(--transition-base),
     border-color var(--transition-base);
 }
-.ah-tree__btn:hover {
+.ah-map__btn:hover {
   background: var(--glass-bg-strong);
   border-color: var(--glass-border-strong);
 }
-.ah-tree__btn--danger {
+.ah-map__btn--danger {
   color: var(--color-error);
 }
-.ah-tree__empty {
-  position: relative;
-  padding: var(--space-1) var(--space-2);
+.ah-map__empty {
   color: var(--glass-highlight);
+  padding: var(--space-1) var(--space-2);
 }
