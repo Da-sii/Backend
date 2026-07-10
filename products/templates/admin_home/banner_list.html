@@ -125,36 +125,45 @@
 {% endblock %}
 
 {% block content %}
-<section class="glass-panel reveal" style="margin-bottom: var(--space-6);">
-  <p class="text-caption" style="color: var(--glass-highlight);">배너 관리</p>
-  <h1 class="text-title-lg">배너</h1>
-  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 56ch;">
-    메인 화면 배너를 추가·삭제합니다. 순서(order)는 중복될 수 없으며, 배너를 삭제하면 하위 상세 이미지도 함께 제거됩니다.
-  </p>
-</section>
-
-<section class="glass-card reveal" style="margin-bottom: var(--space-6);">
-  <h2 class="text-title-sm">배너 추가</h2>
-  <form method="post" enctype="multipart/form-data" class="ah-recordbar">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="create" />
-    <div class="ah-field">
-      <label class="ah-label" for="banner-image">썸네일 이미지</label>
-      <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*" required />
+{# 배너 추가 모달 — 목록 헤더 ＋ 버튼으로 열림 #}
+<div class="ah-modal" id="banner-create-modal" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="banner-create-modal-title">
+    <div class="ah-modal__head">
+      <h2 id="banner-create-modal-title" class="text-title-md">배너 추가</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
     </div>
-    <div class="ah-field">
-      <label class="ah-label" for="banner-order">순서</label>
-      <input class="ah-input ah-order-input" type="number" id="banner-order" name="order"
-             value="{{ next_order }}" min="1" />
+    <div class="ah-modal__body">
+      <form method="post" enctype="multipart/form-data" class="ah-stack">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create" />
+        <div class="ah-field">
+          <label class="ah-label" for="banner-image">썸네일 이미지</label>
+          <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*" required />
+        </div>
+        <div class="ah-field">
+          <label class="ah-label" for="banner-order">순서</label>
+          <input class="ah-input ah-order-input" type="number" id="banner-order" name="order"
+                 value="{{ next_order }}" min="1" />
+        </div>
+        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" class="btn btn-primary">배너 등록</button>
+        </div>
+      </form>
     </div>
-    <button type="submit" class="btn btn-primary">배너 등록</button>
-  </form>
-</section>
+  </div>
+</div>
 
 <section class="reveal">
-  <h2 class="text-title-sm" style="margin-bottom: var(--space-3);">
-    배너 목록 <span class="text-muted">({{ banners|length }})</span>
-  </h2>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
+    <h2 class="text-title-sm">
+      배너 목록 <span class="text-muted">({{ banners|length }})</span>
+    </h2>
+    <button type="button" class="btn btn-primary" data-modal-open="banner-create-modal"
+            title="배너 추가" aria-label="배너 추가">＋</button>
+  </div>
 
   {% if banners %}
   <div class="ah-records" data-reveal-stagger>
