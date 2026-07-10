@@ -21,87 +21,86 @@
   </div>
   <button type="button" class="btn btn-primary"
           data-modal-open="category-modal"
-          data-cat-act="create" data-cat-level="big" data-cat-title="대분류 추가">
-    ＋ 대분류 추가
-  </button>
+          data-cat-act="create" data-cat-level="big" data-cat-title="대분류 추가"
+          title="대분류 추가" aria-label="대분류 추가">＋</button>
 </section>
 
 <section class="reveal">
   {% if bigs %}
-  <ul class="ah-tree">
+  {# 3열 마인드맵 — 1col 대분류 · 2col 중분류 · 3col 소분류, 열 간 커넥터로 연결 #}
+  <div class="ah-map">
     {% for big in bigs %}
-    <li class="ah-tree__item">
-      <div class="ah-tree__row ah-tree__row--big">
-        <span class="ah-tree__icon" aria-hidden="true">📁</span>
-        <span class="ah-tree__name text-body">{{ big.category }}</span>
-        <span class="ah-tree__actions">
-          <button type="button" class="ah-tree__btn" title="중분류 추가"
+    <div class="ah-map__group">
+      {# col 1 — 대분류 (자기 중분류 묶음에 세로 중앙) #}
+      <div class="ah-map__node ah-map__node--big">
+        <span class="ah-map__name text-body">{{ big.category }}</span>
+        <span class="ah-map__actions">
+          <button type="button" class="ah-map__btn" title="중분류 추가"
                   data-modal-open="category-modal"
                   data-cat-act="create" data-cat-level="middle" data-cat-parent="{{ big.id }}"
                   data-cat-title="중분류 추가">＋</button>
-          <button type="button" class="ah-tree__btn" title="이름 수정"
+          <button type="button" class="ah-map__btn" title="이름 수정"
                   data-modal-open="category-modal"
                   data-cat-act="update" data-cat-level="big" data-cat-id="{{ big.id }}"
                   data-cat-name="{{ big.category }}" data-cat-title="대분류 수정">✎</button>
-          <button type="button" class="ah-tree__btn ah-tree__btn--danger" title="삭제"
+          <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
                   data-cat-act="delete" data-cat-level="big" data-cat-id="{{ big.id }}"
                   data-cat-confirm="이 대분류와 하위 중·소분류, 제품 연결이 모두 삭제됩니다. 계속할까요?">🗑</button>
         </span>
       </div>
 
-      <ul class="ah-tree__children">
+      {# col 2+3 — 중분류별 행: [중분류] [소분류들] #}
+      <div class="ah-map__branches">
         {% for mid in big.middle_categories.all %}
-        <li class="ah-tree__item">
-          <div class="ah-tree__row ah-tree__row--middle">
-            <span class="ah-tree__icon" aria-hidden="true">📂</span>
-            <span class="ah-tree__name text-body">{{ mid.category }}</span>
-            <span class="ah-tree__actions">
-              <button type="button" class="ah-tree__btn" title="소분류 추가"
+        <div class="ah-map__branch">
+          <div class="ah-map__node ah-map__node--mid">
+            <span class="ah-map__name text-body">{{ mid.category }}</span>
+            <span class="ah-map__actions">
+              <button type="button" class="ah-map__btn" title="소분류 추가"
                       data-modal-open="category-modal"
                       data-cat-act="create" data-cat-level="small" data-cat-parent="{{ mid.id }}"
                       data-cat-title="소분류 추가">＋</button>
-              <button type="button" class="ah-tree__btn" title="이름 수정"
+              <button type="button" class="ah-map__btn" title="이름 수정"
                       data-modal-open="category-modal"
                       data-cat-act="update" data-cat-level="middle" data-cat-id="{{ mid.id }}"
                       data-cat-name="{{ mid.category }}" data-cat-title="중분류 수정">✎</button>
-              <button type="button" class="ah-tree__btn ah-tree__btn--danger" title="삭제"
+              <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
                       data-cat-act="delete" data-cat-level="middle" data-cat-id="{{ mid.id }}"
                       data-cat-confirm="이 중분류와 하위 소분류, 제품 연결이 모두 삭제됩니다. 계속할까요?">🗑</button>
             </span>
           </div>
 
-          <ul class="ah-tree__children">
+          <div class="ah-map__smalls">
             {% for small in mid.small_categories.all %}
-            <li class="ah-tree__item">
-              <div class="ah-tree__row ah-tree__row--small">
-                <span class="ah-tree__icon" aria-hidden="true">📄</span>
-                <span class="ah-tree__name text-body">{{ small.category }}</span>
-                <span class="ah-badge ah-badge--neutral" title="연결된 제품 수">제품 {{ small.product_count }}</span>
-                <span class="ah-tree__actions">
-                  <button type="button" class="ah-tree__btn" title="이름 수정"
-                          data-modal-open="category-modal"
-                          data-cat-act="update" data-cat-level="small" data-cat-id="{{ small.id }}"
-                          data-cat-name="{{ small.category }}" data-cat-title="소분류 수정">✎</button>
-                  <button type="button" class="ah-tree__btn ah-tree__btn--danger" title="삭제"
-                          data-cat-act="delete" data-cat-level="small" data-cat-id="{{ small.id }}"
-                          data-cat-confirm="이 소분류와 제품 연결이 삭제됩니다. 계속할까요?">🗑</button>
-                </span>
-              </div>
-            </li>
+            <div class="ah-map__node ah-map__node--small">
+              <span class="ah-map__name text-body">{{ small.category }}</span>
+              <span class="ah-badge ah-badge--neutral" title="연결된 제품 수">{{ small.product_count }}</span>
+              <span class="ah-map__actions">
+                <button type="button" class="ah-map__btn" title="이름 수정"
+                        data-modal-open="category-modal"
+                        data-cat-act="update" data-cat-level="small" data-cat-id="{{ small.id }}"
+                        data-cat-name="{{ small.category }}" data-cat-title="소분류 수정">✎</button>
+                <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
+                        data-cat-act="delete" data-cat-level="small" data-cat-id="{{ small.id }}"
+                        data-cat-confirm="이 소분류와 제품 연결이 삭제됩니다. 계속할까요?">🗑</button>
+              </span>
+            </div>
             {% empty %}
-            <li class="ah-tree__empty text-body-sm">소분류가 없습니다.</li>
+            <div class="ah-map__empty text-body-sm">소분류 없음</div>
             {% endfor %}
-          </ul>
-        </li>
+          </div>
+        </div>
         {% empty %}
-        <li class="ah-tree__empty text-body-sm">중분류가 없습니다.</li>
+        <div class="ah-map__branch">
+          <div class="ah-map__empty text-body-sm">중분류 없음</div>
+        </div>
         {% endfor %}
-      </ul>
-    </li>
+      </div>
+    </div>
     {% endfor %}
-  </ul>
+  </div>
   {% else %}
-  <p class="ah-record-empty text-body">등록된 대분류가 없습니다. 위 "대분류 추가"로 시작하세요.</p>
+  <p class="ah-record-empty text-body">등록된 대분류가 없습니다. 위 ＋ 로 시작하세요.</p>
   {% endif %}
 </section>
 
