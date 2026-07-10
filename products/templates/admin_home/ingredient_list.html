@@ -69,7 +69,7 @@
   <div class="ah-modal" id="ing-modal-{{ ing.id }}" aria-hidden="true">
     <div class="ah-modal__overlay" data-modal-close></div>
     <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
-         aria-labelledby="ing-modal-{{ ing.id }}-title">
+         aria-labelledby="ing-modal-{{ ing.id }}-title" style="width: min(920px, 100%);">
       <div class="ah-modal__head">
         <h2 id="ing-modal-{{ ing.id }}-title" class="text-title-md">성분 상세 · #{{ ing.id }}</h2>
         <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
@@ -80,15 +80,17 @@
           <input type="hidden" name="action" value="update" />
           <input type="hidden" name="id" value="{{ ing.id }}" />
 
-          <div class="ah-field">
-            <label class="ah-label">성분 이름</label>
-            <input class="ah-input" type="text" name="name" value="{{ ing.name }}"
-                   aria-label="성분 이름" required />
-          </div>
-          <div class="ah-field">
-            <label class="ah-label">주성분</label>
-            <input class="ah-input" type="text" name="mainIngredient" maxlength="100"
-                   value="{{ ing.mainIngredient|default:'' }}" aria-label="주성분" />
+          <div class="ah-grid">
+            <div class="ah-field">
+              <label class="ah-label">성분 이름</label>
+              <input class="ah-input" type="text" name="name" value="{{ ing.name }}"
+                     aria-label="성분 이름" required />
+            </div>
+            <div class="ah-field">
+              <label class="ah-label">주성분</label>
+              <input class="ah-input" type="text" name="mainIngredient" maxlength="100"
+                     value="{{ ing.mainIngredient|default:'' }}" aria-label="주성분" />
+            </div>
           </div>
           <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
             <div class="ah-field" style="flex:1 1 160px;">
@@ -103,6 +105,7 @@
             </div>
           </div>
 
+          <div class="ah-grid">
           {# 효과 (JSON 리스트) #}
           <div class="ah-field">
             <label class="ah-label">효과</label>
@@ -138,6 +141,7 @@
               <input type="hidden" name="sideEffect" data-listedit-target />
             </div>
           </div>
+          </div>
 
           {# 성분 가이드(IngredientGuide, 1:1) — 핵심 포인트 / 출처 #}
           <div class="ah-formsection">
@@ -147,6 +151,7 @@
             </p>
           </div>
 
+          <div class="ah-grid">
           <div class="ah-field">
             <label class="ah-label">핵심 포인트</label>
             <div class="ah-listedit" data-listedit>
@@ -179,6 +184,7 @@
               <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
               <input type="hidden" name="sources" data-listedit-target />
             </div>
+          </div>
           </div>
 
           <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
