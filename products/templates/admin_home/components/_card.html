@@ -1,0 +1,10 @@
+{% comment %}
+  재사용 유리 카드 파셜.
+  사용: {% include "admin_home/components/_card.html" with title="..." desc="..." icon="🔒" %}
+  - title (필수), desc (선택), icon (선택, 이모지/문자)
+{% endcomment %}
+<article class="glass-card reveal">
+  {% if title %}<h3 class="glass-card__title">{{ title }}</h3>{% endif %}
+  {% if desc %}<p class="glass-card__desc">{{ desc }}</p>{% endif %}
+  {% if icon %}<div class="glass-card__icon" aria-hidden="true">{{ icon }}</div>{% endif %}
+</article>
