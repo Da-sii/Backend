@@ -1,0 +1,197 @@
+/* =============================================================
+   tokens.css — /admin/home 디자인 시스템 토큰
+   모든 raw 값(hex/rgba/px)은 이 파일에만 존재한다.
+   컴포넌트 CSS는 반드시 이 토큰(var(--...))만 참조할 것.
+   레퍼런스: docs/assets/Color System.png, Typography.png, ref1.png
+   ============================================================= */
+
+:root {
+  /* ---------------------------------------------------------
+     Primary — Green (main: green-500)
+     --------------------------------------------------------- */
+  --color-green-50: #EAFAF2;
+  --color-green-100: #D5F6E4;
+  --color-green-200: #ACECCA;
+  --color-green-300: #82E3AF;
+  --color-green-400: #58DA95;
+  --color-green-500: #50D88F; /* main */
+  --color-green-600: #25A762;
+  --color-green-700: #1C7D49;
+  --color-green-800: #135331;
+  --color-green-900: #092A18;
+  --color-green-950: #05150C;
+
+  /* ---------------------------------------------------------
+     Sub — Blue (main: blue-400)
+     --------------------------------------------------------- */
+  --color-blue-50: #E5F0FF;
+  --color-blue-100: #CCE0FF;
+  --color-blue-200: #99C2FF;
+  --color-blue-300: #66A3FF;
+  --color-blue-400: #5398FF; /* main */
+  --color-blue-500: #3385FF;
+  --color-blue-600: #0052CC;
+  --color-blue-700: #003D99;
+  --color-blue-800: #002966;
+  --color-blue-900: #001433;
+  --color-blue-950: #000A1A;
+
+  /* ---------------------------------------------------------
+     Gray
+     --------------------------------------------------------- */
+  --color-gray-0: #FFFFFF;
+  --color-gray-50: #F1F2F3;
+  --color-gray-100: #E4E6E7;
+  --color-gray-200: #C9CCCF;
+  --color-gray-300: #AEB3B7;
+  --color-gray-400: #939A9F;
+  --color-gray-500: #60676C;
+  --color-gray-600: #484D51;
+  --color-gray-700: #363A3D;
+  --color-gray-800: #303336;
+  --color-gray-900: #181A1B;
+  --color-gray-950: #0C0D0E;
+
+  /* ---------------------------------------------------------
+     기능색 (etc)
+     --------------------------------------------------------- */
+  --color-kakao: #FEE500;
+  --color-error: #FF3A4A;
+  --color-graybox: #F6F5FA;
+  --color-ok: #9DD716;
+  --color-orange: #ED9A01;
+  --color-star-yellow: #F6C72B;
+  --gradient-logo: linear-gradient(135deg, #3DE0C7, #2BA8E0); /* 근사치 */
+  --gradient-bar: linear-gradient(90deg, #FFD54A, #ED9A01);   /* 근사치 */
+
+  /* ---------------------------------------------------------
+     캘린더
+     --------------------------------------------------------- */
+  --color-cal-lightorange: #FEE8D4;
+  --color-cal-orange: #FD8F2A;
+  --color-cal-lightpurple: #EEDDF8;
+  --color-cal-purple: #A954DD;
+  --color-cal-lightpink: #FBE2EB;
+  --color-cal-pink: #EA709C;
+  /* 캘린더 blue는 blue-50 / blue-400 재사용 */
+
+  /* ---------------------------------------------------------
+     시맨틱 별칭 (컴포넌트는 되도록 이 별칭을 참조)
+     --------------------------------------------------------- */
+  --brand-primary: var(--color-green-500);
+  --brand-secondary: var(--color-blue-400);
+  --text-strong: var(--color-gray-900);
+  --text-default: var(--color-gray-700);
+  --text-muted: var(--color-gray-500);
+  --text-on-glass: var(--color-gray-0);
+  --surface: var(--color-gray-0);
+  --surface-subtle: var(--color-graybox);
+  --focus-ring: var(--color-blue-400);
+
+  /* ---------------------------------------------------------
+     Typography — Nanum Square Neo Variable
+     "최소 18px" 규칙: 모든 size 토큰 >= 18px.
+     line-height 는 unitless 비율.
+     밀도 개선(TASK-11): 헤딩(display/title-*)만 한 단계 축소.
+     본문(text-lg/md/sm, caption)은 18px floor 를 지키기 위해 그대로 유지.
+     --------------------------------------------------------- */
+  --font-family-base: "NanumSquareNeo", "Pretendard", system-ui, -apple-system,
+    "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+
+  --font-weight-regular: 400;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --fs-display: 36px;   --lh-display: 1.2;    /* Hero 대형 헤드라인 */
+  --fs-title-lg: 28px;  --lh-title-lg: 1.3;   /* Headline */
+  --fs-title-md: 24px;  --lh-title-md: 1.35;  /* Title */
+  --fs-title-sm: 21px;  --lh-title-sm: 1.4;   /* Sub Title (body-md 20px 과 구분되도록 21px) */
+  --fs-text-lg: 22px;   --lh-text-lg: 1.5;    /* Body */
+  --fs-text-md: 20px;   --lh-text-md: 1.5;    /* Body */
+  --fs-text-sm: 18px;   --lh-text-sm: 1.5;    /* Body (최소, floor) */
+  --fs-caption: 18px;   --lh-caption: 1.4;    /* Caption (floor) */
+
+  /* 원본 스타일명 유지용 별칭 */
+  --fs-caption-1: var(--fs-caption);
+  --fs-caption-2: var(--fs-caption);
+  --fs-caption-3: var(--fs-caption);
+
+  /* ---------------------------------------------------------
+     Radius (밀도 개선: 한 단계 압축)
+     --------------------------------------------------------- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* ---------------------------------------------------------
+     Blur
+     --------------------------------------------------------- */
+  --blur-sm: 12px;
+  --blur-md: 18px;
+  --blur-lg: 28px;
+
+  /* ---------------------------------------------------------
+     Shadow
+     --------------------------------------------------------- */
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.18);
+  --shadow-lift: 0 16px 48px rgba(0, 0, 0, 0.28);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+
+  /* ---------------------------------------------------------
+     Spacing (컴포넌트 여백은 이 토큰만 사용)
+     밀도 개선: 비율을 유지하며 한 단계 타이트하게 압축.
+     --------------------------------------------------------- */
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 16px;
+  --space-4: 22px;
+  --space-6: 32px;
+  --space-8: 44px;
+
+  /* ---------------------------------------------------------
+     Liquid Glass 재질 (glass.css 가 참조 — hex 대신 여기서 정의)
+     --------------------------------------------------------- */
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-bg-strong: rgba(255, 255, 255, 0.18);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.08);
+  --glass-bg-dark: rgba(24, 26, 27, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-border-strong: rgba(255, 255, 255, 0.4);
+  --glass-highlight: rgba(255, 255, 255, 0.4);
+  --glass-saturate: 160%;
+  /* backdrop-filter 미지원 시 가독성 확보용 불투명 배경 */
+  --glass-bg-fallback: rgba(255, 255, 255, 0.9);
+  --glass-bg-dark-fallback: rgba(24, 26, 27, 0.92);
+
+  /* ---------------------------------------------------------
+     레이어링 (z-index)
+     --------------------------------------------------------- */
+  --z-toast: 1000;
+  --z-modal: 900;
+
+  /* 모달 뒤를 덮는 스크림(딤) */
+  --scrim: rgba(12, 13, 14, 0.55);
+
+  /* ---------------------------------------------------------
+     레이아웃 / 배경 (base.html 에서 교체 가능)
+     --------------------------------------------------------- */
+  --admin-max-width: 1200px;
+  --transition-base: 200ms ease;
+  /* ref1 톤: 은은한 그린-블루 그라데이션 배경 (이미지로 교체 가능) */
+  --admin-bg-image: none;
+  --admin-bg-color: var(--color-gray-900);
+  --admin-bg-gradient: radial-gradient(
+      1200px 800px at 15% 10%,
+      rgba(80, 216, 143, 0.28),
+      transparent 60%
+    ),
+    radial-gradient(
+      1000px 700px at 90% 20%,
+      rgba(83, 152, 255, 0.24),
+      transparent 55%
+    ),
+    linear-gradient(160deg, var(--color-gray-800), var(--color-gray-950));
+}
