@@ -141,10 +141,49 @@
     });
   }
 
+  /* -----------------------------------------------------------
+     사이드바 드로어 — 좁은 화면에서 햄버거(#ah-menu-toggle)로 사이드바를
+     오프캔버스로 열고 닫는다. 사이드바/토프바는 지속 셸이라 한 번만 배선한다
+     (부분 로딩으로 재호출돼도 _ahSidebarWired 가드로 중복 방지).
+     ----------------------------------------------------------- */
+  function initSidebarToggle() {
+    if (document._ahSidebarWired) return;
+    var layout = document.getElementById("ah-layout");
+    var toggle = document.getElementById("ah-menu-toggle");
+    if (!layout || !toggle) return;
+    document._ahSidebarWired = "1";
+
+    var scrim = document.getElementById("ah-sidebar-scrim");
+    function setOpen(open) {
+      layout.classList.toggle("is-nav-open", open);
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    toggle.addEventListener("click", function () {
+      setOpen(!layout.classList.contains("is-nav-open"));
+    });
+    if (scrim) {
+      scrim.addEventListener("click", function () {
+        setOpen(false);
+      });
+    }
+    // 사이드바 메뉴 클릭(모바일) 후에는 드로어를 닫는다.
+    layout.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest(".ah-sidebar__item")) {
+        setOpen(false);
+      }
+    });
+    // Esc 로 닫기
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" || e.keyCode === 27) setOpen(false);
+    });
+  }
+
   function init() {
     document.querySelectorAll(".glass-nav").forEach(wireNav);
     initGlassSheen();
     initModals();
+    initSidebarToggle();
   }
 
   // 창 크기 변경 시 모든 nav 인디케이터 위치 재계산 (전역에 한 번만 바인딩)
