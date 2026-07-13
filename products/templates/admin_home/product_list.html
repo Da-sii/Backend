@@ -1,11 +1,11 @@
 {% extends base_template|default:"admin_home/base.html" %}
 {% comment %}
-  제품 관리 — 목록 + 제품 추가(모달).
-  "제품 추가" 버튼 → .ah-modal 오버레이의 폼(action=create, multipart)을 그대로 전체 페이지 POST 한다.
-  성분(ingredient_ids[]/amounts[])·기타 원료(other_ingredient_ids[])·카테고리(category_ids[])는
-  각각 행 단위 동적 리스트(.ah-listedit, extra_js 의 data-row-* 델리게이트)로 추가/삭제한다.
-  수정/삭제는 이번 범위가 아니다. 각 항목의 "수정"은 기존 admin 편집기(admin_product_edit)로 링크만 건다.
-  목록 쿼리는 admin_home_views.product_list 에서 기존 admin_views.product_form 목록 쿼리와 동일한 형태를 재사용한다.
+  제품 관리 — 목록 + 추가/수정(모달).
+  · 추가: 토프바 "＋ 제품 추가" → #product-create-modal 폼(action=create, multipart) 전체 페이지 POST.
+  · 수정: 목록 행 클릭 → 공유 #product-edit-modal 을 extra_js 가 행별 json_script(product.edit_data)로
+    채워 연다(action=update). 저장 시 성분/기타원료/카테고리는 replace-all, 이미지는 체크 삭제 + 신규 추가.
+    (기존 /admin 편집기로 이동하지 않는다 — admin_home 안에서 처리)
+  성분·기타 원료·카테고리는 행 단위 동적 리스트(.ah-listedit, extra_js 의 data-row-* 델리게이트)로 편집한다.
 {% endcomment %}
 
 {% block title %}제품 · DASII{% endblock %}
@@ -129,6 +129,128 @@
   </div>
 </div>
 
+{# 제품 상세/수정 모달 — 목록 행 클릭 시 extra_js 가 값을 채워 연다(공유 모달 1개). #}
+<div class="ah-modal" id="product-edit-modal" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="product-edit-modal-title" style="width: min(860px, 100%);">
+    <div class="ah-modal__head">
+      <h2 id="product-edit-modal-title" class="text-title-md">제품 수정</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      <form method="post" enctype="multipart/form-data" class="ah-stack">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update" />
+        <input type="hidden" name="id" id="pe-id" value="" />
+
+        <div class="ah-grid">
+          <div class="ah-field">
+            <label class="ah-label" for="pe-name">제품명</label>
+            <input class="ah-input" type="text" id="pe-name" name="name" required />
+          </div>
+          <div class="ah-field">
+            <label class="ah-label" for="pe-company">제조사</label>
+            <input class="ah-input" type="text" id="pe-company" name="company" required />
+          </div>
+          <div class="ah-field">
+            <label class="ah-label" for="pe-type">제품 유형</label>
+            <input class="ah-input" type="text" id="pe-type" name="productType" required />
+          </div>
+          <div class="ah-field">
+            <label class="ah-label" for="pe-coupang">쿠팡 링크</label>
+            <input class="ah-input" type="text" id="pe-coupang" name="coupang" placeholder="https://..." />
+          </div>
+        </div>
+
+        {# 기존 이미지 — 체크한 이미지는 저장 시 삭제된다(delete_image_ids[]). JS 가 채움. #}
+        <div class="ah-formsection">
+          <h3 class="text-title-sm">기존 이미지</h3>
+          <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
+            삭제할 이미지를 체크하세요.
+          </p>
+        </div>
+        <div class="pe-images" id="pe-images"></div>
+
+        <div class="ah-field">
+          <label class="ah-label" for="pe-images-new">새 이미지 추가</label>
+          <input class="ah-input" type="file" id="pe-images-new" name="image_files" multiple accept="image/*" />
+        </div>
+
+        {# 성분 — 저장 시 기존 연결을 지우고 아래 행들로 다시 만든다(replace-all) #}
+        <div class="ah-formsection">
+          <h3 class="text-title-sm">성분</h3>
+          <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
+            성분을 선택하고 용량을 입력합니다.
+          </p>
+        </div>
+        <div class="ah-listedit" data-row-group>
+          <div class="ah-listedit__rows" data-row-list id="pe-ing-rows">
+            <div class="ah-listedit__row" data-row>
+              <select class="ah-select" name="ingredient_ids[]" aria-label="성분 선택">
+                <option value="">성분 선택</option>
+                {% for ing in ingredients %}
+                <option value="{{ ing.id }}">{{ ing.name }}</option>
+                {% endfor %}
+              </select>
+              <input class="ah-input" type="text" name="amounts[]" placeholder="예: 1000mg" aria-label="용량" />
+              <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-glass" data-row-add>+ 성분 추가</button>
+        </div>
+
+        {# 기타 원료 #}
+        <div class="ah-formsection">
+          <h3 class="text-title-sm">기타 원료</h3>
+        </div>
+        <div class="ah-listedit" data-row-group>
+          <div class="ah-listedit__rows" data-row-list id="pe-oi-rows">
+            <div class="ah-listedit__row" data-row>
+              <select class="ah-select" name="other_ingredient_ids[]" aria-label="기타 원료 선택">
+                <option value="">기타 원료 선택</option>
+                {% for oi in other_ingredients %}
+                <option value="{{ oi.id }}">{{ oi.name }}</option>
+                {% endfor %}
+              </select>
+              <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-glass" data-row-add>+ 기타 원료 추가</button>
+        </div>
+
+        {# 소분류 카테고리 #}
+        <div class="ah-formsection">
+          <h3 class="text-title-sm">카테고리(소분류)</h3>
+        </div>
+        <div class="ah-listedit" data-row-group>
+          <div class="ah-listedit__rows" data-row-list id="pe-cat-rows">
+            <div class="ah-listedit__row" data-row>
+              <select class="ah-select" name="category_ids[]" aria-label="소분류 선택">
+                <option value="">소분류 선택</option>
+                {% for sc in small_categories %}
+                <option value="{{ sc.id }}">
+                  {{ sc.middle_category.big_category.category }} &gt;
+                  {{ sc.middle_category.category }} &gt;
+                  {{ sc.category }}
+                </option>
+                {% endfor %}
+              </select>
+              <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-glass" data-row-add>+ 카테고리 추가</button>
+        </div>
+
+        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" class="btn btn-primary">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <section class="reveal">
   <div style="display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
     <h2 class="text-title-sm">
@@ -147,7 +269,9 @@
   {% if products %}
   <div class="ah-records" id="product-records" data-reveal-stagger>
     {% for product in products %}
-    <div class="ah-record reveal" data-search="{{ product.name|lower }} {{ product.company|lower }}">
+    <div class="ah-record reveal" data-product-edit="{{ product.id }}"
+         style="cursor:pointer;" title="클릭하여 상세·수정"
+         data-search="{{ product.name|lower }} {{ product.company|lower }}">
       <span class="ah-record__id text-body-sm">#{{ product.id }}</span>
 
       <div class="ah-product__info">
@@ -167,9 +291,7 @@
         </div>
       </div>
 
-      <div class="ah-record__actions">
-        <a class="btn btn-glass" href="{% url 'admin_product_edit' product.id %}">수정</a>
-      </div>
+      {{ product.edit_data|json_script:product.data_id }}
     </div>
     {% endfor %}
   </div>
@@ -193,6 +315,23 @@
     flex-wrap: wrap;
     gap: var(--space-1);
     margin-top: var(--space-1);
+  }
+
+  /* 수정 모달 — 기존 이미지 썸네일 + 삭제 체크 */
+  .pe-images { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+  .pe-image { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+  .pe-image__img {
+    height: 72px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    object-fit: cover;
+  }
+  .pe-image__del {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--glass-highlight);
+    font-size: var(--fs-caption);
   }
 </style>
 {% endblock %}
@@ -260,6 +399,111 @@
           }
         }
       }
+    });
+  })();
+
+  // 제품 상세/수정 모달 — 목록 행 클릭 시 행별 json_script(product-data-<id>) 값을
+  // 공유 모달(#product-edit-modal)에 채우고 연다. document 위임(멱등).
+  (function () {
+    if (document._ahProductEditWired) return;
+    document._ahProductEditWired = "1";
+
+    // 한 그룹의 행들을 items 로 다시 그린다(첫 행을 빈 템플릿 삼아 복제·값 주입).
+    function fillGroup(listId, items, fill) {
+      var list = document.getElementById(listId);
+      if (!list) return;
+      var template = list.querySelector("[data-row]");
+      if (!template) return;
+      var base = template.cloneNode(true);
+      base.querySelectorAll("select").forEach(function (s) { s.selectedIndex = 0; });
+      base.querySelectorAll("input").forEach(function (i) { i.value = ""; });
+      list.innerHTML = "";
+      if (!items || !items.length) {
+        list.appendChild(base);
+        return;
+      }
+      items.forEach(function (item) {
+        var row = base.cloneNode(true);
+        fill(row, item);
+        list.appendChild(row);
+      });
+    }
+
+    function setVal(id, value) {
+      var el = document.getElementById(id);
+      if (el) el.value = value == null ? "" : value;
+    }
+
+    function populate(data) {
+      setVal("pe-id", data.id);
+      setVal("pe-name", data.name);
+      setVal("pe-company", data.company);
+      setVal("pe-type", data.productType);
+      setVal("pe-coupang", data.coupang);
+
+      // 기존 이미지 썸네일 + 삭제 체크박스
+      var box = document.getElementById("pe-images");
+      box.innerHTML = "";
+      if (!data.images || !data.images.length) {
+        var empty = document.createElement("p");
+        empty.className = "text-caption";
+        empty.style.color = "var(--glass-highlight)";
+        empty.textContent = "등록된 이미지가 없습니다.";
+        box.appendChild(empty);
+      } else {
+        data.images.forEach(function (img) {
+          var label = document.createElement("label");
+          label.className = "pe-image";
+          var im = document.createElement("img");
+          im.className = "pe-image__img";
+          im.src = img.url;
+          im.alt = "제품 이미지";
+          var span = document.createElement("span");
+          span.className = "pe-image__del";
+          var cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.name = "delete_image_ids[]";
+          cb.value = String(img.id);
+          span.appendChild(cb);
+          span.appendChild(document.createTextNode(" 삭제"));
+          label.appendChild(im);
+          label.appendChild(span);
+          box.appendChild(label);
+        });
+      }
+
+      fillGroup("pe-ing-rows", data.ingredients, function (row, item) {
+        var sel = row.querySelector("select");
+        if (sel) sel.value = String(item.id);
+        var amt = row.querySelector('input[name="amounts[]"]');
+        if (amt) amt.value = item.amount || "";
+      });
+      fillGroup("pe-oi-rows", data.others, function (row, item) {
+        var sel = row.querySelector("select");
+        if (sel) sel.value = String(item.id);
+      });
+      fillGroup("pe-cat-rows", data.categories, function (row, item) {
+        var sel = row.querySelector("select");
+        if (sel) sel.value = String(item.id);
+      });
+    }
+
+    document.addEventListener("click", function (e) {
+      var row = e.target.closest ? e.target.closest("[data-product-edit]") : null;
+      if (!row) return;
+      var id = row.getAttribute("data-product-edit");
+      var dataEl = document.getElementById("product-data-" + id);
+      var modal = document.getElementById("product-edit-modal");
+      if (!dataEl || !modal) return;
+      try {
+        populate(JSON.parse(dataEl.textContent));
+      } catch (err) {
+        return;
+      }
+      // 모달 열기(닫기는 interactions.js 의 data-modal-close/Esc 위임이 담당)
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("ah-modal-open");
     });
   })();
 </script>
