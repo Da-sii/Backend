@@ -10,20 +10,18 @@
 
 {% block title %}카테고리 · DASII{% endblock %}
 {% block topbar_title %}카테고리 관리{% endblock %}
+{% block topbar_actions %}
+<button type="button" class="btn btn-primary"
+        data-modal-open="category-modal"
+        data-cat-act="create" data-cat-level="big" data-cat-title="대분류 추가">＋ 대분류 추가</button>
+{% endblock %}
 
 {% block content %}
-<section class="glass-card reveal"
-         style="margin-bottom: var(--space-6); display:flex; align-items:center; justify-content:space-between; gap: var(--space-4); flex-wrap:wrap;">
-  <div>
-    <h1 class="text-title-lg">카테고리</h1>
-    <p class="text-body-sm" style="margin-top: var(--space-1);">
-      대·중·소분류를 한 트리에서 관리합니다. 노드에 마우스를 올리면 추가·수정·삭제 버튼이 나타납니다.
-    </p>
-  </div>
-  <button type="button" class="btn btn-primary"
-          data-modal-open="category-modal"
-          data-cat-act="create" data-cat-level="big" data-cat-title="대분류 추가"
-          title="대분류 추가" aria-label="대분류 추가">＋</button>
+<section class="glass-card reveal" style="margin-bottom: var(--space-6);">
+  <p class="text-body-sm">
+    대·중·소분류를 한 트리에서 관리합니다. 노드에 마우스를 올리면 추가·수정·삭제 버튼이 나타나며,
+    새 대분류는 우측 상단 <strong>＋ 대분류 추가</strong> 로 만듭니다.
+  </p>
 </section>
 
 <section class="reveal">
@@ -101,7 +99,7 @@
     {% endfor %}
   </div>
   {% else %}
-  <p class="ah-record-empty text-body">등록된 대분류가 없습니다. 위 ＋ 로 시작하세요.</p>
+  <p class="ah-record-empty text-body">등록된 대분류가 없습니다. 우측 상단 ＋ 대분류 추가 로 시작하세요.</p>
   {% endif %}
 </section>
 
