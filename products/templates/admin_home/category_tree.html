@@ -17,16 +17,9 @@
 {% endblock %}
 
 {% block content %}
-<section class="glass-card reveal" style="margin-bottom: var(--space-6);">
-  <p class="text-body-sm">
-    대·중·소분류를 한 트리에서 관리합니다. 노드에 마우스를 올리면 추가·수정·삭제 버튼이 나타나며,
-    새 대분류는 우측 상단 <strong>＋ 대분류 추가</strong> 로 만듭니다.
-  </p>
-</section>
-
 <section class="reveal">
   {% if bigs %}
-  {# 3열 마인드맵 — 1col 대분류 · 2col 중분류 · 3col 소분류, 열 간 커넥터로 연결 #}
+  {# 3열 마인드맵 — 1col 대분류 · 2col 중분류 · 3col 소분류(세로 나열), 열은 동일 비율 #}
   <div class="ah-map">
     {% for big in bigs %}
     <div class="ah-map__group">
