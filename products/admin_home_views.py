@@ -13,6 +13,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Count, Max, Prefetch, ProtectedError
 from django.db.models.functions import TruncDate
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from common.models import Banner, BannerDetail
@@ -225,13 +226,56 @@ def _signup_chart(days=30):
     }
 
 
-def home(request):
-    """/admin/home 랜딩(홈). 로그인 후 진입 지점.
+def _home_kpis(chart):
+    """홈 대시보드 상단 KPI 스탯 타일용 집계(읽기 전용 count).
 
-    홈 카드 중 "제품 추가 요청"은 사용자가 보낸 ProductRequest 목록을
-    모달로 보여준다(기존 admin product_request_list 기능 이식).
-    action=delete 로 개별 요청을 삭제할 수 있다.
-    하단에는 최근 30일 가입 추이 미니 차트(신규+누적)를 표시한다.
+    카탈로그/회원 규모를 한눈에 보여준다. 각 타일은 label/value/icon 과
+    선택적으로 관리 페이지로 가는 href 를 갖는다(_stat.html 컴포넌트가 렌더).
+    오늘 신규 가입은 이미 계산된 signup_chart(chart) 값을 재사용한다.
+    """
+    return [
+        {"label": "총 회원", "value": User.objects.count(), "icon": "👥"},
+        {"label": "오늘 신규 가입", "value": chart["today_new"], "icon": "🌱"},
+        {
+            "label": "제품",
+            "value": Product.objects.count(),
+            "icon": "📦",
+            "href": reverse("admin_home_product"),
+        },
+        {
+            "label": "기능성 원료",
+            "value": Ingredient.objects.count(),
+            "icon": "🧪",
+            "href": reverse("admin_home_ingredient"),
+        },
+        {
+            "label": "기타 원료",
+            "value": OtherIngredient.objects.count(),
+            "icon": "🧴",
+            "href": reverse("admin_home_ingredient_other"),
+        },
+        {
+            "label": "소분류",
+            "value": SmallCategory.objects.count(),
+            "icon": "🗂️",
+            "href": reverse("admin_home_category"),
+        },
+        {
+            "label": "배너",
+            "value": Banner.objects.count(),
+            "icon": "🖼️",
+            "href": reverse("admin_home_banner"),
+        },
+    ]
+
+
+def home(request):
+    """/admin/home 랜딩(홈). 로그인 후 진입 지점 — 대시보드 개요.
+
+    상단에 카탈로그/회원 규모 KPI 스탯 타일을 두고, 그 아래 최근 30일 가입 추이
+    미니 차트(신규 막대 + 누적 스파크라인)와 "제품 추가 요청" 위젯을 배치한다.
+    제품 추가 요청은 사용자가 보낸 ProductRequest 목록으로, 위젯의 "전체 보기"가
+    여는 모달에서 확인/삭제한다(action=delete). 모든 집계는 읽기 전용이다.
     """
     if request.method == "POST" and request.POST.get("action") == "delete":
         try:
@@ -244,12 +288,14 @@ def home(request):
     product_requests = ProductRequest.objects.select_related("user").order_by(
         "-created_at"
     )
+    chart = _signup_chart(30)
     return _ah_render(
         request,
         "admin_home/home.html",
         {
             "product_requests": product_requests,
-            "signup_chart": _signup_chart(30),
+            "signup_chart": chart,
+            "kpis": _home_kpis(chart),
         },
     )
 
