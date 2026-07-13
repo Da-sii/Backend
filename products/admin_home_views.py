@@ -696,7 +696,7 @@ def product_list(request):
         category_count=Count("category_products", distinct=True),
     ).prefetch_related(
         "images",
-        "ingredients",
+        "ingredients__ingredient",
         "category_products__category__middle_category__big_category",
         "product_other_ingredients__other_ingredient",
     ).order_by("-id")

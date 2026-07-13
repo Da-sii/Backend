@@ -163,18 +163,19 @@
           </div>
         </div>
 
-        {# 기존 이미지 — 체크한 이미지는 저장 시 삭제된다(delete_image_ids[]). JS 가 채움. #}
+        {# 이미지 — 기존 이미지는 체크해서 삭제(delete_image_ids[], JS 가 채움),
+           추가는 현재 한 번에 한 장만 지원하므로 단일 파일 입력으로 UI 를 맞춘다. #}
         <div class="ah-formsection">
-          <h3 class="text-title-sm">기존 이미지</h3>
+          <h3 class="text-title-sm">제품 이미지</h3>
           <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
-            삭제할 이미지를 체크하세요.
+            삭제할 이미지를 체크하고, 새 이미지는 한 번에 한 장씩 추가합니다.
           </p>
         </div>
         <div class="pe-images" id="pe-images"></div>
 
         <div class="ah-field">
-          <label class="ah-label" for="pe-images-new">새 이미지 추가</label>
-          <input class="ah-input" type="file" id="pe-images-new" name="image_files" multiple accept="image/*" />
+          <label class="ah-label" for="pe-images-new">이미지 추가 (한 번에 한 장)</label>
+          <input class="ah-input" type="file" id="pe-images-new" name="image_files" accept="image/*" />
         </div>
 
         {# 성분 — 저장 시 기존 연결을 지우고 아래 행들로 다시 만든다(replace-all) #}
@@ -272,23 +273,24 @@
     <div class="ah-record reveal" data-product-edit="{{ product.id }}"
          style="cursor:pointer;" title="클릭하여 상세·수정"
          data-search="{{ product.name|lower }} {{ product.company|lower }}">
-      <span class="ah-record__id text-body-sm">#{{ product.id }}</span>
+      {# 표시용 넘버링 — DB id 대신 목록 순번(1~n)이라 앞 항목 삭제 시에도 항상 이어진다 #}
+      <span class="ah-record__id text-body-sm">{{ forloop.counter }}</span>
 
       <div class="ah-product__info">
         <p class="text-body">{{ product.name }}</p>
         <p class="text-body-sm text-muted">{{ product.company }} · {{ product.productType }}</p>
 
-        <div class="ah-product__chips">
-          <span class="ah-badge ah-badge--neutral" title="등록된 이미지 수">이미지 {{ product.image_count }}</span>
-          <span class="ah-badge ah-badge--neutral" title="연결된 성분 수">성분 {{ product.ingredient_count }}</span>
-          <span class="ah-badge ah-badge--neutral" title="연결된 카테고리 수">카테고리 {{ product.category_count }}</span>
-          {% for pi in product.ingredients.all %}
-          <span class="ah-badge ah-badge--neutral">{{ pi.ingredient.name }} {{ pi.amount }}</span>
-          {% endfor %}
-          {% for poi in product.product_other_ingredients.all %}
-          <span class="ah-badge ah-badge--neutral">{{ poi.other_ingredient.name }}</span>
-          {% endfor %}
-        </div>
+        {# 소분류·성분(용량)·기타원료를 뱃지 대신 텍스트로 녹여 표기 #}
+        <dl class="ah-product__meta text-body-sm">
+          <dt>카테고리</dt>
+          <dd>{% for cp in product.category_products.all %}{{ cp.category.category }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
+          <dt>성분</dt>
+          <dd>{% for pi in product.ingredients.all %}{{ pi.ingredient.name }} {{ pi.amount }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
+          {% if product.product_other_ingredients.all %}
+          <dt>기타 원료</dt>
+          <dd>{% for poi in product.product_other_ingredients.all %}{{ poi.other_ingredient.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd>
+          {% endif %}
+        </dl>
       </div>
 
       {{ product.edit_data|json_script:product.data_id }}
@@ -303,18 +305,30 @@
 
 {% block extra_head %}
 <style>
-  /* 제품 정보 블록: 이름/브랜드·타입/성분 칩을 세로로 쌓고, 레코드 안에서 넓게 차지한다. */
+  /* 제품 정보 블록: 이름/브랜드·타입/메타(소분류·성분·기타원료)를 세로로 쌓는다. */
   .ah-product__info {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
     flex: 1 1 480px;
   }
-  .ah-product__chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
+  /* 메타 — 라벨(dt) + 값(dd) 2열 그리드. 라벨 폭은 가장 긴 라벨에 맞춰 자동 정렬. */
+  .ah-product__meta {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: var(--space-3);
+    row-gap: var(--space-1);
     margin-top: var(--space-1);
+  }
+  .ah-product__meta dt {
+    color: var(--glass-highlight);
+    font-weight: var(--font-weight-bold);
+    white-space: nowrap;
+  }
+  .ah-product__meta dd {
+    margin: 0;
+    color: var(--text-on-glass);
+    word-break: break-word;
   }
 
   /* 수정 모달 — 기존 이미지 썸네일 + 삭제 체크 */
