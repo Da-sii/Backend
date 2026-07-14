@@ -230,7 +230,8 @@
       {% for ing in ingredients %}
       <div class="ah-record reveal" data-modal-open="ing-modal-{{ ing.id }}"
            style="cursor:pointer;" title="클릭하여 상세·수정">
-        <span class="ah-record__id text-body-sm">#{{ ing.id }}</span>
+        {# 표시용 넘버링 — DB id 대신 목록 순번(1~n)이라 앞 항목 삭제 시에도 항상 이어진다 #}
+        <span class="ah-record__id text-body-sm">{{ forloop.counter }}</span>
 
         <div class="ah-record__edit" style="flex-wrap: wrap;">
           <span class="text-body">{{ ing.name }}</span>
@@ -245,7 +246,13 @@
         </div>
 
         <div class="ah-record__actions">
-          <span class="ah-badge ah-badge--neutral" title="사용 중인 제품 수">제품 {{ ing.product_count }}</span>
+          {# 성분 가이드 유무 — 핵심 포인트/출처 중 하나라도 있으면 '있음' #}
+          {% if ing.guide.keyPoints or ing.guide.sources %}
+          <span class="ah-guideflag ah-guideflag--on text-body-sm" title="성분 가이드 있음">● 가이드 있음</span>
+          {% else %}
+          <span class="ah-guideflag ah-guideflag--off text-body-sm" title="성분 가이드 없음">○ 가이드 없음</span>
+          {% endif %}
+          <span class="text-body-sm text-muted" title="사용 중인 제품 수">제품 {{ ing.product_count }}개</span>
         </div>
       </div>
       {% endfor %}
@@ -255,6 +262,15 @@
     {% endif %}
   </section>
 </div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* 성분 가이드 유무 플래그 — 있음은 브랜드 톤, 없음은 옅은 톤(텍스트로 한눈에 구분) */
+  .ah-guideflag { white-space: nowrap; font-weight: var(--font-weight-bold); }
+  .ah-guideflag--on { color: var(--color-green-600); }
+  .ah-guideflag--off { color: var(--glass-highlight); font-weight: var(--font-weight-regular); }
+</style>
 {% endblock %}
 
 {% block extra_js %}
