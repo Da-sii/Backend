@@ -541,20 +541,72 @@ def _get_small_category(request):
 
 
 # ---------------------------------------------------------------------------
-# 제품 관리 — 목록 + 추가(모달)
-# 추가 로직은 기존 admin_views.product_form 의 생성 흐름을 그대로 이식했다.
-# (수정/삭제는 기존 admin 편집기 링크를 유지)
+# 제품 관리 — 목록 + 추가/수정(모달)
+# 추가·수정 모두 admin_home 모달에서 처리한다(기존 admin 편집기로 이동하지 않음).
+# 성분/기타원료/카테고리 연결 생성은 _save_product_relations 로 create·update 공용,
+# update 는 기존 연결을 지운 뒤 다시 만드는 replace-all 방식이다.
 # ---------------------------------------------------------------------------
-def product_list(request):
-    """제품 리스트 + 제품 추가.
+def _save_product_relations(product, request):
+    """POST 배열로 제품의 성분/기타원료/카테고리 연결을 생성한다(create·update 공용).
 
-    POST(action=create)는 기존 admin_views.product_form 의 생성 로직과
-    동일하게 동작한다: Product 기본필드 + upload_images_to_s3 이미지 업로드 +
-    ingredient_ids[]/amounts[] → ProductIngredient,
-    other_ingredient_ids[] → ProductOtherIngredient,
-    category_ids[] → CategoryProduct.
-    모달 폼 렌더에 필요한 ingredients/other_ingredients/small_categories 를
-    컨텍스트로 함께 내려준다.
+    같은 항목을 중복 선택해도 unique/중복이 생기지 않도록 seen 집합으로 거른다.
+    update 에서는 호출 전에 기존 연결(ProductIngredient/ProductOtherIngredient/
+    CategoryProduct)을 모두 지워 replace-all 로 동작시킨다(링크 행 삭제는 PROTECT 무관).
+    """
+    # 성분 + 용량 → ProductIngredient
+    seen_ing = set()
+    for ingredient_id, amount in zip(
+        request.POST.getlist("ingredient_ids[]"),
+        request.POST.getlist("amounts[]"),
+    ):
+        ingredient_id = ingredient_id.strip()
+        amount = amount.strip()
+        if not (ingredient_id and amount) or ingredient_id in seen_ing:
+            continue
+        try:
+            ingredient = Ingredient.objects.get(id=ingredient_id)
+        except (Ingredient.DoesNotExist, ValueError):
+            continue
+        seen_ing.add(ingredient_id)
+        ProductIngredient.objects.create(
+            product=product, ingredient=ingredient, amount=amount
+        )
+
+    # 기타 원료 → ProductOtherIngredient
+    seen_oi = set()
+    for oi_id in request.POST.getlist("other_ingredient_ids[]"):
+        oi_id = oi_id.strip()
+        if not oi_id or oi_id in seen_oi:
+            continue
+        try:
+            oi = OtherIngredient.objects.get(id=oi_id)
+        except (OtherIngredient.DoesNotExist, ValueError):
+            continue
+        seen_oi.add(oi_id)
+        ProductOtherIngredient.objects.create(product=product, other_ingredient=oi)
+
+    # 소분류 카테고리 → CategoryProduct
+    seen_cat = set()
+    for category_id in request.POST.getlist("category_ids[]"):
+        category_id = category_id.strip()
+        if not category_id or category_id in seen_cat:
+            continue
+        try:
+            category = SmallCategory.objects.get(id=category_id)
+        except (SmallCategory.DoesNotExist, ValueError):
+            continue
+        seen_cat.add(category_id)
+        CategoryProduct.objects.create(product=product, category=category)
+
+
+def product_list(request):
+    """제품 리스트 + 제품 추가(create)/수정(update) — 모두 모달에서 처리.
+
+    - action=create: Product 기본필드 + 이미지 업로드 + 성분/기타원료/카테고리 연결 생성.
+    - action=update: 기본필드·이미지(선택 삭제/추가) 갱신 + 연결 replace-all.
+    두 경로 모두 연결 생성은 _save_product_relations 공용 헬퍼를 쓴다.
+    목록에는 모달 렌더용 선택지(ingredients/other_ingredients/small_categories)와
+    행별 상세/수정 prefill 데이터(product.edit_data, json_script 용)를 함께 내려준다.
     """
     if request.method == "POST" and request.POST.get("action") == "create":
         name = request.POST.get("name", "").strip()
@@ -581,59 +633,59 @@ def product_list(request):
                         upload_images_to_s3(product, image_files)
                     )
 
-                # 성분 + 용량 → ProductIngredient (같은 성분 중복 선택 시 unique 위반 방지)
-                ingredient_ids = request.POST.getlist("ingredient_ids[]")
-                amounts = request.POST.getlist("amounts[]")
-                seen_ing = set()
-                for ingredient_id, amount in zip(ingredient_ids, amounts):
-                    ingredient_id = ingredient_id.strip()
-                    amount = amount.strip()
-                    if not (ingredient_id and amount) or ingredient_id in seen_ing:
-                        continue
-                    try:
-                        ingredient = Ingredient.objects.get(id=ingredient_id)
-                    except (Ingredient.DoesNotExist, ValueError):
-                        continue
-                    seen_ing.add(ingredient_id)
-                    ProductIngredient.objects.create(
-                        product=product,
-                        ingredient=ingredient,
-                        amount=amount,
-                    )
-
-                # 기타 원료 → ProductOtherIngredient (같은 원료 중복 선택 시 unique 위반 방지)
-                seen_oi = set()
-                for oi_id in request.POST.getlist("other_ingredient_ids[]"):
-                    oi_id = oi_id.strip()
-                    if not oi_id or oi_id in seen_oi:
-                        continue
-                    try:
-                        oi = OtherIngredient.objects.get(id=oi_id)
-                    except (OtherIngredient.DoesNotExist, ValueError):
-                        continue
-                    seen_oi.add(oi_id)
-                    ProductOtherIngredient.objects.create(
-                        product=product,
-                        other_ingredient=oi,
-                    )
-
-                # 소분류 카테고리 → CategoryProduct (같은 카테고리 중복 선택 시 unique 위반 방지)
-                seen_cat = set()
-                for category_id in request.POST.getlist("category_ids[]"):
-                    category_id = category_id.strip()
-                    if not category_id or category_id in seen_cat:
-                        continue
-                    try:
-                        category = SmallCategory.objects.get(id=category_id)
-                    except (SmallCategory.DoesNotExist, ValueError):
-                        continue
-                    seen_cat.add(category_id)
-                    CategoryProduct.objects.create(
-                        product=product,
-                        category=category,
-                    )
+                _save_product_relations(product, request)
 
             messages.success(request, f'"{name}" 제품이 추가되었습니다.')
+        except Exception as e:
+            messages.error(request, f"오류가 발생했습니다: {str(e)}")
+        return redirect("admin_home_product")
+
+    if request.method == "POST" and request.POST.get("action") == "update":
+        # 상세/수정 모달 저장 — 기본필드 + 이미지(선택 삭제/추가) + 연결 replace-all.
+        try:
+            product = Product.objects.get(id=request.POST.get("id", ""))
+        except (Product.DoesNotExist, ValueError):
+            messages.error(request, "제품을 찾을 수 없습니다.")
+            return redirect("admin_home_product")
+
+        name = request.POST.get("name", "").strip()
+        company = request.POST.get("company", "").strip()
+        product_type = request.POST.get("productType", "").strip()
+        coupang = request.POST.get("coupang", "").strip() or None
+
+        if not all([name, company, product_type]):
+            messages.error(request, "모든 필수 항목을 입력해주세요.")
+            return redirect("admin_home_product")
+
+        try:
+            with transaction.atomic():
+                product.name = name
+                product.company = company
+                product.productType = product_type
+                product.coupang = coupang
+                product.save()
+
+                # 이미지 — 체크한 기존 이미지 삭제 + 새 이미지 업로드/추가
+                delete_ids = [
+                    i for i in request.POST.getlist("delete_image_ids[]") if i.strip()
+                ]
+                if delete_ids:
+                    ProductImage.objects.filter(
+                        id__in=delete_ids, product=product
+                    ).delete()
+                new_images = request.FILES.getlist("image_files")
+                if new_images:
+                    ProductImage.objects.bulk_create(
+                        upload_images_to_s3(product, new_images)
+                    )
+
+                # 성분/기타원료/카테고리 연결 — 기존을 지우고 폼 값으로 다시 생성(replace-all)
+                ProductIngredient.objects.filter(product=product).delete()
+                ProductOtherIngredient.objects.filter(product=product).delete()
+                CategoryProduct.objects.filter(product=product).delete()
+                _save_product_relations(product, request)
+
+            messages.success(request, f'"{name}" 제품이 수정되었습니다.')
         except Exception as e:
             messages.error(request, f"오류가 발생했습니다: {str(e)}")
         return redirect("admin_home_product")
@@ -649,7 +701,30 @@ def product_list(request):
         "product_other_ingredients__other_ingredient",
     ).order_by("-id")
 
-    # 모달 추가 폼 렌더용 선택지
+    # 상세/수정 모달 prefill 용 제품별 데이터 — 행마다 json_script 로 심어 JS 가 읽는다.
+    # (prefetch 된 관계만 사용하므로 추가 쿼리 없음)
+    products = list(products)
+    for p in products:
+        p.data_id = f"product-data-{p.id}"
+        p.edit_data = {
+            "id": p.id,
+            "name": p.name,
+            "company": p.company,
+            "productType": p.productType,
+            "coupang": p.coupang or "",
+            "images": [{"id": img.id, "url": img.url} for img in p.images.all()],
+            "ingredients": [
+                {"id": pi.ingredient_id, "amount": pi.amount}
+                for pi in p.ingredients.all()
+            ],
+            "others": [
+                {"id": poi.other_ingredient_id}
+                for poi in p.product_other_ingredients.all()
+            ],
+            "categories": [{"id": cp.category_id} for cp in p.category_products.all()],
+        }
+
+    # 모달 추가/수정 폼 렌더용 선택지
     ingredients = Ingredient.objects.all().order_by("id")
     other_ingredients = OtherIngredient.objects.all().order_by("name")
     small_categories = (
