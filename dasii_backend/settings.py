@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     "products",
     "review",
     "common",
+    "recommendations",
 
     # Third-party
     "rest_framework",
