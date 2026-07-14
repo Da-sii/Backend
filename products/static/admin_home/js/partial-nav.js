@@ -51,11 +51,11 @@
     });
   }
 
-  // 상단 탭(#ah-topnav)만 활성 상태를 갱신한다.
-  function updateTopNav(path) {
-    var nav = document.getElementById("ah-topnav");
+  // 좌측 사이드바(#ah-sidebar)의 활성 메뉴만 갱신한다(부분 로딩 후에도 유지되는 셸).
+  function updateSidebarActive(path) {
+    var nav = document.getElementById("ah-sidebar");
     if (!nav) return;
-    nav.querySelectorAll(".glass-nav__item").forEach(function (item) {
+    nav.querySelectorAll(".ah-sidebar__item").forEach(function (item) {
       var href = item.getAttribute("href");
       if (!href || href.indexOf(PREFIX.slice(0, -1)) !== 0) {
         // /admin/home 밖(기존 Admin 등)은 활성 대상 아님
@@ -66,6 +66,21 @@
         href === path || (href !== PREFIX && path.indexOf(href) === 0);
       item.classList.toggle("is-active", active);
     });
+  }
+
+  // 토프바(지속 셸)의 페이지 타이틀/액션을 응답 fragment 의 마커로 갱신한다.
+  function updateTopbar(frag) {
+    var titleMarker = frag.querySelector("[data-ah-topbar-title]");
+    var titleEl = document.getElementById("ah-topbar-title");
+    if (titleMarker && titleEl) {
+      titleEl.textContent =
+        titleMarker.getAttribute("data-ah-topbar-title") || "";
+    }
+    var actionsMarker = frag.querySelector("[data-ah-topbar-actions]");
+    var actionsEl = document.getElementById("ah-topbar-actions");
+    if (actionsEl) {
+      actionsEl.innerHTML = actionsMarker ? actionsMarker.innerHTML : "";
+    }
   }
 
   // 중첩 부분 교체 시, 유지되는 서브내비의 활성 탭을 응답(fragment)의 값과 맞춘다.
@@ -113,8 +128,11 @@
       document.title = titleMarker.getAttribute("data-ah-title") || document.title;
     }
 
-    // 상단 탭 활성 갱신 (경로 기준)
-    updateTopNav(url.split("?")[0].split("#")[0]);
+    // 토프바 페이지 타이틀/액션 갱신 (지속 셸)
+    updateTopbar(frag);
+
+    // 사이드바 활성 메뉴 갱신 (경로 기준)
+    updateSidebarActive(url.split("?")[0].split("#")[0]);
 
     // 디자인 시스템 재초기화(reveal 등장, nav 인디케이터/서브내비 배선)
     document.dispatchEvent(new CustomEvent("ah:content-loaded"));
