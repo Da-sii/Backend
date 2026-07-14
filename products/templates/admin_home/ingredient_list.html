@@ -12,6 +12,9 @@
 
 {% block title %}원료 · 기능성 원료 · DASII{% endblock %}
 {% block topbar_title %}원료 관리{% endblock %}
+{% block topbar_actions %}
+<button type="button" class="btn btn-primary" data-modal-open="ing-create-modal">＋ 기능성 원료 추가</button>
+{% endblock %}
 
 {% block content %}
 {% include "admin_home/components/_ingredient_subnav.html" %}
@@ -216,12 +219,10 @@
 
   {# ── 목록 ── #}
   <section class="reveal">
-    <div style="display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
+    <div style="margin-bottom: var(--space-3);">
       <h2 class="text-title-sm">
         기능성 원료 목록 <span class="text-muted">({{ ingredients|length }})</span>
       </h2>
-      <button type="button" class="btn btn-primary" data-modal-open="ing-create-modal"
-              title="기능성 원료 추가" aria-label="기능성 원료 추가">＋</button>
     </div>
 
     {% if ingredients %}
@@ -250,7 +251,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <p class="ah-record-empty text-body">등록된 기능성 원료가 없습니다. 위 ＋ 로 첫 성분을 추가해보세요.</p>
+    <p class="ah-record-empty text-body">등록된 기능성 원료가 없습니다. 우측 상단 ＋ 기능성 원료 추가 로 첫 성분을 추가해보세요.</p>
     {% endif %}
   </section>
 </div>
