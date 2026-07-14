@@ -107,12 +107,13 @@
       {% for oi in others %}
       <div class="ah-record reveal" data-modal-open="oi-modal-{{ oi.id }}"
            style="cursor:pointer;" title="클릭하여 수정">
-        <span class="ah-record__id text-body-sm">#{{ oi.id }}</span>
+        {# 표시용 넘버링 — DB id 대신 목록 순번(1~n)이라 앞 항목 삭제 시에도 항상 이어진다 #}
+        <span class="ah-record__id text-body-sm">{{ forloop.counter }}</span>
         <div class="ah-record__edit" style="flex-wrap: wrap;">
           <span class="text-body">{{ oi.name }}</span>
         </div>
         <div class="ah-record__actions">
-          <span class="ah-badge ah-badge--neutral" title="사용 중인 제품 수">제품 {{ oi.product_count }}</span>
+          <span class="text-body-sm text-muted" title="사용 중인 제품 수">제품 {{ oi.product_count }}개</span>
         </div>
       </div>
       {% endfor %}
