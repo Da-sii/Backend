@@ -20,6 +20,8 @@
   gap: var(--space-3);
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
+/* 스탯 타일 행 — 카드보다 촘촘하게(한 줄에 여러 KPI) */
+.ah-grid--stats { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
 /* =========================================================
    0. App Shell — 사이드바 + 토프바 대시보드 레이아웃
@@ -324,6 +326,67 @@
     border-color: var(--color-gray-200);
   }
   .glass-card__desc { color: var(--text-muted); }
+}
+
+/* =========================================================
+   2-1. Stat Tile — 대시보드 KPI 타일(_stat.html)
+   아이콘 + (라벨/값/보조). href 있으면 링크 타일(.ah-stat--link).
+   ========================================================= */
+.ah-stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+  color: var(--text-on-glass);
+}
+.ah-stat__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  font-size: var(--fs-title-md);
+  line-height: 1;
+  background: var(--glass-bg-strong);
+  border-radius: var(--radius-md);
+}
+.ah-stat__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.ah-stat__label { color: var(--glass-highlight); }
+.ah-stat__value { font-weight: var(--font-weight-extrabold); line-height: 1.1; }
+.ah-stat__unit {
+  margin-left: 2px;
+  color: var(--glass-highlight);
+  font-weight: var(--font-weight-regular);
+}
+.ah-stat__sub { color: var(--glass-highlight); }
+.ah-stat--link {
+  transition: transform var(--transition-base),
+    box-shadow var(--transition-base), border-color var(--transition-base);
+}
+.ah-stat--link:hover { border-color: var(--glass-border-strong); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ah-stat {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+  .ah-stat__label,
+  .ah-stat__sub,
+  .ah-stat__unit { color: var(--text-muted); }
+  .ah-stat__icon { background: var(--surface-subtle); }
 }
 
 /* =========================================================

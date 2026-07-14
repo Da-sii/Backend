@@ -1,6 +1,7 @@
 {% extends base_template|default:"admin_home/base.html" %}
 {% comment %}
-  /admin/home 랜딩(홈). 로그인 후 진입 지점.
+  /admin/home 랜딩(홈) — 대시보드 개요.
+  상단 KPI 스탯 타일 행 + 가입 추이 패널 + 제품 추가 요청 위젯(모달).
   신규 관리자 기능은 이 아래(/admin/home/<name>/)에 추가된다.
 {% endcomment %}
 
@@ -9,24 +10,17 @@
 
 {% block extra_head %}
 <style>
-  /* 가입 추이 미니 차트 — 토큰만 사용, 외부 라이브러리 없음 */
-  .sc-stats {
-    display: flex;
-    flex-wrap: wrap;
+  /* 대시보드 2단 그리드 + 가입 추이 미니 차트 — 토큰만 사용, 외부 라이브러리 없음 */
+  .ah-dashboard-grid {
+    display: grid;
     gap: var(--space-3);
-    margin-bottom: var(--space-6);
+    grid-template-columns: 2fr 1fr;
+    align-items: start;
   }
-  .sc-stat {
-    flex: 1 1 160px;
-    padding: var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+  @media (max-width: 900px) {
+    .ah-dashboard-grid { grid-template-columns: 1fr; }
   }
-  .sc-stat__label { color: var(--glass-highlight); }
-  .sc-stat__value { margin-top: var(--space-1); }
 
-  .sc-chart { margin-top: var(--space-4); }
   .sc-chart__head {
     display: flex;
     align-items: baseline;
@@ -61,11 +55,7 @@
 
   /* 누적 총합 스파크라인 */
   .sc-spark { margin-top: var(--space-6); }
-  .sc-spark__svg {
-    display: block;
-    width: 100%;
-    height: 64px;
-  }
+  .sc-spark__svg { display: block; width: 100%; height: 64px; }
   .sc-spark__area { fill: var(--color-green-500); opacity: 0.14; }
   .sc-spark__line {
     fill: none;
@@ -74,56 +64,51 @@
     stroke-linejoin: round;
     stroke-linecap: round;
   }
-
   .sc-axis {
     display: flex;
     justify-content: space-between;
     margin-top: var(--space-2);
     color: var(--glass-highlight);
   }
+
+  /* 제품 추가 요청 위젯의 최근 항목 미리보기 */
+  .pr-preview { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); }
+  .pr-preview__item {
+    padding: var(--space-2) var(--space-3);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+  }
+  .pr-preview__content {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .pr-preview__date { color: var(--glass-highlight); }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="ah-grid" data-reveal-stagger>
-  {# Style Guide 카드 → 제품 추가 요청 카드로 교체. 클릭 시 목록 모달을 연다. #}
-  <button type="button" class="glass-card reveal" data-modal-open="pr-modal"
-          style="text-align:left; cursor:pointer; font-family:inherit; width:100%;">
-    <h3 class="glass-card__title">제품 추가 요청</h3>
-    <p class="glass-card__desc">사용자가 보낸 제품 추가 요청을 확인합니다. ({{ product_requests|length }}건)</p>
-    <div class="glass-card__icon" aria-hidden="true">📨</div>
-  </button>
-  {% include "admin_home/components/_card.html" with title="곧 추가됩니다" desc="신규 관리 기능이 여기에 배치됩니다." icon="✨" %}
+{# 상단 KPI 스탯 타일 행 #}
+<section class="ah-grid ah-grid--stats" data-reveal-stagger style="margin-bottom: var(--space-6);">
+  {% for s in kpis %}
+  <div class="reveal">
+    {% include "admin_home/components/_stat.html" with label=s.label value=s.value icon=s.icon href=s.href sub=s.sub %}
+  </div>
+  {% endfor %}
 </section>
 
-{# 가입 추이 미니 차트 — 최근 30일 신규 가입(막대) + 누적 총 회원(스파크라인) #}
-<section class="glass-panel reveal" style="margin-top: var(--space-6);">
-  <div class="sc-chart__head">
-    <h2 class="text-title-md">가입 추이</h2>
-    <span class="text-body-sm" style="color: var(--glass-highlight);">
-      최근 {{ signup_chart.days }}일 · KST 기준
-    </span>
-  </div>
-
-  <div class="sc-stats">
-    <div class="sc-stat">
-      <p class="sc-stat__label text-body-sm">최근 {{ signup_chart.days }}일 신규</p>
-      <p class="sc-stat__value text-title-lg">{{ signup_chart.new_total }}<span class="text-body-sm">명</span></p>
-    </div>
-    <div class="sc-stat">
-      <p class="sc-stat__label text-body-sm">오늘 신규</p>
-      <p class="sc-stat__value text-title-lg">{{ signup_chart.today_new }}<span class="text-body-sm">명</span></p>
-    </div>
-    <div class="sc-stat">
-      <p class="sc-stat__label text-body-sm">누적 총 회원</p>
-      <p class="sc-stat__value text-title-lg">{{ signup_chart.grand_total }}<span class="text-body-sm">명</span></p>
-    </div>
-  </div>
-
-  <div class="sc-chart">
+<div class="ah-dashboard-grid">
+  {# 가입 추이 — 최근 30일 신규 가입(막대) + 누적 총 회원(스파크라인) #}
+  <section class="glass-panel reveal">
     <div class="sc-chart__head">
-      <span class="text-body-sm">일자별 신규 가입</span>
+      <h2 class="text-title-md">가입 추이</h2>
+      <span class="text-body-sm" style="color: var(--glass-highlight);">
+        최근 {{ signup_chart.days }}일 · KST · 신규 {{ signup_chart.new_total }}명 / 누적 {{ signup_chart.grand_total }}명
+      </span>
     </div>
+
     <div class="sc-bars" role="img"
          aria-label="최근 {{ signup_chart.days }}일 일자별 신규 가입 수 막대 그래프">
       {% for p in signup_chart.points %}
@@ -137,25 +122,50 @@
       <span class="text-caption">{{ signup_chart.start_date|date:'n/j' }}</span>
       <span class="text-caption">{{ signup_chart.end_date|date:'n/j' }}</span>
     </div>
-  </div>
 
-  <div class="sc-spark">
-    <div class="sc-chart__head">
-      <span class="text-body-sm">누적 총 회원</span>
+    <div class="sc-spark">
+      <div class="sc-chart__head">
+        <span class="text-body-sm">누적 총 회원</span>
+      </div>
+      <svg class="sc-spark__svg" viewBox="0 0 {{ signup_chart.spark_w }} {{ signup_chart.spark_h }}"
+           preserveAspectRatio="none" role="img"
+           aria-label="최근 {{ signup_chart.days }}일 누적 총 회원 수 추이">
+        {% if signup_chart.spark_area %}
+        <polygon class="sc-spark__area" points="{{ signup_chart.spark_area }}"></polygon>
+        {% endif %}
+        <polyline class="sc-spark__line" vector-effect="non-scaling-stroke"
+                  points="{{ signup_chart.spark_points }}"></polyline>
+      </svg>
     </div>
-    <svg class="sc-spark__svg" viewBox="0 0 {{ signup_chart.spark_w }} {{ signup_chart.spark_h }}"
-         preserveAspectRatio="none" role="img"
-         aria-label="최근 {{ signup_chart.days }}일 누적 총 회원 수 추이">
-      {% if signup_chart.spark_area %}
-      <polygon class="sc-spark__area" points="{{ signup_chart.spark_area }}"></polygon>
-      {% endif %}
-      <polyline class="sc-spark__line" vector-effect="non-scaling-stroke"
-                points="{{ signup_chart.spark_points }}"></polyline>
-    </svg>
-  </div>
-</section>
+  </section>
 
-{# 제품 추가 요청 목록 모달 — 카드 클릭 시 열림(interactions.js) #}
+  {# 제품 추가 요청 위젯 — 최근 몇 건 미리보기 + 전체 보기(모달) #}
+  <section class="glass-panel reveal">
+    <div class="sc-chart__head">
+      <h2 class="text-title-md">제품 추가 요청</h2>
+      <span class="ah-badge ah-badge--neutral">{{ product_requests|length }}건</span>
+    </div>
+    <p class="text-body-sm" style="color: var(--glass-highlight);">사용자가 보낸 제품 추가 요청입니다.</p>
+
+    <div class="pr-preview">
+      {% for req in product_requests|slice:":3" %}
+      <div class="pr-preview__item">
+        <p class="pr-preview__content text-body-sm">{{ req.content }}</p>
+        <span class="pr-preview__date text-caption">{{ req.created_at|date:"Y-m-d H:i" }}</span>
+      </div>
+      {% empty %}
+      <p class="text-body-sm" style="color: var(--glass-highlight);">아직 제품 추가 요청이 없습니다.</p>
+      {% endfor %}
+    </div>
+
+    <button type="button" class="btn btn-glass" data-modal-open="pr-modal"
+            style="margin-top: var(--space-3); width: 100%;">
+      전체 보기 ({{ product_requests|length }})
+    </button>
+  </section>
+</div>
+
+{# 제품 추가 요청 목록 모달 — 위젯의 "전체 보기" 클릭 시 열림(interactions.js) #}
 <div class="ah-modal" id="pr-modal" aria-hidden="true">
   <div class="ah-modal__overlay" data-modal-close></div>
   <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
