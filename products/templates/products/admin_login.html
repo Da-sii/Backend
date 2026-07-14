@@ -8,6 +8,9 @@
 
 {% block title %}관리자 인증 · DASII{% endblock %}
 
+{# 로그인 화면은 앱 셸(사이드바/토프바) 없이 폼만 중앙에 표시한다 #}
+{% block layout_mod %}ah-layout--bare{% endblock %}
+{% block sidebar %}{% endblock %}
 {% block topbar %}{% endblock %}
 
 {% block extra_head %}

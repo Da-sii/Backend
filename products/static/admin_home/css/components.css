@@ -22,6 +22,192 @@
 }
 
 /* =========================================================
+   0. App Shell — 사이드바 + 토프바 대시보드 레이아웃
+   좌측 고정 사이드바(부분 로딩 후에도 유지되는 persistent shell) +
+   메인(상단 토프바 + 콘텐츠). 좁은 화면에서는 사이드바가
+   오프캔버스 드로어(.is-nav-open)로 전환된다. 색/여백 전부 토큰.
+   ========================================================= */
+.ah-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+}
+/* 셸(사이드바) 없는 화면 — 로그인 등. 사이드바 열을 없애 콘텐츠를 풀폭으로 */
+.ah-layout--bare { grid-template-columns: 1fr; }
+
+/* --- 사이드바 --- */
+.ah-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4) var(--space-3);
+  background: var(--glass-bg-dark);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  border-right: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-inset-highlight);
+  z-index: 20;
+}
+.ah-sidebar__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-4);
+}
+.ah-sidebar__brand {
+  font-size: var(--fs-title-md);
+  line-height: 1;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-on-glass);
+  letter-spacing: 0.02em;
+}
+/* "ADMIN" — 배지 대신 브랜드 뒤에 이어 쓰는 텍스트(옅은 톤·보통 굵기) */
+.ah-sidebar__brand-sub {
+  margin-left: 0.4em;
+  color: var(--glass-highlight);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.08em;
+}
+.ah-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+.ah-sidebar__group {
+  margin: var(--space-6) var(--space-2) var(--space-2);
+  color: var(--glass-highlight);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ah-sidebar__nav > .ah-sidebar__group:first-child { margin-top: var(--space-1); }
+.ah-sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-on-glass);
+  font-weight: var(--font-weight-bold);
+  transition: background var(--transition-base), box-shadow var(--transition-base);
+}
+.ah-sidebar__item:hover { background: var(--glass-bg); }
+.ah-sidebar__item.is-active {
+  background: var(--glass-bg-strong);
+  box-shadow: var(--shadow-inset-highlight);
+}
+.ah-sidebar__item.is-active .ah-sidebar__label { color: var(--brand-primary); }
+.ah-sidebar__icon {
+  flex: none;
+  width: var(--space-6);
+  font-size: var(--fs-text-lg);
+  line-height: 1;
+  text-align: center;
+}
+.ah-sidebar__label { font-size: var(--fs-text-sm); }
+.ah-sidebar__foot {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--glass-border);
+}
+.ah-sidebar__logout { width: 100%; }
+
+/* --- 메인(토프바 + 콘텐츠) --- */
+.ah-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* grid 자식 overflow 방지 → 내부 테이블 가로 스크롤이 셸을 밀지 않게 */
+  min-height: 100vh;
+}
+.ah-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--topbar-h);
+  padding: var(--space-2) var(--space-6);
+  background: var(--glass-bg-subtle);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  border-bottom: 1px solid var(--glass-border);
+}
+.ah-topbar__title { color: var(--text-on-glass); margin: 0; }
+.ah-topbar__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.ah-topbar__menu {
+  display: none; /* 데스크톱에서는 숨김, 모바일 미디어쿼리에서 표시 */
+  flex: none;
+  width: calc(40px * var(--ui-scale));
+  height: calc(40px * var(--ui-scale));
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-title-md);
+  color: var(--text-on-glass);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.ah-content-scroll {
+  flex: 1 1 auto;
+  padding: var(--space-6);
+}
+.ah-content-scroll > #ah-content {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+/* 드로어 스크림(모바일에서 사이드바 열릴 때만) */
+.ah-sidebar__scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  backdrop-filter: blur(var(--blur-sm));
+}
+
+/* --- 반응형: 사이드바 오프캔버스 드로어 --- */
+@media (max-width: 900px) {
+  .ah-layout { grid-template-columns: 1fr; }
+  .ah-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(var(--sidebar-width), 82vw);
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+  }
+  .ah-layout.is-nav-open .ah-sidebar { transform: translateX(0); }
+  .ah-layout.is-nav-open .ah-sidebar__scrim { display: block; }
+  .ah-topbar__menu { display: inline-flex; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ah-sidebar { transition: none; }
+}
+
+/* backdrop-filter 미지원 폴백 — 셸은 어두운 톤을 유지(불투명 배경) */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ah-sidebar,
+  .ah-topbar {
+    background: var(--glass-bg-dark-fallback);
+    border-color: var(--color-gray-700);
+  }
+}
+
+/* =========================================================
    1. Buttons
    ========================================================= */
 .btn {
