@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Admin Home{% endblock %}</title>
+
+  {# ── 디자인 시스템: 토큰 → base → glass → components → toast → animations → vendor ── #}
+  <link rel="stylesheet" href="{% static 'admin_home/css/tokens.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/base.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/glass.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/components.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/toast.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/animations.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin_home/css/vendor-overrides.css' %}" />
+
+  <style>
+    /* 배경은 토큰으로 분리 → 페이지/이미지 교체가 쉽도록. 레이아웃은 components.css(.ah-layout) 담당 */
+    html, body { min-height: 100%; }
+    body.admin-home {
+      background-color: var(--admin-bg-color);
+      background-image: var(--admin-bg-image), var(--admin-bg-gradient);
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: var(--text-on-glass);
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="admin-home">
+  {# 토스트 알림 — Django messages 를 우측 상단에서 잠시 보여주고 자동으로 닫는다 #}
+  <div class="ah-toast-container" aria-live="polite" aria-atomic="true">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="ah-toast" data-toast-tag="{{ message.tags }}" role="status">
+      <span class="ah-toast__msg">{{ message }}</span>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  {% comment %}
+    앱 셸 — 좌측 사이드바 + 메인(토프바 + 콘텐츠).
+    사이드바/토프바는 부분 로딩(partial-nav.js) 후에도 유지되는 persistent shell 이며,
+    #ah-content 안의 내용만 교체된다. 활성 메뉴/토프바 타이틀/액션은 partial-nav.js 가 갱신한다.
+  {% endcomment %}
+  <div class="ah-layout {% block layout_mod %}{% endblock %}" id="ah-layout">
+    {% block sidebar %}
+    <aside class="ah-sidebar" id="ah-sidebar">
+      <div class="ah-sidebar__head">
+        <span class="ah-sidebar__brand">DASII<span class="ah-sidebar__brand-sub">ADMIN</span></span>
+      </div>
+      <nav class="ah-sidebar__nav" aria-label="관리 메뉴">
+        <p class="ah-sidebar__group text-caption">콘텐츠 관리</p>
+        <a class="ah-sidebar__item {% if request.resolver_match.url_name == 'admin_home' %}is-active{% endif %}" href="{% url 'admin_home' %}">
+          <span class="ah-sidebar__icon" aria-hidden="true">🏠</span>
+          <span class="ah-sidebar__label">홈</span>
+        </a>
+        <a class="ah-sidebar__item {% if 'admin_home_category' in request.resolver_match.url_name|default:'' %}is-active{% endif %}" href="{% url 'admin_home_category' %}">
+          <span class="ah-sidebar__icon" aria-hidden="true">🗂️</span>
+          <span class="ah-sidebar__label">카테고리</span>
+        </a>
+        <a class="ah-sidebar__item {% if request.resolver_match.url_name == 'admin_home_product' %}is-active{% endif %}" href="{% url 'admin_home_product' %}">
+          <span class="ah-sidebar__icon" aria-hidden="true">📦</span>
+          <span class="ah-sidebar__label">제품</span>
+        </a>
+        <a class="ah-sidebar__item {% if 'admin_home_ingredient' in request.resolver_match.url_name|default:'' %}is-active{% endif %}" href="{% url 'admin_home_ingredient' %}">
+          <span class="ah-sidebar__icon" aria-hidden="true">🧪</span>
+          <span class="ah-sidebar__label">원료</span>
+        </a>
+        <a class="ah-sidebar__item {% if 'admin_home_banner' in request.resolver_match.url_name|default:'' %}is-active{% endif %}" href="{% url 'admin_home_banner' %}">
+          <span class="ah-sidebar__icon" aria-hidden="true">🖼️</span>
+          <span class="ah-sidebar__label">배너</span>
+        </a>
+        <p class="ah-sidebar__group text-caption">시스템</p>
+        <a class="ah-sidebar__item" href="{% url 'admin_main' %}" data-no-partial>
+          <span class="ah-sidebar__icon" aria-hidden="true">🛠️</span>
+          <span class="ah-sidebar__label">기존 Admin</span>
+        </a>
+      </nav>
+      <div class="ah-sidebar__foot">
+        <a class="btn btn-glass ah-sidebar__logout" href="{% url 'admin_logout' %}" data-no-partial>로그아웃</a>
+      </div>
+    </aside>
+    <div class="ah-sidebar__scrim" id="ah-sidebar-scrim"></div>
+    {% endblock %}
+
+    <div class="ah-main">
+      {% block topbar %}
+      <header class="ah-topbar">
+        <button type="button" class="ah-topbar__menu" id="ah-menu-toggle"
+                aria-label="메뉴 열기" aria-controls="ah-sidebar" aria-expanded="false">
+          <span aria-hidden="true">☰</span>
+        </button>
+        <h1 class="ah-topbar__title text-title-md" id="ah-topbar-title">{% block topbar_title %}관리자{% endblock %}</h1>
+        <div class="ah-topbar__actions" id="ah-topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+      </header>
+      {% endblock %}
+
+      {# 부분 로딩 시 이 영역의 내용만 교체된다(사이드바·토프바는 그대로 유지) #}
+      <div class="ah-content-scroll">
+        <div id="ah-content">
+          {% block content %}{% endblock %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# 디자인 시스템 인터랙션 스크립트 #}
+  <script src="{% static 'admin_home/js/reveal.js' %}" defer></script>
+  <script src="{% static 'admin_home/js/interactions.js' %}" defer></script>
+  <script src="{% static 'admin_home/js/partial-nav.js' %}" defer></script>
+  <script src="{% static 'admin_home/js/toast.js' %}" defer></script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

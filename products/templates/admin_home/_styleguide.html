@@ -1,0 +1,186 @@
+{% extends base_template|default:"admin_home/base.html" %}
+{% comment %}
+  스타일가이드 — 검수 전용 페이지.
+  전 컬러 토큰 스와치 + 타이포 스케일 + 모든 공통 컴포넌트를 한 페이지에 렌더.
+  실제 기능 아님. (나중에 제거 가능)
+{% endcomment %}
+
+{% block title %}디자인 시스템 스타일가이드 · /admin/home{% endblock %}
+{% block topbar_title %}스타일가이드{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* 스타일가이드 전용 레이아웃 보조 (토큰만 사용) */
+  .sg-section { margin-bottom: var(--space-8); }
+  .sg-section > h2 { margin-bottom: var(--space-3); }
+  .sg-note { color: var(--glass-highlight); margin-bottom: var(--space-4); }
+  .sg-swatch-grid {
+    display: grid;
+    gap: var(--space-2);
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .sg-swatch-label { margin-top: var(--space-1); }
+  .sg-swatch-label b { display: block; }
+  .sg-type-row { padding: var(--space-2) 0; border-bottom: 1px solid var(--glass-border); }
+  .sg-type-meta { color: var(--glass-highlight); margin-bottom: var(--space-1); }
+  .sg-panel-inner { display: grid; gap: var(--space-4); }
+  .sg-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===================== 헤더 ===================== -->
+<header class="glass-panel reveal" style="margin-bottom: var(--space-8);">
+  <p class="text-caption" style="color: var(--glass-highlight);">/admin/home Design System</p>
+  <h1 class="text-display">Liquid Glass<br />Style Guide</h1>
+  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 40ch;">
+    토큰 · 타이포 · 유리 컴포넌트 검수 페이지. 모든 폰트는 <b>최소 18px</b>.
+  </p>
+  <div class="sg-row" style="margin-top: var(--space-4);">
+    <button type="button" class="btn btn-primary">Let's Talk</button>
+    <button type="button" class="btn btn-glass">Get in touch</button>
+    <span class="ah-badge ah-badge--ok">OK</span>
+    <span class="ah-badge ah-badge--error">Error</span>
+    <span class="ah-badge ah-badge--kakao">Kakao</span>
+  </div>
+</header>
+
+<!-- ===================== 1. 컬러 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">1. Color Tokens</h2>
+  <p class="sg-note text-body-sm">스와치 배경은 CSS 변수(<code>var(--color-…)</code>)로 렌더 — 토큰이 실제 해석되는지 확인.</p>
+
+  {% for scale in color_scales %}
+  <div class="glass-panel reveal" style="margin-bottom: var(--space-3);">
+    <h3 class="text-title-sm" style="margin-bottom: var(--space-3);">
+      {{ scale.title }} <span class="text-caption" style="color: var(--glass-highlight);">(main: {{ scale.main }})</span>
+    </h3>
+    <div class="sg-swatch-grid" data-reveal-stagger>
+      {% for sw in scale.swatches %}
+      <div>
+        <div class="ah-swatch" style="background: {{ sw.cssvar }};"></div>
+        <div class="sg-swatch-label text-caption">
+          <b>{{ sw.name }}</b><span style="color: var(--glass-highlight);">{{ sw.hex }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="glass-panel reveal" style="margin-bottom: var(--space-3);">
+    <h3 class="text-title-sm" style="margin-bottom: var(--space-3);">기능색 (etc)</h3>
+    <div class="sg-swatch-grid">
+      {% for sw in etc_colors %}
+      <div>
+        <div class="ah-swatch" style="background: {{ sw.cssvar }};"></div>
+        <div class="sg-swatch-label text-caption">
+          <b>{{ sw.name }}</b><span style="color: var(--glass-highlight);">{{ sw.hex }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="glass-panel reveal">
+    <h3 class="text-title-sm" style="margin-bottom: var(--space-3);">캘린더</h3>
+    <div class="sg-swatch-grid">
+      {% for sw in calendar_colors %}
+      <div>
+        <div class="ah-swatch" style="background: {{ sw.cssvar }};"></div>
+        <div class="sg-swatch-label text-caption">
+          <b>{{ sw.name }}</b><span style="color: var(--glass-highlight);">{{ sw.hex }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 2. 타이포 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">2. Typography <span class="text-caption" style="color: var(--glass-highlight);">Nanum Square Neo · 18px floor</span></h2>
+  <div class="glass-panel reveal">
+    {% for t in type_scale %}
+    <div class="sg-type-row">
+      <div class="sg-type-meta text-caption">{{ t.label }} · {{ t.size }} / lh {{ t.lh }} · {{ t.use }}</div>
+      <div class="{{ t.cls }}">다시 DASII 건강기능식품 · AaBb 123</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ===================== 3. 버튼 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">3. Buttons</h2>
+  <div class="glass-panel reveal sg-row">
+    <button type="button" class="btn btn-primary">Primary</button>
+    <button type="button" class="btn btn-glass">Glass</button>
+    <button type="button" class="btn btn-primary" disabled style="opacity:.5;cursor:not-allowed;">Disabled</button>
+  </div>
+</section>
+
+<!-- ===================== 4. 유리 카드 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">4. Glass Cards</h2>
+  <div class="ah-grid" data-reveal-stagger>
+    {% include "admin_home/components/_card.html" with title="Accelerate Growth" desc="Scale with precision and confidence." icon="📈" %}
+    {% include "admin_home/components/_card.html" with title="Privacy First" desc="Protect trust while driving innovation." icon="🔒" %}
+    {% include "admin_home/components/_card.html" with title="Design System" desc="토큰 기반 유리 컴포넌트." icon="🧊" %}
+  </div>
+</section>
+
+<!-- ===================== 5. 유리 변형 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">5. Glass Variants</h2>
+  <div class="ah-grid" data-reveal-stagger>
+    <div class="glass reveal" style="padding: var(--space-4);"><span class="text-body-sm">.glass</span></div>
+    <div class="glass glass--strong reveal" style="padding: var(--space-4);"><span class="text-body-sm">.glass--strong</span></div>
+    <div class="glass glass--subtle reveal" style="padding: var(--space-4);"><span class="text-body-sm">.glass--subtle</span></div>
+    <div class="glass glass--dark reveal" style="padding: var(--space-4);"><span class="text-body-sm">.glass--dark</span></div>
+  </div>
+</section>
+
+<!-- ===================== 6. Nav ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">6. Nav (pill)</h2>
+  <div class="reveal">
+    <nav class="glass-nav">
+      <span class="glass-nav__indicator" aria-hidden="true"></span>
+      <span class="glass-nav__item is-active">Features</span>
+      <span class="glass-nav__item">Product</span>
+      <span class="glass-nav__item">About</span>
+      <span class="glass-nav__item">Reviews</span>
+    </nav>
+  </div>
+</section>
+
+<!-- ===================== 7. Form ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">7. Form Elements</h2>
+  <div class="glass-panel reveal sg-panel-inner" style="max-width: 640px;">
+    <div class="ah-field">
+      <label class="ah-label" for="sg-name">이름</label>
+      <input class="ah-input" id="sg-name" type="text" placeholder="예: 가르시니아" />
+    </div>
+    <div class="ah-field">
+      <label class="ah-label" for="sg-cat">카테고리</label>
+      <select class="ah-select" id="sg-cat">
+        <option>비타민</option>
+        <option>유산균</option>
+        <option>오메가3</option>
+      </select>
+    </div>
+    <div class="ah-field">
+      <label class="ah-label" for="sg-memo">설명</label>
+      <textarea class="ah-textarea" id="sg-memo" placeholder="설명을 입력하세요"></textarea>
+    </div>
+  </div>
+</section>
+
+<footer class="reveal" style="padding: var(--space-6) 0; color: var(--glass-highlight);">
+  <p class="text-caption">DASII · /admin/home 디자인 시스템 검수 페이지 (개발 전용)</p>
+</footer>
+
+{% endblock %}

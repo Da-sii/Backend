@@ -1,0 +1,15 @@
+{% comment %}
+  스탯 타일 — 대시보드 KPI 한 칸.
+  사용: {% include "admin_home/components/_stat.html" with label="총 회원" value=123 icon="👥" href="..." %}
+  - label (필수), value (필수)
+  - icon (선택, 이모지/문자), unit (선택, 값 뒤 단위), sub (선택, 보조 설명)
+  - href (선택): 있으면 클릭 가능한 링크 타일(<a>), 없으면 정적 타일(<div>)
+{% endcomment %}
+{% if href %}<a class="ah-stat ah-stat--link lift" href="{{ href }}">{% else %}<div class="ah-stat">{% endif %}
+  {% if icon %}<span class="ah-stat__icon" aria-hidden="true">{{ icon }}</span>{% endif %}
+  <span class="ah-stat__body">
+    <span class="ah-stat__label text-caption">{{ label }}</span>
+    <span class="ah-stat__value text-title-lg">{{ value }}{% if unit %}<span class="ah-stat__unit text-body-sm">{{ unit }}</span>{% endif %}</span>
+    {% if sub %}<span class="ah-stat__sub text-caption">{{ sub }}</span>{% endif %}
+  </span>
+{% if href %}</a>{% else %}</div>{% endif %}

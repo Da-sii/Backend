@@ -1,0 +1,4762 @@
+[
+  {
+    "id": 10,
+    "name": "콜레올로지 티 PRO 하비탈출",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 342,
+        "ingredient_name": "은행잎추출물",
+        "amount": "36mg"
+      },
+      {
+        "ingredient_id": 344,
+        "ingredient_name": "프락토올리고당",
+        "amount": "3g"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.65mg"
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "name": "grn+ 체지방 컷 초록이 포켓",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.36mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "0.42mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "4.5mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "1.5mg"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "name": "푸드올로지 톡스올로지 클렌즈 비움 PRO",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 285,
+        "ingredient_name": "옥수수수염·레몬밤추출복합물",
+        "amount": "1g"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "12.6g"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": "헬스헬퍼 맥스컷 프로 크롬",
+    "company": "헬스헬퍼",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "400mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "0.03mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      },
+      {
+        "ingredient_id": 348,
+        "ingredient_name": "망간",
+        "amount": "3mg"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "name": "그린몬스터 다이어트 쾌변쑥",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 276,
+        "ingredient_name": "Bacillus coagulans SNZ 1969 프로바이오틱스",
+        "amount": "10억CFU"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "30μg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "닥터아돌 카테킨아세로라 C D",
+    "company": "닥터아돌",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "5μg"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": "탄탄 젤리 더블 컷 다이어트",
+    "company": "탄탄",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      },
+      {
+        "ingredient_id": 346,
+        "ingredient_name": "히알루론산",
+        "amount": "120mg"
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "name": "온리추얼 슬리밍컷 다이어트",
+    "company": "온리추얼",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "1000mg"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "name": "그린몬스터 지방타파 다이어트 칼로아웃 잔티젠+",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 112,
+        "ingredient_name": "미역 등 복합추출물",
+        "amount": "600mg"
+      }
+    ]
+  },
+  {
+    "id": 71,
+    "name": "닥터하이 365 번앤번",
+    "company": "닥터하이 365",
+    "ingredients": [
+      {
+        "ingredient_id": 364,
+        "ingredient_name": "철",
+        "amount": "3.6mg"
+      },
+      {
+        "ingredient_id": 125,
+        "ingredient_name": "돌외잎주정추출분말",
+        "amount": "5.4mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "4.5mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "7μg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "9μg"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "세리박스 세리번 나이트",
+    "company": "세리박스",
+    "ingredients": [
+      {
+        "ingredient_id": 342,
+        "ingredient_name": "은행잎추출물",
+        "amount": "28mg"
+      },
+      {
+        "ingredient_id": 341,
+        "ingredient_name": "테아닌",
+        "amount": "250mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "name": "grn+ 분홍이 쓰리데이즈 시즌2",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "900mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "name": "헬스헬퍼 맥스컷 다이어트 핏3.1",
+    "company": "헬스헬퍼",
+    "ingredients": [
+      {
+        "ingredient_id": 82,
+        "ingredient_name": "L-카르니틴 타르트레이트",
+        "amount": "2000mg"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "name": "아일로 듀얼 슬림컷",
+    "company": "아일로",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "400mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "name": "콜레올로지 쾌변 젤리",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 355,
+        "ingredient_name": "폴리덱스트로스",
+        "amount": "4.5g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "name": "닥터트루 당장 컷앤아웃",
+    "company": "닥터트루",
+    "ingredients": [
+      {
+        "ingredient_id": 354,
+        "ingredient_name": "이눌린/치커리 추출물",
+        "amount": "7.2g"
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "name": "그린몬스터 칼로버닝",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 357,
+        "ingredient_name": "홍경천 추출물",
+        "amount": "4.6mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 358,
+        "ingredient_name": "엽산",
+        "amount": "400μg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "name": "그린몬스터 녹차카테킨+",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 49,
+        "ingredient_name": "프로바이오틱스",
+        "amount": "10억 CFU"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "12mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "14mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "15mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "300μg"
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "name": "grn+ 분홍이 슬림밸런스 & 비오틴",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "1000μg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "name": "그린몬스터 다이어트 스페셜 1 포스콜리 500",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "센트디 fast shot 10일 다이어트",
+    "company": "센트",
+    "ingredients": [
+      {
+        "ingredient_id": 164,
+        "ingredient_name": "풋사과추출물 애플페논",
+        "amount": "372mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "12mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "14mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "15mg"
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "name": "초록이 슬림밸런스 & 쾌변",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "350mg"
+      },
+      {
+        "ingredient_id": 63,
+        "ingredient_name": "자일로올리고당 분말",
+        "amount": "700mg"
+      },
+      {
+        "ingredient_id": 353,
+        "ingredient_name": "옥타코사놀 함유 유지",
+        "amount": "7mg"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "name": "딥트 3일 피치맛 번",
+    "company": "딥트 3일",
+    "ingredients": [
+      {
+        "ingredient_id": 125,
+        "ingredient_name": "돌외잎주정추출분말",
+        "amount": "5.4mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10ug"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "name": "바이탈헬스 바이탈슬림 다이어트 올인원 나이트",
+    "company": "바이탈헬스",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 341,
+        "ingredient_name": "테아닌",
+        "amount": "200mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "name": "그린몬스터 다이어트 체지방쏙",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 351,
+        "ingredient_name": "비타민 A",
+        "amount": "700μg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10μg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 352,
+        "ingredient_name": "비타민 B12",
+        "amount": "24μg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "110μg"
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "name": "작은 다이어트 카페 슬림 한 잔",
+    "company": "이너랩",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "프로뉴트리션 클로라인",
+    "company": "프로뉴트리션",
+    "ingredients": [
+      {
+        "ingredient_id": 136,
+        "ingredient_name": "그린커피빈추출물",
+        "amount": "66.2mg"
+      },
+      {
+        "ingredient_id": 342,
+        "ingredient_name": "은행잎추출물",
+        "amount": "28mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10μg"
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "name": "네츄럴굿띵스 속편한 다이어트",
+    "company": "네츄럴굿띵스",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "800mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "4.5mg NE"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.36mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "0.42mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 352,
+        "ingredient_name": "비타민 B12",
+        "amount": "0.72μg"
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "name": "그린몬스터 다이어트 스페셜 2 가르시니아 900",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "900mg"
+      }
+    ]
+  },
+  {
+    "id": 70,
+    "name": "닥터프리오 당케어 패밀리",
+    "company": "닥터프리오",
+    "ingredients": [
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 352,
+        "ingredient_name": "비타민 B12",
+        "amount": "2.4μg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "30μg"
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "name": "grn+ 초록이 쓰리데이즈 시즌2",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": "콜레올로지 버닝올로지 디데이",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 125,
+        "ingredient_name": "돌외잎주정추출분말",
+        "amount": "5.4mg"
+      },
+      {
+        "ingredient_id": 112,
+        "ingredient_name": "미역 등 복합추출물",
+        "amount": "600mg"
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "name": "그린몬스터 하비탈출",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 342,
+        "ingredient_name": "은행잎추출물",
+        "amount": "28.8mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "name": "닥터아돌 위디어트 히카바이오틱스 하이드록시트르산",
+    "company": "닥터아돌",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 183,
+        "ingredient_name": "인동덩굴꽃봉오리추출물",
+        "amount": "0.8mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "60mg"
+      },
+      {
+        "ingredient_id": 49,
+        "ingredient_name": "프로바이오틱스",
+        "amount": "5억 CFU"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "3mg"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "name": "CJ이너비 슬리밍 스타터",
+    "company": "CJ이너비",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "5g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      }
+    ]
+  },
+  {
+    "id": 81,
+    "name": "덴프스 혈당케어 슬림",
+    "company": "덴프스",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "30µg"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "미에로화이바 데이톡",
+    "company": "미에로화이바",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "5g"
+      }
+    ]
+  },
+  {
+    "id": 43,
+    "name": "그린스토어 혈당솔루션",
+    "company": "그린스토어",
+    "ingredients": [
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "16mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "100µg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "200µg"
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "name": "내츄럴플러스 에버핏 잔티젠다이어트",
+    "company": "내츄럴플러스",
+    "ingredients": [
+      {
+        "ingredient_id": 112,
+        "ingredient_name": "미역 등 복합추출물",
+        "amount": "600mg"
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "name": "내츄럴플러스 차전자피 가르시니아 쾌변 & 다이어트 환",
+    "company": "내츄럴플러스",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "6000mg"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "name": "내츄럴플러스 슬림 다이어트 카페",
+    "company": "내츄럴플러스",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      }
+    ]
+  },
+  {
+    "id": 76,
+    "name": "대웅생명과학 프리미엄 차전자피 식이섬유",
+    "company": "대웅생명과학",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "5g"
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "name": "네츄럴굿띵스 잇츠 차전자피",
+    "company": "네츄럴굿띵스",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "8g"
+      }
+    ]
+  },
+  {
+    "id": 59,
+    "name": "닥터랩노쉬 혈당관리 다이어트 혈당슬림컷",
+    "company": "닥터랩노쉬",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "0.4g"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "칼로 컨트롤 PLUS",
+    "company": "칼로(Kalo)",
+    "ingredients": [
+      {
+        "ingredient_id": 49,
+        "ingredient_name": "프로바이오틱스",
+        "amount": "5억CFU"
+      },
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "칼로 스탑 PLUS",
+    "company": "칼로(Kalo)",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "1000mg"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "메타그린 슬림업",
+    "company": "바이탈뷰티",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "360mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "25mg"
+      }
+    ]
+  },
+  {
+    "id": 63,
+    "name": "닥터블릿 푸응 스타트버닝",
+    "company": "닥터블릿",
+    "ingredients": [
+      {
+        "ingredient_id": 284,
+        "ingredient_name": "양춘사추출물",
+        "amount": "0.55mg"
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "name": "뉴트리킷 익스트리밍 가르시니아 젤리",
+    "company": "뉴트리킷",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "1500mg"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "name": "뉴트리가든 혈당·혈행·혈압 코큐텐블러드Q",
+    "company": "뉴트리가든",
+    "ingredients": [
+      {
+        "ingredient_id": 362,
+        "ingredient_name": "코엔자임Q10",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 342,
+        "ingredient_name": "은행잎추출물",
+        "amount": "28mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55µg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "name": "니아르 포스콜린 에스케어",
+    "company": "니아르",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "16.5μg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "7.5mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "6mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "7mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "name": "그린몬스터 다이어트 스페셜 3 키토산 3200",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 356,
+        "ingredient_name": "키토산",
+        "amount": "3200mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "name": "내츄럴플러스 에버핏 다이어트 CLA",
+    "company": "내츄럴플러스",
+    "ingredients": [
+      {
+        "ingredient_id": 360,
+        "ingredient_name": "공액리놀레산",
+        "amount": "1600mg"
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "name": "니아르 액티포닌 돌외잎",
+    "company": "니아르",
+    "ingredients": [
+      {
+        "ingredient_id": 125,
+        "ingredient_name": "돌외잎주정추출분말",
+        "amount": "5.4mg"
+      },
+      {
+        "ingredient_id": 363,
+        "ingredient_name": "마그네슘",
+        "amount": "94.5mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10μg"
+      },
+      {
+        "ingredient_id": 358,
+        "ingredient_name": "엽산",
+        "amount": "680μg"
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "name": "나우푸드 콜레스테롤 & 혈당 서포트",
+    "company": "나우푸드",
+    "ingredients": [
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 44,
+        "ingredient_name": "홍국쌀",
+        "amount": "4mg"
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "name": "내츄럴플러스 쾌변 클렌즈 다이어트 올인원",
+    "company": "내츄럴플러스",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "780mg"
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "name": "나우푸드 녹차 추출물 EGCG",
+    "company": "나우푸드",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "360mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "name": "내츄럴플러스 에버핏 다이어트",
+    "company": "내츄럴플러스",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "450mg"
+      }
+    ]
+  },
+  {
+    "id": 68,
+    "name": "닥터블릿 푸응 팻버닝 프로",
+    "company": "닥터블릿",
+    "ingredients": [
+      {
+        "ingredient_id": 360,
+        "ingredient_name": "공액리놀레산",
+        "amount": "1500mg"
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "name": "나우푸드 수용성 가르시니아",
+    "company": "나우푸드",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "1000mg"
+      },
+      {
+        "ingredient_id": 359,
+        "ingredient_name": "요오드",
+        "amount": "150μg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "123μg"
+      }
+    ]
+  },
+  {
+    "id": 65,
+    "name": "닥터블릿 푸응 애프터버닝",
+    "company": "닥터블릿",
+    "ingredients": [
+      {
+        "ingredient_id": 164,
+        "ingredient_name": "풋사과추출물 애플페논",
+        "amount": "372mg"
+      }
+    ]
+  },
+  {
+    "id": 66,
+    "name": "닥터블릿 푸응 파비플로라",
+    "company": "닥터블릿",
+    "ingredients": [
+      {
+        "ingredient_id": 289,
+        "ingredient_name": "파비플로라생강뿌리추출물",
+        "amount": "0.81mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      }
+    ]
+  },
+  {
+    "id": 64,
+    "name": "닥터블릿 푸응 그린티엔 버닝",
+    "company": "닥터블릿",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      }
+    ]
+  },
+  {
+    "id": 67,
+    "name": "닥터블릿 푸응 나이트버닝 프로",
+    "company": "닥터블릿",
+    "ingredients": [
+      {
+        "ingredient_id": 112,
+        "ingredient_name": "미역 등 복합추출물",
+        "amount": "600mg"
+      }
+    ]
+  },
+  {
+    "id": 69,
+    "name": "닥터블릿 푸응 다이어트",
+    "company": "닥터블릿",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "6g"
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "name": "그린몬스터 맨 다이어트 피지컬 부스터",
+    "company": "그린몬스터",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 353,
+        "ingredient_name": "옥타코사놀 함유 유지",
+        "amount": "7mg"
+      }
+    ]
+  },
+  {
+    "id": 72,
+    "name": "담백하루 혈당케어 바나바 맥스",
+    "company": "담백하루",
+    "ingredients": [
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "30µg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55µg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      }
+    ]
+  },
+  {
+    "id": 74,
+    "name": "대웅생명과학 가르시니아 플러스",
+    "company": "대웅생명과학",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "760mg"
+      }
+    ]
+  },
+  {
+    "id": 75,
+    "name": "대웅생명과학 녹차카테킨 다이어트 플러스",
+    "company": "대웅생명과학",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      }
+    ]
+  },
+  {
+    "id": 77,
+    "name": "대웅제약 에너씨슬 다이어트 샷 Zero",
+    "company": "대웅제약",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 352,
+        "ingredient_name": "비타민 B12",
+        "amount": "500μg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "75μg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "35mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 358,
+        "ingredient_name": "엽산",
+        "amount": "800μg DFE"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "300μg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "2.55mg"
+      },
+      {
+        "ingredient_id": 365,
+        "ingredient_name": "밀크씨슬추출물",
+        "amount": "4.2g"
+      }
+    ]
+  },
+  {
+    "id": 79,
+    "name": "대원제약 체지방컷 가르시니아",
+    "company": "대원제약",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "800mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 83,
+    "name": "딥트 3일 스트롱 플러스",
+    "company": "딥트 3일 스트롱 플러스",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "5g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "780mg"
+      }
+    ]
+  },
+  {
+    "id": 85,
+    "name": "딥트 3일 사이언스 업",
+    "company": "딥트 3일",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "5g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "780mg"
+      }
+    ]
+  },
+  {
+    "id": 62,
+    "name": "닥터브라이언 밸런스핏 가르시니아&비타민B",
+    "company": "닥터브라이언",
+    "ingredients": [
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "20mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      }
+    ]
+  },
+  {
+    "id": 80,
+    "name": "대원제약 잔티젠 다이어트",
+    "company": "대원제약",
+    "ingredients": [
+      {
+        "ingredient_id": 112,
+        "ingredient_name": "미역 등 복합추출물",
+        "amount": "600mg"
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "name": "닥터브라이언 퍼펙트 핏 콜레우스 포스콜리",
+    "company": "닥터브라이언",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 341,
+        "ingredient_name": "테아닌",
+        "amount": "200mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      }
+    ]
+  },
+  {
+    "id": 54,
+    "name": "뉴오리진 혈당&면역케어",
+    "company": "뉴오리진",
+    "ingredients": [
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "2.55mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "30μg"
+      }
+    ]
+  },
+  {
+    "id": 91,
+    "name": "룰더핏 에스컷 & 액티브 다이어트",
+    "company": "룰더핏",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "60μg"
+      }
+    ]
+  },
+  {
+    "id": 73,
+    "name": "혈당커트 ABC 주스맛",
+    "company": "대상웰라이프",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "5g"
+      }
+    ]
+  },
+  {
+    "id": 95,
+    "name": "바이탈뷰티 메타그린 칼로리컷 젤리",
+    "company": "바이탈뷰티",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750 mg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "200μg"
+      }
+    ]
+  },
+  {
+    "id": 94,
+    "name": "미궁365 대장사랑 다이어트",
+    "company": "미궁365",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "5.5g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "780mg"
+      }
+    ]
+  },
+  {
+    "id": 96,
+    "name": "바이탈뷰티 메타그린 부스터샷",
+    "company": "바이탈뷰티",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "360mg"
+      },
+      {
+        "ingredient_id": 34,
+        "ingredient_name": "APIC 대두배아열수추출물 등 복합물",
+        "amount": "700mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "48mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "50mg"
+      }
+    ]
+  },
+  {
+    "id": 98,
+    "name": "벨라미 다이어트 젤리",
+    "company": "벨라미",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4200mg"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.6mg"
+      }
+    ]
+  },
+  {
+    "id": 101,
+    "name": "비비랩 슬림핏 혈당컷 츄어블",
+    "company": "비비랩",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.45mg"
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "name": "비거너리 면역 다이어트 체지방 컷",
+    "company": "비거너리바이달바",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10μg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "name": "비피움 혈당&다이어트 커피맛",
+    "company": "비피움",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4200mg"
+      }
+    ]
+  },
+  {
+    "id": 103,
+    "name": "세리박스 세리컷 스타터 블루밍",
+    "company": "세리박스",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 342,
+        "ingredient_name": "은행잎추출물",
+        "amount": "28mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 366,
+        "ingredient_name": "알로에 전잎",
+        "amount": "20mg"
+      }
+    ]
+  },
+  {
+    "id": 104,
+    "name": "세리박스 세리컷 스타터 샤이닝",
+    "company": "세리박스",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "1000mg"
+      },
+      {
+        "ingredient_id": 357,
+        "ingredient_name": "홍경천 추출물",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 358,
+        "ingredient_name": "엽산",
+        "amount": "400μg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      }
+    ]
+  },
+  {
+    "id": 109,
+    "name": "스키니랩 차전자피 카테킨 다이어트",
+    "company": "스키니랩",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "7.2g"
+      },
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      }
+    ]
+  },
+  {
+    "id": 105,
+    "name": "센트디 10일 다이어트 클렌즈",
+    "company": "센트",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 344,
+        "ingredient_name": "프락토올리고당",
+        "amount": "3000mg"
+      }
+    ]
+  },
+  {
+    "id": 107,
+    "name": "셀렉스 카테킨",
+    "company": "셀렉스",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      }
+    ]
+  },
+  {
+    "id": 112,
+    "name": "스키니랩 레드핏 나이트 다이어트",
+    "company": "스키니랩",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 341,
+        "ingredient_name": "테아닌",
+        "amount": "200mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "30μg"
+      }
+    ]
+  },
+  {
+    "id": 108,
+    "name": "솔티스 혈당 프로텍션 프로 S2",
+    "company": "솔티스",
+    "ingredients": [
+      {
+        "ingredient_id": 367,
+        "ingredient_name": "귀리식이섬유",
+        "amount": "6g"
+      },
+      {
+        "ingredient_id": 367,
+        "ingredient_name": "귀리식이섬유",
+        "amount": "6g"
+      }
+    ]
+  },
+  {
+    "id": 110,
+    "name": "스키니랩 가르시니아",
+    "company": "스키니랩",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "1000mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "4.5 mgNE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "30μg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "16.5μg"
+      }
+    ]
+  },
+  {
+    "id": 111,
+    "name": "스키니랩 모로실 다이어트 C3G 테이스티",
+    "company": "스키니랩",
+    "ingredients": [
+      {
+        "ingredient_id": 230,
+        "ingredient_name": "모로오렌지추출분말",
+        "amount": "2.2mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      }
+    ]
+  },
+  {
+    "id": 113,
+    "name": "스키니랩 다이글로핏 다이어트",
+    "company": "스키니랩",
+    "ingredients": [
+      {
+        "ingredient_id": 278,
+        "ingredient_name": "다이크로스타키스 글로메라타 추출물",
+        "amount": "400mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10μg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "30μg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      },
+      {
+        "ingredient_id": 368,
+        "ingredient_name": "비타민 E",
+        "amount": "11mg α-TE"
+      }
+    ]
+  },
+  {
+    "id": 114,
+    "name": "스키니랩 모로실 다이어트 C3G",
+    "company": "스키니랩",
+    "ingredients": [
+      {
+        "ingredient_id": 230,
+        "ingredient_name": "모로오렌지추출분말",
+        "amount": "2.2mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      }
+    ]
+  },
+  {
+    "id": 116,
+    "name": "스키니랩 이지슬리밍 잔티젠 다이어트",
+    "company": "스키니랩",
+    "ingredients": [
+      {
+        "ingredient_id": 112,
+        "ingredient_name": "미역 등 복합추출물",
+        "amount": "600mg"
+      }
+    ]
+  },
+  {
+    "id": 115,
+    "name": "스키니랩 래피드 솔루션 다이어트",
+    "company": "스키니랩",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "4.5g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "1000mg"
+      }
+    ]
+  },
+  {
+    "id": 117,
+    "name": "스키니랩 애플페논 풋사과 다이어트",
+    "company": "스키니랩",
+    "ingredients": [
+      {
+        "ingredient_id": 164,
+        "ingredient_name": "풋사과추출물 애플페논",
+        "amount": "372mg"
+      }
+    ]
+  },
+  {
+    "id": 118,
+    "name": "스포식스 팻버닝 다이어트 워터",
+    "company": "스포식스",
+    "ingredients": [
+      {
+        "ingredient_id": 190,
+        "ingredient_name": "자몽추출물등 복합물",
+        "amount": "900mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.6mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "0.7mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.75mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "2.5mg"
+      }
+    ]
+  },
+  {
+    "id": 97,
+    "name": "바이탈헬스 바이탈슬림 다이어트 올인원 데이",
+    "company": "바이탈헬스",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "1100mg"
+      },
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 360,
+        "ingredient_name": "공액리놀레산",
+        "amount": "1400mg"
+      }
+    ]
+  },
+  {
+    "id": 89,
+    "name": "락피도 혈당앤슬림 다이어트",
+    "company": "락피도",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "2.4mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "2.8mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "3mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "30mg NE"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "30μg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "10mg"
+      }
+    ]
+  },
+  {
+    "id": 78,
+    "name": "대원제약 변할때까지 차전자피",
+    "company": "대원제약",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "7.5g"
+      }
+    ]
+  },
+  {
+    "id": 82,
+    "name": "덴프스 혈당케어 프로",
+    "company": "덴프스",
+    "ingredients": [
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "50μg"
+      }
+    ]
+  },
+  {
+    "id": 84,
+    "name": "딥트 3일 듀얼 버닝",
+    "company": "딥트 3일",
+    "ingredients": [
+      {
+        "ingredient_id": 233,
+        "ingredient_name": "레몬버베나추출물 등 복합물",
+        "amount": "700mg"
+      },
+      {
+        "ingredient_id": 112,
+        "ingredient_name": "미역 등 복합추출물",
+        "amount": "600mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "4.5mg NE"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "9µg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "2.55mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.36mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "0.42mg"
+      }
+    ]
+  },
+  {
+    "id": 88,
+    "name": "라이필 비움샷",
+    "company": "라이필",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "5g"
+      },
+      {
+        "ingredient_id": 178,
+        "ingredient_name": "그린커피빈주정추출물",
+        "amount": "122.5mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "10.36mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.45mg"
+      }
+    ]
+  },
+  {
+    "id": 90,
+    "name": "룰더핏 에프컷 망고 버닝 에이드",
+    "company": "룰더핏",
+    "ingredients": [
+      {
+        "ingredient_id": 155,
+        "ingredient_name": "아프리카망고 종자추출물",
+        "amount": "3.6mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "5μg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "4.25mg"
+      }
+    ]
+  },
+  {
+    "id": 92,
+    "name": "메디트리 비움 차전자피",
+    "company": "메디트리",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "6g"
+      }
+    ]
+  },
+  {
+    "id": 124,
+    "name": "오늘부터 버닝워터",
+    "company": "오늘부터",
+    "ingredients": [
+      {
+        "ingredient_id": 344,
+        "ingredient_name": "프락토올리고당",
+        "amount": "3g"
+      },
+      {
+        "ingredient_id": 82,
+        "ingredient_name": "L-카르니틴 타르트레이트",
+        "amount": "2g"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      }
+    ]
+  },
+  {
+    "id": 125,
+    "name": "오늘부터 슬림에이드",
+    "company": "오늘부터",
+    "ingredients": [
+      {
+        "ingredient_id": 344,
+        "ingredient_name": "프락토올리고당",
+        "amount": "3g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      }
+    ]
+  },
+  {
+    "id": 126,
+    "name": "오늘부터 웰컷 포 맨 PRO",
+    "company": "오늘부터",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "1500mg"
+      },
+      {
+        "ingredient_id": 365,
+        "ingredient_name": "밀크씨슬추출물",
+        "amount": "130mg"
+      },
+      {
+        "ingredient_id": 353,
+        "ingredient_name": "옥타코사놀 함유 유지",
+        "amount": "7mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "30mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "2.8mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "2.4mg"
+      }
+    ]
+  },
+  {
+    "id": 127,
+    "name": "오늘부터 부스터컷 PRO",
+    "company": "오늘부터",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "400mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.65mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      }
+    ]
+  },
+  {
+    "id": 128,
+    "name": "오늘부터 슬림카페 PRO",
+    "company": "오늘부터",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "800mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.45mg"
+      }
+    ]
+  },
+  {
+    "id": 129,
+    "name": "오늘부터 슬림카페 라떼맛 PRO",
+    "company": "오늘부터",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "800mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.45mg"
+      }
+    ]
+  },
+  {
+    "id": 130,
+    "name": "오늘부터 나이트컷",
+    "company": "오늘부터",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 341,
+        "ingredient_name": "테아닌",
+        "amount": "200mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "25mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "6mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "7mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "200µg"
+      }
+    ]
+  },
+  {
+    "id": 131,
+    "name": "오늘부터 루트컷",
+    "company": "오늘부터",
+    "ingredients": [
+      {
+        "ingredient_id": 63,
+        "ingredient_name": "자일로올리고당 분말",
+        "amount": "700mg"
+      },
+      {
+        "ingredient_id": 110,
+        "ingredient_name": "핑거루트추출분말",
+        "amount": "26.4mg"
+      }
+    ]
+  },
+  {
+    "id": 132,
+    "name": "이너랩 S라인 다이어트&유산균",
+    "company": "이너랩",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "90μg"
+      },
+      {
+        "ingredient_id": 49,
+        "ingredient_name": "프로바이오틱스",
+        "amount": "20억 CFU"
+      }
+    ]
+  },
+  {
+    "id": 133,
+    "name": "이너랩 황금 쾌변엔 비건 울트라 차전자피 8500",
+    "company": "이너랩",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "8500mg"
+      }
+    ]
+  },
+  {
+    "id": 134,
+    "name": "이너랩 다이어트엔 체지방 슬림 오일 CLA(공액리놀레산)",
+    "company": "이너랩",
+    "ingredients": [
+      {
+        "ingredient_id": 360,
+        "ingredient_name": "공액리놀레산",
+        "amount": "1400mg"
+      }
+    ]
+  },
+  {
+    "id": 135,
+    "name": "이너랩 차전자피 가르시니아 슬리밍 환",
+    "company": "이너랩",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "6000mg"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      }
+    ]
+  },
+  {
+    "id": 136,
+    "name": "익스트림 팻 버닝",
+    "company": "익스트림",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "400mg"
+      }
+    ]
+  },
+  {
+    "id": 137,
+    "name": "일양약품 프라임 차전자피 식이섬유 환",
+    "company": "일양약품",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "6000mg"
+      }
+    ]
+  },
+  {
+    "id": 138,
+    "name": "잠백이 팻커팅",
+    "company": "잠백이",
+    "ingredients": [
+      {
+        "ingredient_id": 82,
+        "ingredient_name": "L-카르니틴 타르트레이트",
+        "amount": "3000mg"
+      }
+    ]
+  },
+  {
+    "id": 142,
+    "name": "칼로비스 가벼울소다 풋사과맛",
+    "company": "칼로비스",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "375mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.225mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "4.25mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.75mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.6mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "0.7mg"
+      }
+    ]
+  },
+  {
+    "id": 141,
+    "name": "칼로바이 녹차 카테킨+프로바이오틱스",
+    "company": "칼로바이",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "400mg"
+      },
+      {
+        "ingredient_id": 49,
+        "ingredient_name": "프로바이오틱스",
+        "amount": "1억 CFU"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "16.5μg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "4.5mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "0.42mg"
+      }
+    ]
+  },
+  {
+    "id": 140,
+    "name": "칼로 나이트 Relax",
+    "company": "칼로(Kalo)",
+    "ingredients": [
+      {
+        "ingredient_id": 341,
+        "ingredient_name": "테아닌",
+        "amount": "250mg"
+      },
+      {
+        "ingredient_id": 357,
+        "ingredient_name": "홍경천 추출물",
+        "amount": "4.2mg"
+      },
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      }
+    ]
+  },
+  {
+    "id": 143,
+    "name": "칼로비스 가벼울소다 샤인머스캣맛",
+    "company": "칼로비스",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "375mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.225mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "4.25mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.75mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.6mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "0.7mg"
+      }
+    ]
+  },
+  {
+    "id": 144,
+    "name": "칼로비스 오늘 더 애플 청사과맛",
+    "company": "칼로비스",
+    "ingredients": [
+      {
+        "ingredient_id": 164,
+        "ingredient_name": "풋사과추출물 애플페논",
+        "amount": "372mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10µg"
+      }
+    ]
+  },
+  {
+    "id": 145,
+    "name": "칼로비스 오늘 더 애플 딸기맛&키위맛",
+    "company": "칼로비스",
+    "ingredients": [
+      {
+        "ingredient_id": 164,
+        "ingredient_name": "풋사과추출물 애플페논",
+        "amount": "372mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10µg"
+      }
+    ]
+  },
+  {
+    "id": 146,
+    "name": "탄탄 슬리밍 트리플 부스터 샷",
+    "company": "탄탄",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 342,
+        "ingredient_name": "은행잎추출물",
+        "amount": "28mg"
+      },
+      {
+        "ingredient_id": 63,
+        "ingredient_name": "자일로올리고당 분말",
+        "amount": "700mg"
+      },
+      {
+        "ingredient_id": 270,
+        "ingredient_name": "저분자 피쉬 콜라겐 펩타이드",
+        "amount": "2.475mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.36mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "3μg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "2.55mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "16.5μg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "9μg"
+      }
+    ]
+  },
+  {
+    "id": 147,
+    "name": "탄탄 슬리밍 C3G 다이어트 플러스",
+    "company": "탄탄",
+    "ingredients": [
+      {
+        "ingredient_id": 230,
+        "ingredient_name": "모로오렌지추출분말",
+        "amount": "2.2mg"
+      },
+      {
+        "ingredient_id": 63,
+        "ingredient_name": "자일로올리고당 분말",
+        "amount": "700mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "30μg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10μg"
+      }
+    ]
+  },
+  {
+    "id": 148,
+    "name": "트루알엑스 슈퍼다이어트 혈당컷",
+    "company": "트루알엑스",
+    "ingredients": [
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      }
+    ]
+  },
+  {
+    "id": 149,
+    "name": "퍼니트 매일 비움 쾌변엔 차전자피 식이섬유",
+    "company": "퍼니트",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "5g"
+      }
+    ]
+  },
+  {
+    "id": 150,
+    "name": "퍼니트 새빨간 콜레우스포스콜리 다이어트",
+    "company": "퍼니트",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      }
+    ]
+  },
+  {
+    "id": 100,
+    "name": "비거너리 다이어트 젤리",
+    "company": "비거너리바이달바",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4200mg"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      }
+    ]
+  },
+  {
+    "id": 139,
+    "name": "정관장 GLPro 더블컷",
+    "company": "정관장",
+    "ingredients": [
+      {
+        "ingredient_id": 293,
+        "ingredient_name": "홍삼",
+        "amount": "23mg"
+      },
+      {
+        "ingredient_id": 71,
+        "ingredient_name": "레몬 밤 추출물 혼합분말",
+        "amount": "1380mg"
+      }
+    ]
+  },
+  {
+    "id": 93,
+    "name": "메디트리 비움 차전자피 다이어트",
+    "company": "메디트리",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "6g"
+      }
+    ]
+  },
+  {
+    "id": 123,
+    "name": "오늘부터 슬림젤리 제로",
+    "company": "오늘부터",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      }
+    ]
+  },
+  {
+    "id": 122,
+    "name": "영라뉴 장용성 파비플로라 PRO",
+    "company": "영라뉴",
+    "ingredients": [
+      {
+        "ingredient_id": 289,
+        "ingredient_name": "파비플로라생강뿌리추출물",
+        "amount": "0.81mg"
+      }
+    ]
+  },
+  {
+    "id": 153,
+    "name": "콜레올로지 버닝올로지 티",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 155,
+        "ingredient_name": "아프리카망고 종자추출물",
+        "amount": "3.6mg"
+      },
+      {
+        "ingredient_id": 49,
+        "ingredient_name": "프로바이오틱스",
+        "amount": "10억 CFU"
+      }
+    ]
+  },
+  {
+    "id": 158,
+    "name": "풀무원건강식물원 카테킨 다이어트",
+    "company": "풀무원건강식물원",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "360mg"
+      }
+    ]
+  },
+  {
+    "id": 159,
+    "name": "프로뉴트리션 엠티솔루션 쾌변젤리",
+    "company": "프로뉴트리션",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "5g"
+      },
+      {
+        "ingredient_id": 369,
+        "ingredient_name": "알로에 겔",
+        "amount": "110mg"
+      }
+    ]
+  },
+  {
+    "id": 160,
+    "name": "피토틱스 팍시 다이어트 FCCE 발효율피",
+    "company": "피토틱스",
+    "ingredients": [
+      {
+        "ingredient_id": 227,
+        "ingredient_name": "발효율피추출분말",
+        "amount": "3.1mg"
+      },
+      {
+        "ingredient_id": 351,
+        "ingredient_name": "비타민 A",
+        "amount": "700μg RE"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10μg"
+      },
+      {
+        "ingredient_id": 368,
+        "ingredient_name": "비타민 E",
+        "amount": "11mg α-TE"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      }
+    ]
+  },
+  {
+    "id": 164,
+    "name": "CJ이너비 팻다운 파워번 가르시니아",
+    "company": "CJ이너비",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "900mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 161,
+    "name": "핏타민 이지팩 카테킨",
+    "company": "핏타민",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      }
+    ]
+  },
+  {
+    "id": 162,
+    "name": "헤밀레 김소형원방 혈당+다이어트 공비단",
+    "company": "헤밀레",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "6g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      }
+    ]
+  },
+  {
+    "id": 165,
+    "name": "CJ이너비 팻다운 나이트번 잔티젠",
+    "company": "CJ이너비",
+    "ingredients": [
+      {
+        "ingredient_id": 112,
+        "ingredient_name": "미역 등 복합추출물",
+        "amount": "600mg"
+      }
+    ]
+  },
+  {
+    "id": 163,
+    "name": "헬스헬퍼 포포젤리",
+    "company": "헬스헬퍼",
+    "ingredients": [
+      {
+        "ingredient_id": 155,
+        "ingredient_name": "아프리카망고 종자추출물",
+        "amount": "3.6mg"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      }
+    ]
+  },
+  {
+    "id": 166,
+    "name": "CJ이너비 슬리밍 샷",
+    "company": "CJ이너비",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "22.5mg NE"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "2.25mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.8mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "30μg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10μg"
+      }
+    ]
+  },
+  {
+    "id": 167,
+    "name": "GNM 그린컷 카테킨 애프터",
+    "company": "GNM자연의품격",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "400mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "2.4mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "2.8mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "3mg"
+      },
+      {
+        "ingredient_id": 358,
+        "ingredient_name": "엽산",
+        "amount": "800μg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      }
+    ]
+  },
+  {
+    "id": 168,
+    "name": "GNM 레드 콜레우스포스콜리 다이어트",
+    "company": "GNM자연의품격",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      }
+    ]
+  },
+  {
+    "id": 169,
+    "name": "GNM 레드컷 가르시니아 비포",
+    "company": "GNM자연의품격",
+    "ingredients": [
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "4.8mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "5.6mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "30mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "10mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "6mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "8.5mg"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "900mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55µg"
+      }
+    ]
+  },
+  {
+    "id": 170,
+    "name": "grn+ 리얼퀸",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 370,
+        "ingredient_name": "회화나무열매추출물",
+        "amount": "35mg"
+      },
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "0.3g"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "2.55mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "3µg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "9µg"
+      },
+      {
+        "ingredient_id": 364,
+        "ingredient_name": "철",
+        "amount": "3.6mg"
+      },
+      {
+        "ingredient_id": 368,
+        "ingredient_name": "비타민 E",
+        "amount": "3.3mg α-TE"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "4.5mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "0.42mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.36mg"
+      }
+    ]
+  },
+  {
+    "id": 171,
+    "name": "grn+ 연홍이 콜레우스컷",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 56,
+        "ingredient_name": "콜레우스포스콜리추출물",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.02mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.19mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.27mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "4.25mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "46.76µg"
+      }
+    ]
+  },
+  {
+    "id": 174,
+    "name": "grn+ 빨강이 다이어트 젤리",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      },
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      }
+    ]
+  },
+  {
+    "id": 185,
+    "name": "대웅제약 바나바잎 추출물",
+    "company": "대웅제약",
+    "ingredients": [
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "30μg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 339,
+        "ingredient_name": "비타민 D",
+        "amount": "10μg"
+      }
+    ]
+  },
+  {
+    "id": 176,
+    "name": "grn+ 탄수화물 컷 분홍이 포켓",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 351,
+        "ingredient_name": "비타민 A",
+        "amount": "210µg RAE"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.36mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "0.42mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "0.45mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "4.5mg NE"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "17µg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "2.55mg"
+      }
+    ]
+  },
+  {
+    "id": 151,
+    "name": "퍼니트 차전자피환",
+    "company": "퍼니트",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "6g"
+      }
+    ]
+  },
+  {
+    "id": 172,
+    "name": "grn+ 다홍이 팻버닝",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 360,
+        "ingredient_name": "공액리놀레산",
+        "amount": "1400mg"
+      }
+    ]
+  },
+  {
+    "id": 119,
+    "name": "아일로 마그번 코어컷 앰플",
+    "company": "아일로",
+    "ingredients": [
+      {
+        "ingredient_id": 164,
+        "ingredient_name": "풋사과추출물 애플페논",
+        "amount": "372mg"
+      },
+      {
+        "ingredient_id": 363,
+        "ingredient_name": "마그네슘",
+        "amount": "150mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 350,
+        "ingredient_name": "비오틴",
+        "amount": "300μg"
+      }
+    ]
+  },
+  {
+    "id": 121,
+    "name": "아임오 풋사과 식이섬유 밸런스",
+    "company": "아임오",
+    "ingredients": [
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "2.5g"
+      },
+      {
+        "ingredient_id": 164,
+        "ingredient_name": "풋사과추출물 애플페논",
+        "amount": "372mg"
+      }
+    ]
+  },
+  {
+    "id": 152,
+    "name": "퍼니트 리얼카테킨",
+    "company": "퍼니트",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "7.5mg NE"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "2.5mg"
+      }
+    ]
+  },
+  {
+    "id": 154,
+    "name": "맨올로지 컷 PRO",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 164,
+        "ingredient_name": "풋사과추출물 애플페논",
+        "amount": "372mg"
+      },
+      {
+        "ingredient_id": 365,
+        "ingredient_name": "밀크씨슬추출물",
+        "amount": "130mg"
+      },
+      {
+        "ingredient_id": 353,
+        "ingredient_name": "옥타코사놀 함유 유지",
+        "amount": "40mg"
+      }
+    ]
+  },
+  {
+    "id": 155,
+    "name": "푸드올로지 지중해 아티초크",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 88,
+        "ingredient_name": "아티초크 추출물",
+        "amount": "28.8mg"
+      },
+      {
+        "ingredient_id": 125,
+        "ingredient_name": "돌외잎주정추출분말",
+        "amount": "5.4mg"
+      }
+    ]
+  },
+  {
+    "id": 156,
+    "name": "푸드올로지 지중해 레몬버베나",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 233,
+        "ingredient_name": "레몬버베나추출물 등 복합물",
+        "amount": "500mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 349,
+        "ingredient_name": "크롬",
+        "amount": "30μg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.mg"
+      }
+    ]
+  },
+  {
+    "id": 173,
+    "name": "grn+ 편안한 밤 하늘이 다이어트",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 341,
+        "ingredient_name": "테아닌",
+        "amount": "250mg"
+      },
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "375mg"
+      },
+      {
+        "ingredient_id": 368,
+        "ingredient_name": "비타민 E",
+        "amount": "3.3mg α-TE"
+      }
+    ]
+  },
+  {
+    "id": 182,
+    "name": "안국약품 브이팩 다이어트 유산균",
+    "company": "안국약품",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 49,
+        "ingredient_name": "프로바이오틱스",
+        "amount": "30억 CFU"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "100mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "7.5mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "7mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      }
+    ]
+  },
+  {
+    "id": 183,
+    "name": "오브맘 다이어트 홀릭",
+    "company": "오브맘",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "0.36mg"
+      }
+    ]
+  },
+  {
+    "id": 175,
+    "name": "grn+ 다이어트 블랙맨",
+    "company": "grn+",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 365,
+        "ingredient_name": "밀크씨슬추출물",
+        "amount": "130mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "50mg"
+      },
+      {
+        "ingredient_id": 368,
+        "ingredient_name": "비타민 E",
+        "amount": "3.3mg α-TE"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "16.5µg"
+      }
+    ]
+  },
+  {
+    "id": 180,
+    "name": "LG생활건강 이너뷰 다이어트 가르시니아",
+    "company": "LG생활건강",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      }
+    ]
+  },
+  {
+    "id": 177,
+    "name": "CJ이너비 슬리밍 톡톡",
+    "company": "CJ이너비",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.68mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "120mg"
+      }
+    ]
+  },
+  {
+    "id": 186,
+    "name": "자연관 스파이크컷 바나바잎 & 카테킨",
+    "company": "자연관",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "400mg"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 338,
+        "ingredient_name": "나이아신",
+        "amount": "15mg NE"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      }
+    ]
+  },
+  {
+    "id": 189,
+    "name": "닥터블릿 푸응 7days 데일리버닝",
+    "company": "닥터블릿",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "300mg"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4g"
+      }
+    ]
+  },
+  {
+    "id": 187,
+    "name": "대웅제약 녹차카테킨",
+    "company": "대웅제약",
+    "ingredients": [
+      {
+        "ingredient_id": 331,
+        "ingredient_name": "녹차추출물",
+        "amount": "360mg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "25mg"
+      },
+      {
+        "ingredient_id": 333,
+        "ingredient_name": "비타민 C",
+        "amount": "30mg"
+      }
+    ]
+  },
+  {
+    "id": 188,
+    "name": "닥터블릿 푸응 7days 팻버닝",
+    "company": "닥터블릿",
+    "ingredients": [
+      {
+        "ingredient_id": 360,
+        "ingredient_name": "공액리놀레산",
+        "amount": "1400mg"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "name": "콜레올로지 PRO",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 337,
+        "ingredient_name": "셀렌",
+        "amount": "55μg"
+      },
+      {
+        "ingredient_id": 334,
+        "ingredient_name": "판토텐산",
+        "amount": "5mg"
+      },
+      {
+        "ingredient_id": 336,
+        "ingredient_name": "비타민 B6",
+        "amount": "1.5mg"
+      },
+      {
+        "ingredient_id": 343,
+        "ingredient_name": "비타민 B1",
+        "amount": "1.2mg"
+      },
+      {
+        "ingredient_id": 335,
+        "ingredient_name": "비타민 B2",
+        "amount": "1.4mg"
+      }
+    ]
+  },
+  {
+    "id": 120,
+    "name": "아일로 차전자피환",
+    "company": "아일로",
+    "ingredients": [
+      {
+        "ingredient_id": 361,
+        "ingredient_name": "차전자피식이섬유",
+        "amount": "8g"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "콜레올로지 컷팅 젤리",
+    "company": "푸드올로지",
+    "ingredients": [
+      {
+        "ingredient_id": 330,
+        "ingredient_name": "가르시니아캄보지아(HCA)",
+        "amount": "750mg"
+      },
+      {
+        "ingredient_id": 332,
+        "ingredient_name": "난소화성말토덱스트린(식이섬유)",
+        "amount": "4.2g"
+      }
+    ]
+  },
+  {
+    "id": 181,
+    "name": "종근당건강 락토핏 당케어",
+    "company": "종근당건강",
+    "ingredients": [
+      {
+        "ingredient_id": 49,
+        "ingredient_name": "프로바이오틱스",
+        "amount": "20억 CFU"
+      },
+      {
+        "ingredient_id": 345,
+        "ingredient_name": "바나바잎추출물",
+        "amount": "1.3mg"
+      },
+      {
+        "ingredient_id": 347,
+        "ingredient_name": "아연",
+        "amount": "2.55mg"
+      }
+    ]
+  }
+]

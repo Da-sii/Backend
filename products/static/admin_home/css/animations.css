@@ -1,0 +1,77 @@
+/* =============================================================
+   animations.css — keyframe + transition 유틸
+   접근성: prefers-reduced-motion 에서 모션 제거.
+   ============================================================= */
+
+/* ---------------------------------------------------------
+   스크롤 등장 (reveal.js 가 .is-visible 을 부여)
+   기본은 숨김(fade + translateY(24px)), 보이면 원위치로.
+   --------------------------------------------------------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease, transform 600ms ease;
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* stagger: 부모에 data-reveal-stagger, 자식 --reveal-index 로 지연 */
+.reveal[style*="--reveal-index"] {
+  transition-delay: calc(var(--reveal-index) * 80ms);
+}
+
+/* opacity-only 변형: backdrop-filter(예: .glass-nav)를 감싸는 요소(예: 상단 헤더)에
+   translateY 진입 애니메이션을 적용하면 blur 영역이 매 프레임 재계산되며
+   경계선(seam) 아티팩트가 잠깐 보인다. 이런 요소는 .reveal 과 함께 이 클래스를
+   추가해 이동 없이 opacity만으로 페이드시킨다. (reveal.js 연동은 .reveal 로 그대로 동작) */
+.reveal.reveal--fade,
+.reveal.reveal--fade.is-visible {
+  transform: none;
+}
+
+/* ---------------------------------------------------------
+   hover lift 유틸 (컴포넌트에 직접 붙일 수 있는 범용 클래스)
+   --------------------------------------------------------- */
+.lift {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+
+/* ---------------------------------------------------------
+   부드러운 진입 (페이지 로드시)
+   --------------------------------------------------------- */
+@keyframes ah-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ah-fade-in { animation: ah-fade-in 500ms ease both; }
+
+@keyframes ah-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.ah-float { animation: ah-float 6s ease-in-out infinite; }
+
+/* ---------------------------------------------------------
+   접근성 — 모션 최소화
+   --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

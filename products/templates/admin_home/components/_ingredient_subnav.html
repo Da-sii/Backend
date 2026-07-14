@@ -1,0 +1,11 @@
+{% comment %}
+  원료 서브내비 — 기능성 원료(Ingredient) / 기타 원료(OtherIngredient) 전환.
+  카테고리 서브내비와 동일하게 glass-nav(슬라이딩 pill) 컴포넌트를 재사용하며,
+  #ah-subcontent 중첩 부분 로딩으로 서브내비는 유지한 채 그 아래만 교체된다.
+  활성 탭은 현재 url_name 으로 판별한다.
+{% endcomment %}
+<nav class="glass-nav ah-subnav reveal">
+  <span class="glass-nav__indicator" aria-hidden="true"></span>
+  <a class="glass-nav__item {% if request.resolver_match.url_name == 'admin_home_ingredient' %}is-active{% endif %}" href="{% url 'admin_home_ingredient' %}">기능성 원료</a>
+  <a class="glass-nav__item {% if request.resolver_match.url_name == 'admin_home_ingredient_other' %}is-active{% endif %}" href="{% url 'admin_home_ingredient_other' %}">기타 원료</a>
+</nav>
