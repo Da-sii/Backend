@@ -1,0 +1,253 @@
+{% extends base_template|default:"admin_home/base.html" %}
+{% comment %}
+  배너 관리 — 목록/추가/삭제. (기존 common admin 배너 기능 이식)
+  단일 뷰(banner_list)에서 POST action(create/delete)으로 분기한다.
+  이미지는 S3 업로드(upload_banner_to_s3) 후 URL 저장, order 는 고유(unique).
+  상세 이미지(BannerDetail) 관리는 별도 태스크에서 각 배너 카드에 추가된다.
+{% endcomment %}
+
+{% block title %}배너 · DASII{% endblock %}
+{% block topbar_title %}배너 관리{% endblock %}
+{% block topbar_actions %}
+<button type="button" class="btn btn-primary" data-modal-open="banner-create-modal">＋ 배너 추가</button>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* 배너 카드 — 디자인 시스템 토큰만 사용 */
+  .ah-banner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+    color: var(--text-on-glass);
+  }
+  .ah-banner__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+  .ah-banner__thumb {
+    height: 80px;
+    max-width: 200px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    object-fit: cover;
+  }
+  .ah-banner__meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .ah-banner__badges {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    flex-wrap: wrap;
+  }
+  .ah-banner__actions { margin-left: auto; display: flex; gap: var(--space-2); }
+
+  /* 상세 이미지 섹션 */
+  .ah-banner__details {
+    border-top: 1px dashed var(--glass-border);
+    padding-top: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .ah-detail-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .ah-detail-item { position: relative; display: inline-block; }
+  .ah-detail-item__img {
+    height: 72px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    object-fit: cover;
+  }
+  .ah-detail-item__order {
+    position: absolute;
+    top: var(--space-1);
+    left: var(--space-1);
+  }
+  .ah-detail-item__del {
+    position: absolute;
+    top: var(--space-1);
+    right: var(--space-1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6em;
+    height: 1.6em;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--color-error);
+    color: var(--color-gray-0);
+    font-size: var(--fs-text-sm); /* 18px floor */
+    line-height: 1;
+    cursor: pointer;
+  }
+  .ah-detail-add {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  /* 파일 입력 — 18px 하한 유지, 유리 톤 */
+  .ah-file {
+    font-size: var(--fs-text-sm);
+    color: var(--text-on-glass);
+  }
+  .ah-file::file-selector-button {
+    font-size: var(--fs-text-sm);
+    font-weight: var(--font-weight-bold);
+    padding: var(--space-1) var(--space-3);
+    margin-right: var(--space-2);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+    background: var(--glass-bg-strong);
+    color: var(--text-on-glass);
+    cursor: pointer;
+  }
+  .ah-order-input { max-width: 8rem; }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .ah-banner {
+      background: var(--glass-bg-fallback);
+      color: var(--text-default);
+      border-color: var(--color-gray-200);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{# 배너 추가 모달 — 목록 헤더 ＋ 버튼으로 열림 #}
+<div class="ah-modal" id="banner-create-modal" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="banner-create-modal-title">
+    <div class="ah-modal__head">
+      <h2 id="banner-create-modal-title" class="text-title-md">배너 추가</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      <form method="post" enctype="multipart/form-data" class="ah-stack">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create" />
+        <div class="ah-field">
+          <label class="ah-label" for="banner-image">썸네일 이미지</label>
+          <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*" required />
+        </div>
+        <div class="ah-field">
+          <label class="ah-label" for="banner-order">순서</label>
+          <input class="ah-input ah-order-input" type="number" id="banner-order" name="order"
+                 value="{{ next_order }}" min="1" />
+        </div>
+        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" class="btn btn-primary">배너 등록</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<section class="reveal">
+  <div style="margin-bottom: var(--space-3);">
+    <h2 class="text-title-sm">
+      배너 목록 <span class="text-muted">({{ banners|length }})</span>
+    </h2>
+  </div>
+
+  {% if banners %}
+  <div class="ah-records" data-reveal-stagger>
+    {% for banner in banners %}
+    <div class="ah-banner reveal">
+      <div class="ah-banner__header">
+        <img class="ah-banner__thumb" src="{{ banner.image_url }}" alt="배너 #{{ banner.id }} 썸네일" />
+
+        <div class="ah-banner__meta">
+          <p class="text-body">배너 #{{ banner.id }}</p>
+          <div class="ah-banner__badges">
+            <span class="ah-badge ah-badge--neutral">순서 {{ banner.order }}</span>
+            {% if banner.is_active %}
+            <span class="ah-badge ah-badge--ok">활성</span>
+            {% else %}
+            <span class="ah-badge ah-badge--neutral">비활성</span>
+            {% endif %}
+            <span class="ah-badge ah-badge--neutral">상세 {{ banner.details.count }}</span>
+          </div>
+        </div>
+
+        <div class="ah-banner__actions">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="toggle_active" />
+            <input type="hidden" name="id" value="{{ banner.id }}" />
+            <button type="submit" class="btn btn-glass">
+              {% if banner.is_active %}숨기기{% else %}노출하기{% endif %}
+            </button>
+          </form>
+          <form method="post"
+                onsubmit="return confirm('이 배너와 하위 상세 이미지가 모두 삭제됩니다. 계속할까요?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="id" value="{{ banner.id }}" />
+            <button type="submit" class="btn btn-danger">삭제</button>
+          </form>
+        </div>
+      </div>
+
+      {# 상세 이미지 — 목록/추가/삭제 #}
+      <div class="ah-banner__details">
+        <p class="text-body-sm text-muted">상세 이미지</p>
+
+        {% if banner.details.all %}
+        <div class="ah-detail-list">
+          {% for detail in banner.details.all %}
+          <div class="ah-detail-item">
+            <img class="ah-detail-item__img" src="{{ detail.detail_image_url }}" alt="상세 이미지 순서 {{ detail.order }}" />
+            <span class="ah-badge ah-badge--neutral ah-detail-item__order">{{ detail.order }}</span>
+            <form method="post" onsubmit="return confirm('이 상세 이미지를 삭제할까요?');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="detail_delete" />
+              <input type="hidden" name="id" value="{{ detail.id }}" />
+              <button type="submit" class="ah-detail-item__del" aria-label="상세 이미지 삭제" title="삭제">&times;</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="ah-detail-add">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="detail_create" />
+          <input type="hidden" name="banner_id" value="{{ banner.id }}" />
+          <div class="ah-field">
+            <label class="ah-label" for="detail-image-{{ banner.id }}">상세 이미지</label>
+            <input class="ah-file" type="file" id="detail-image-{{ banner.id }}" name="detail_image" accept="image/*" required />
+          </div>
+          <div class="ah-field">
+            <label class="ah-label" for="detail-order-{{ banner.id }}">순서</label>
+            <input class="ah-input ah-order-input" type="number" id="detail-order-{{ banner.id }}"
+                   name="order" value="{{ banner.details.count|add:1 }}" min="1" />
+          </div>
+          <button type="submit" class="btn btn-glass">상세 추가</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="ah-record-empty text-body">등록된 배너가 없습니다. 위에서 첫 배너를 추가해보세요.</p>
+  {% endif %}
+</section>
+{% endblock %}

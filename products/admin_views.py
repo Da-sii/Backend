@@ -366,6 +366,23 @@ def product_form(request):
         'products': products
     })
 
+def _recommended_length_error(min_recommended, max_recommended):
+    """minRecommended/maxRecommended 는 CharField(max_length=50) 이므로,
+    폼에서 이를 초과해 POST 되면 저장 시 Postgres DataError(500)가 발생한다.
+    모델 필드의 max_length 를 기준으로 미리 검증해 오류 메시지를 돌려준다
+    (문제 없으면 None).
+    """
+    fields = {
+        "최소권장량": (min_recommended, "minRecommended"),
+        "최대권장량": (max_recommended, "maxRecommended"),
+    }
+    for label, (value, field_name) in fields.items():
+        max_length = Ingredient._meta.get_field(field_name).max_length
+        if value and len(value) > max_length:
+            return f"{label}은 {max_length}자를 초과할 수 없습니다."
+    return None
+
+
 # Ingredient 입력 화면 (템플릿 기반)
 def ingredient_form(request):
     if request.method == 'POST':
@@ -389,8 +406,13 @@ def ingredient_form(request):
         except:
             side_effect = None
 
+        length_error = _recommended_length_error(min_recommended, max_recommended)
+
         if not all([name, main_ingredient, min_recommended, max_recommended, effect]):
             messages.error(request, '필수 항목을 모두 입력해주세요.')
+
+        elif length_error:
+            messages.error(request, length_error)
 
         else:
             Ingredient.objects.create(
@@ -419,10 +441,17 @@ def ingredient_edit(request, ingredient_id):
         return redirect('admin_ingredient_form')
 
     if request.method == 'POST':
+        min_recommended = request.POST.get('minRecommended', '').strip()
+        max_recommended = request.POST.get('maxRecommended', '').strip()
+        length_error = _recommended_length_error(min_recommended, max_recommended)
+        if length_error:
+            messages.error(request, length_error)
+            return redirect('admin_ingredient_edit', ingredient_id=ingredient_id)
+
         ingredient.name = request.POST.get('name', '').strip()
         ingredient.mainIngredient = request.POST.get('mainIngredient', '').strip()
-        ingredient.minRecommended = request.POST.get('minRecommended', '').strip()
-        ingredient.maxRecommended = request.POST.get('maxRecommended', '').strip()
+        ingredient.minRecommended = min_recommended
+        ingredient.maxRecommended = max_recommended
 
         effect_raw = request.POST.get('effect', '[]')
         side_raw = request.POST.get('sideEffect', '[]')

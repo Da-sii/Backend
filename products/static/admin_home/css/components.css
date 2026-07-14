@@ -1,0 +1,875 @@
+/* =============================================================
+   components.css — 공통 컴포넌트 (ref1 참고)
+   ⚠️ raw hex 금지: 색/여백/radius/blur/shadow 는 전부 토큰(var).
+   ⚠️ 18px floor: 모든 텍스트 >= 18px.
+   ============================================================= */
+
+/* ---------------------------------------------------------
+   레이아웃 헬퍼
+   --------------------------------------------------------- */
+.ah-container {
+  width: 100%;
+  max-width: var(--admin-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.ah-stack > * + * { margin-top: var(--space-3); }
+.ah-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+/* 스탯 타일 행 — 카드보다 촘촘하게(한 줄에 여러 KPI) */
+.ah-grid--stats { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+/* =========================================================
+   0. App Shell — 사이드바 + 토프바 대시보드 레이아웃
+   좌측 고정 사이드바(부분 로딩 후에도 유지되는 persistent shell) +
+   메인(상단 토프바 + 콘텐츠). 좁은 화면에서는 사이드바가
+   오프캔버스 드로어(.is-nav-open)로 전환된다. 색/여백 전부 토큰.
+   ========================================================= */
+.ah-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+}
+/* 셸(사이드바) 없는 화면 — 로그인 등. 사이드바 열을 없애 콘텐츠를 풀폭으로 */
+.ah-layout--bare { grid-template-columns: 1fr; }
+
+/* --- 사이드바 --- */
+.ah-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4) var(--space-3);
+  background: var(--glass-bg-dark);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  border-right: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-inset-highlight);
+  z-index: 20;
+}
+.ah-sidebar__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-4);
+}
+.ah-sidebar__brand {
+  font-size: var(--fs-title-md);
+  line-height: 1;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-on-glass);
+  letter-spacing: 0.02em;
+}
+/* "ADMIN" — 배지 대신 브랜드 뒤에 이어 쓰는 텍스트(옅은 톤·보통 굵기) */
+.ah-sidebar__brand-sub {
+  margin-left: 0.4em;
+  color: var(--glass-highlight);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.08em;
+}
+.ah-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+.ah-sidebar__group {
+  margin: var(--space-6) var(--space-2) var(--space-2);
+  color: var(--glass-highlight);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ah-sidebar__nav > .ah-sidebar__group:first-child { margin-top: var(--space-1); }
+.ah-sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-on-glass);
+  font-weight: var(--font-weight-bold);
+  transition: background var(--transition-base), box-shadow var(--transition-base);
+}
+.ah-sidebar__item:hover { background: var(--glass-bg); }
+.ah-sidebar__item.is-active {
+  background: var(--glass-bg-strong);
+  box-shadow: var(--shadow-inset-highlight);
+}
+.ah-sidebar__item.is-active .ah-sidebar__label { color: var(--brand-primary); }
+.ah-sidebar__icon {
+  flex: none;
+  width: var(--space-6);
+  font-size: var(--fs-text-lg);
+  line-height: 1;
+  text-align: center;
+}
+.ah-sidebar__label { font-size: var(--fs-text-sm); }
+.ah-sidebar__foot {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--glass-border);
+}
+.ah-sidebar__logout { width: 100%; }
+
+/* --- 메인(토프바 + 콘텐츠) --- */
+.ah-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* grid 자식 overflow 방지 → 내부 테이블 가로 스크롤이 셸을 밀지 않게 */
+  min-height: 100vh;
+}
+.ah-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--topbar-h);
+  padding: var(--space-2) var(--space-6);
+  background: var(--glass-bg-subtle);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  border-bottom: 1px solid var(--glass-border);
+}
+.ah-topbar__title { color: var(--text-on-glass); margin: 0; }
+.ah-topbar__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.ah-topbar__menu {
+  display: none; /* 데스크톱에서는 숨김, 모바일 미디어쿼리에서 표시 */
+  flex: none;
+  width: calc(40px * var(--ui-scale));
+  height: calc(40px * var(--ui-scale));
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-title-md);
+  color: var(--text-on-glass);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.ah-content-scroll {
+  flex: 1 1 auto;
+  padding: var(--space-6);
+}
+.ah-content-scroll > #ah-content {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+/* 드로어 스크림(모바일에서 사이드바 열릴 때만) */
+.ah-sidebar__scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  backdrop-filter: blur(var(--blur-sm));
+}
+
+/* --- 반응형: 사이드바 오프캔버스 드로어 --- */
+@media (max-width: 900px) {
+  .ah-layout { grid-template-columns: 1fr; }
+  .ah-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(var(--sidebar-width), 82vw);
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+  }
+  .ah-layout.is-nav-open .ah-sidebar { transform: translateX(0); }
+  .ah-layout.is-nav-open .ah-sidebar__scrim { display: block; }
+  .ah-topbar__menu { display: inline-flex; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ah-sidebar { transition: none; }
+}
+
+/* backdrop-filter 미지원 폴백 — 셸은 어두운 톤을 유지(불투명 배경) */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ah-sidebar,
+  .ah-topbar {
+    background: var(--glass-bg-dark-fallback);
+    border-color: var(--color-gray-700);
+  }
+}
+
+/* =========================================================
+   1. Buttons
+   ========================================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-text-sm); /* 18px floor */
+  line-height: 1;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: transform var(--transition-base),
+    box-shadow var(--transition-base), background var(--transition-base),
+    border-color var(--transition-base);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-primary {
+  background: var(--brand-primary);
+  color: var(--color-green-950);
+  box-shadow: var(--shadow-glass);
+}
+.btn-primary:hover {
+  background: var(--color-green-400);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+.btn-primary:active { transform: translateY(-1px); }
+
+.btn-glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  border-color: var(--glass-border);
+  color: var(--text-on-glass);
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+}
+.btn-glass:hover {
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border-strong);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+.btn-glass:active { transform: translateY(-1px); }
+
+.btn-danger {
+  background: var(--color-error);
+  color: var(--color-gray-0);
+  box-shadow: var(--shadow-glass);
+}
+.btn-danger:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+  filter: brightness(1.05);
+}
+.btn-danger:active { transform: translateY(-1px); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .btn-glass {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+}
+
+/* =========================================================
+   2. Glass Card — 제목 + 설명 + 하단 아이콘 영역
+   ========================================================= */
+.glass-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+  color: var(--text-on-glass);
+  transition: transform var(--transition-base),
+    box-shadow var(--transition-base), border-color var(--transition-base);
+}
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+  border-color: var(--glass-border-strong);
+}
+.glass-card__title {
+  font-size: var(--fs-title-sm);
+  line-height: var(--lh-title-sm);
+  font-weight: var(--font-weight-bold);
+}
+.glass-card__desc {
+  font-size: var(--fs-text-sm);
+  line-height: var(--lh-text-sm);
+  color: var(--glass-highlight);
+}
+.glass-card__icon {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  font-size: var(--fs-display);
+  line-height: 1;
+  opacity: 0.85;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-card {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+  .glass-card__desc { color: var(--text-muted); }
+}
+
+/* =========================================================
+   2-1. Stat Tile — 대시보드 KPI 타일(_stat.html)
+   아이콘 + (라벨/값/보조). href 있으면 링크 타일(.ah-stat--link).
+   ========================================================= */
+.ah-stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+  color: var(--text-on-glass);
+}
+.ah-stat__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  font-size: var(--fs-title-md);
+  line-height: 1;
+  background: var(--glass-bg-strong);
+  border-radius: var(--radius-md);
+}
+.ah-stat__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.ah-stat__label { color: var(--glass-highlight); }
+.ah-stat__value { font-weight: var(--font-weight-extrabold); line-height: 1.1; }
+.ah-stat__unit {
+  margin-left: 2px;
+  color: var(--glass-highlight);
+  font-weight: var(--font-weight-regular);
+}
+.ah-stat__sub { color: var(--glass-highlight); }
+.ah-stat--link {
+  transition: transform var(--transition-base),
+    box-shadow var(--transition-base), border-color var(--transition-base);
+}
+.ah-stat--link:hover { border-color: var(--glass-border-strong); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ah-stat {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+  .ah-stat__label,
+  .ah-stat__sub,
+  .ah-stat__unit { color: var(--text-muted); }
+  .ah-stat__icon { background: var(--surface-subtle); }
+}
+
+/* =========================================================
+   3. Glass Panel — 배경 위 큰 반투명 컨테이너(섹션/헤더)
+   ========================================================= */
+.glass-panel {
+  padding: var(--space-6);
+  background: var(--glass-bg-subtle);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+  color: var(--text-on-glass);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-panel {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+}
+
+/* =========================================================
+   4. Nav — pill 세그먼트 + 활성 하이라이트 슬라이드
+   ========================================================= */
+.glass-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+  position: relative;
+}
+.glass-nav__item {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-text-sm); /* 18px floor */
+  font-weight: var(--font-weight-bold);
+  color: var(--text-on-glass);
+  cursor: pointer;
+  transition:
+    color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+/* 호버 시에는 인디케이터(pill)가 따라오지 않고, 탭 자체에 가벼운 그림자만
+   살짝 띄워 부드럽게 강조한다. --shadow-lift보다 옅은 --shadow-sm 사용. */
+.glass-nav__item:hover {
+  box-shadow: var(--shadow-sm);
+}
+/* 활성 하이라이트는 .glass-nav__indicator(슬라이딩 pill)가 담당한다.
+   is-active 자체는 배경을 갖지 않고, JS가 초기 위치를 계산하는 기준점으로만 쓰인다. */
+.glass-nav__item.is-active {
+  color: var(--text-on-glass);
+}
+
+/* 선택/호버된 탭 위로 부드럽게 이동하는 pill 배경.
+   위치·크기는 JS(interactions.js)가 --nav-ind-x / --nav-ind-y / --nav-ind-w / --nav-ind-h
+   커스텀 프로퍼티로 갱신한다(탭 아이템의 offsetLeft/Top/Width/Height와 동일하게 맞춰
+   호버 강조 범위와 pill 범위를 일치시킨다). */
+.glass-nav__indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--nav-ind-h, 100%);
+  width: var(--nav-ind-w, 0px);
+  transform: translate(var(--nav-ind-x, 0px), var(--nav-ind-y, 0px));
+  background: var(--glass-bg-strong);
+  border-radius: var(--radius-pill);
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--transition-base),
+    width var(--transition-base),
+    height var(--transition-base),
+    opacity var(--transition-base);
+}
+.glass-nav__indicator.is-visible {
+  opacity: 1;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-nav {
+    background: var(--glass-bg-fallback);
+    border-color: var(--color-gray-200);
+  }
+  .glass-nav__item { color: var(--text-default); }
+  /* backdrop-filter 미지원 환경에서는 슬라이딩 pill 대신 정적 배경으로 활성 탭을 표시 */
+  .glass-nav__item.is-active { background: var(--color-gray-100); }
+  .glass-nav__indicator { display: none; }
+}
+
+/* =========================================================
+   5. Form 요소 — 유리 톤, 18px 폰트, 명확한 포커스 링
+   ========================================================= */
+.ah-field { display: flex; flex-direction: column; gap: var(--space-1); }
+
+.ah-label {
+  font-size: var(--fs-text-sm); /* 18px floor */
+  font-weight: var(--font-weight-bold);
+  color: var(--text-on-glass);
+}
+
+.ah-input,
+.ah-select,
+.ah-textarea {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--glass-bg-subtle);
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-text-sm); /* 18px floor */
+  line-height: var(--lh-text-sm);
+  color: var(--text-on-glass);
+  transition: border-color var(--transition-base),
+    box-shadow var(--transition-base), background var(--transition-base);
+}
+.ah-textarea { min-height: calc(var(--space-8) * 2); resize: vertical; }
+
+.ah-input:focus,
+.ah-select:focus,
+.ah-textarea:focus {
+  outline: none;
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--glass-highlight);
+  background: var(--glass-bg);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ah-input,
+  .ah-select,
+  .ah-textarea {
+    background: var(--surface);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+  .ah-label { color: var(--text-default); }
+}
+
+/* =========================================================
+   6. Color swatch / badge (스타일가이드 검수용 공통 조각)
+   ========================================================= */
+.ah-swatch {
+  height: var(--space-8);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+}
+.ah-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-caption); /* 18px floor */
+  font-weight: var(--font-weight-bold);
+}
+.ah-badge--ok { background: var(--color-ok); color: var(--color-green-950); }
+.ah-badge--error { background: var(--color-error); color: var(--color-gray-0); }
+.ah-badge--kakao { background: var(--color-kakao); color: var(--color-gray-900); }
+.ah-badge--neutral {
+  background: var(--glass-bg-strong);
+  color: var(--text-on-glass);
+  border: 1px solid var(--glass-border);
+}
+
+/* =========================================================
+   7. 레코드 목록 — /admin/home 관리 페이지(대/중/소분류 등) 공통
+   추가 폼(ah-recordbar) + 행 목록(ah-records/ah-record)
+   ========================================================= */
+.ah-recordbar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.ah-recordbar .ah-field { flex: 1 1 240px; }
+
+.ah-records { display: flex; flex-direction: column; gap: var(--space-2); }
+.ah-record {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding: var(--space-2) var(--space-3);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+  color: var(--text-on-glass);
+}
+.ah-record__id {
+  color: var(--glass-highlight);
+  font-weight: var(--font-weight-bold);
+}
+.ah-record__edit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1 1 320px;
+}
+.ah-record__edit .ah-input,
+.ah-record__edit .ah-select { flex: 1 1 auto; }
+.ah-record__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+.ah-record-empty { color: var(--glass-highlight); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ah-record {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+  .ah-record__id { color: var(--text-muted); }
+}
+
+/* 카테고리 서브내비(대/중/소분류 전환) — 상단 글로벌 nav 아래 위치 */
+.ah-subnav { margin-bottom: var(--space-6); }
+
+/* =========================================================
+   8. 리스트 편집기(List Editor) — 항목(줄) 추가/삭제 위젯
+   원료 등 효과/부작용/핵심 포인트/출처처럼 배열 필드를 편집할 때 사용(텍스트 1줄 + 삭제).
+   제출 직전 hidden 필드(data-listedit-target)에 JSON 배열로 직렬화된다(페이지별 JS).
+   제품 추가 모달의 성분/기타 원료/카테고리처럼 select(+input) 조합 행에도 재사용한다 —
+   이 경우 name="...[]" 배열이 그대로 폼에 제출되며(JSON 직렬화 없음), 행 추가/삭제는
+   첫 행을 복제/초기화하는 페이지별 JS(data-row-group/-list/-row/-add/-remove)가 담당한다.
+   ========================================================= */
+.ah-listedit__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.ah-listedit__row { display: flex; gap: var(--space-2); align-items: flex-start; }
+.ah-listedit__row .ah-textarea { flex: 1 1 auto; }
+.ah-listedit__row .ah-select { flex: 2 1 240px; }
+.ah-listedit__row .ah-input { flex: 1 1 160px; }
+.ah-listedit__row .btn { flex: none; }
+
+/* 모달 폼 내부 구획 제목 */
+.ah-formsection {
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* =========================================================
+   Modal — 스크림 위에 유리 다이얼로그를 중앙에 띄운다.
+   data-modal-open="ID" 트리거로 열고, [data-modal-close]/Esc 로 닫는다(interactions.js).
+   기본은 숨김, .is-open 일 때만 표시.
+   ========================================================= */
+.ah-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  padding: var(--space-4);
+  align-items: center;
+  justify-content: center;
+  /* 숨김은 display 대신 opacity/visibility 로 → 닫힘도 트랜지션됨 */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--transition-base), visibility var(--transition-base);
+}
+.ah-modal.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.ah-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  backdrop-filter: blur(var(--blur-sm));
+}
+
+/* .glass-panel 을 함께 붙여 유리 재질/여백을 재사용한다. */
+.ah-modal__dialog {
+  position: relative;
+  width: min(680px, 100%);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* 진입 시 살짝 확대되며 들어온다(닫힐 때 축소) */
+  transform: scale(0.96);
+  transition: transform var(--transition-base);
+}
+.ah-modal.is-open .ah-modal__dialog {
+  transform: scale(1);
+}
+
+.ah-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.ah-modal__close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-title-md);
+  line-height: 1;
+  color: var(--text-on-glass);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background var(--transition-base), border-color var(--transition-base);
+}
+.ah-modal__close:hover {
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border-strong);
+}
+
+.ah-modal__body {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-right: var(--space-1);
+}
+
+/* 요청 카드 한 건 */
+.ah-request {
+  padding: var(--space-4);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+}
+.ah-request__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.ah-request__id { color: var(--glass-highlight); font-weight: var(--font-weight-bold); }
+.ah-request__user { color: var(--glass-highlight); }
+.ah-request__content { white-space: pre-line; }
+.ah-request__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.ah-request__date { color: var(--glass-highlight); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ah-modal__dialog,
+  .ah-request {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+  .ah-request__id,
+  .ah-request__user,
+  .ah-request__date { color: var(--text-muted); }
+}
+
+/* 모달이 열려 있을 때 본문 스크롤 잠금 */
+body.ah-modal-open { overflow: hidden; }
+
+/* =========================================================
+   Category Map — 대/중/소 3열 마인드맵
+   1col 대분류 · 2col 중분류 · 3col 소분류(세로 나열). 열 간 커넥터는 border-left 세로선.
+   세 열은 동일 비율(각 1/3): group 1fr:2fr → branch 1fr:1fr 중첩으로 대=중=소 폭이 같다.
+   소분류는 열 안에서 세로로 나열되며, 상단 정렬(align-items:start)로 시작을 맞춘다.
+   색/여백 전부 토큰, 18px floor 준수.
+   ========================================================= */
+.ah-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.ah-map__group {
+  display: grid;
+  grid-template-columns: 1fr 2fr; /* 대 1/3 · (중+소) 2/3 */
+  align-items: start;
+  gap: var(--space-4);
+}
+.ah-map__branches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border-left: 2px solid var(--glass-border); /* 대 → 중 커넥터 */
+  padding-left: var(--space-4);
+}
+.ah-map__branch {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 중 1/3 · 소 1/3 (group 의 2/3 을 반씩) */
+  align-items: start;
+  gap: var(--space-3);
+}
+.ah-map__smalls {
+  display: flex;
+  flex-direction: column; /* 소분류 세로 나열 */
+  gap: var(--space-2);
+  border-left: 2px solid var(--glass-border); /* 중 → 소 커넥터 */
+  padding-left: var(--space-3);
+}
+.ah-map__node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  transition: background var(--transition-base);
+}
+.ah-map__node--big {
+  background: var(--glass-bg-strong);
+}
+.ah-map__node:hover {
+  background: var(--glass-bg-strong);
+}
+.ah-map__name {
+  font-weight: var(--font-weight-bold);
+}
+.ah-map__actions {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin-left: auto;
+  padding-left: var(--space-2);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+.ah-map__node:hover .ah-map__actions,
+.ah-map__node:focus-within .ah-map__actions {
+  opacity: 1;
+}
+.ah-map__btn {
+  flex: none;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-text-sm); /* 18px floor */
+  line-height: 1;
+  color: var(--text-on-glass);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base);
+}
+.ah-map__btn:hover {
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border-strong);
+}
+.ah-map__btn--danger {
+  color: var(--color-error);
+}
+.ah-map__empty {
+  color: var(--glass-highlight);
+  padding: var(--space-1) var(--space-2);
+}

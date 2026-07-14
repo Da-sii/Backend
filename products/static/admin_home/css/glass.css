@@ -1,0 +1,63 @@
+/* =============================================================
+   glass.css — Liquid Glass 유틸리티
+   토큰만 참조(raw hex 없음). Safari 대응 -webkit- 접두사 포함.
+   backdrop-filter 미지원 브라우저는 @supports 로 불투명 폴백.
+   ============================================================= */
+
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+  color: var(--text-on-glass);
+}
+
+/* 변형 --------------------------------------------------- */
+.glass--strong {
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-lg)) saturate(var(--glass-saturate));
+  border-color: var(--glass-border-strong);
+}
+
+.glass--subtle {
+  background: var(--glass-bg-subtle);
+  -webkit-backdrop-filter: blur(var(--blur-sm)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-sm)) saturate(var(--glass-saturate));
+}
+
+/* 어두운 배경(밝은 표면) 위에 얹는 반전 유리 */
+.glass--dark {
+  background: var(--glass-bg-dark);
+  border-color: var(--glass-border);
+  color: var(--text-on-glass);
+}
+
+/* 둥근 모서리 유틸 (유리 표면 공통) */
+.glass--pill { border-radius: var(--radius-pill); }
+.glass--xl { border-radius: var(--radius-xl); }
+
+/* ---------------------------------------------------------
+   Fallback — backdrop-filter 미지원 시 배경 alpha 를 크게 올려
+   유리 뒤 텍스트 가독성을 유지한다.
+   --------------------------------------------------------- */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass--subtle {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+  .glass--strong {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+  .glass--dark {
+    background: var(--glass-bg-dark-fallback);
+    color: var(--text-on-glass);
+    border-color: var(--color-gray-700);
+  }
+}

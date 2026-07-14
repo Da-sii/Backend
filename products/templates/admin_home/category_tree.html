@@ -1,0 +1,185 @@
+{% extends base_template|default:"admin_home/base.html" %}
+{% comment %}
+  카테고리 · 대/중/소 통합 트리 (category_tree).
+  대→중→소를 항상 펼친 중첩 트리로 표시하고, 노드 hover 액션으로 추가/수정/삭제한다.
+  · 추가·수정: 공유 모달(#category-modal)을 extra_js 가 클릭 노드의 data-cat-* 로 채워 연다
+    (여는 동작 자체는 interactions.js 의 data-modal-open 이 담당).
+  · 삭제: 공유 폼(#category-delete-form)에 level/id 를 채워 제출한다.
+  모든 변경은 단일 뷰 /admin/home/category/ 로 POST(level + action) 된다.
+{% endcomment %}
+
+{% block title %}카테고리 · DASII{% endblock %}
+{% block topbar_title %}카테고리 관리{% endblock %}
+{% block topbar_actions %}
+<button type="button" class="btn btn-primary"
+        data-modal-open="category-modal"
+        data-cat-act="create" data-cat-level="big" data-cat-title="대분류 추가">＋ 대분류 추가</button>
+{% endblock %}
+
+{% block content %}
+<section class="reveal">
+  {% if bigs %}
+  {# 3열 마인드맵 — 1col 대분류 · 2col 중분류 · 3col 소분류(세로 나열), 열은 동일 비율 #}
+  <div class="ah-map">
+    {% for big in bigs %}
+    <div class="ah-map__group">
+      {# col 1 — 대분류 (자기 중분류 묶음에 세로 중앙) #}
+      <div class="ah-map__node ah-map__node--big">
+        <span class="ah-map__name text-body">{{ big.category }}</span>
+        <span class="ah-map__actions">
+          <button type="button" class="ah-map__btn" title="중분류 추가"
+                  data-modal-open="category-modal"
+                  data-cat-act="create" data-cat-level="middle" data-cat-parent="{{ big.id }}"
+                  data-cat-title="중분류 추가">＋</button>
+          <button type="button" class="ah-map__btn" title="이름 수정"
+                  data-modal-open="category-modal"
+                  data-cat-act="update" data-cat-level="big" data-cat-id="{{ big.id }}"
+                  data-cat-name="{{ big.category }}" data-cat-title="대분류 수정">✎</button>
+          <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
+                  data-cat-act="delete" data-cat-level="big" data-cat-id="{{ big.id }}"
+                  data-cat-confirm="이 대분류와 하위 중·소분류, 제품 연결이 모두 삭제됩니다. 계속할까요?">🗑</button>
+        </span>
+      </div>
+
+      {# col 2+3 — 중분류별 행: [중분류] [소분류들] #}
+      <div class="ah-map__branches">
+        {% for mid in big.middle_categories.all %}
+        <div class="ah-map__branch">
+          <div class="ah-map__node ah-map__node--mid">
+            <span class="ah-map__name text-body">{{ mid.category }}</span>
+            <span class="ah-map__actions">
+              <button type="button" class="ah-map__btn" title="소분류 추가"
+                      data-modal-open="category-modal"
+                      data-cat-act="create" data-cat-level="small" data-cat-parent="{{ mid.id }}"
+                      data-cat-title="소분류 추가">＋</button>
+              <button type="button" class="ah-map__btn" title="이름 수정"
+                      data-modal-open="category-modal"
+                      data-cat-act="update" data-cat-level="middle" data-cat-id="{{ mid.id }}"
+                      data-cat-name="{{ mid.category }}" data-cat-title="중분류 수정">✎</button>
+              <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
+                      data-cat-act="delete" data-cat-level="middle" data-cat-id="{{ mid.id }}"
+                      data-cat-confirm="이 중분류와 하위 소분류, 제품 연결이 모두 삭제됩니다. 계속할까요?">🗑</button>
+            </span>
+          </div>
+
+          <div class="ah-map__smalls">
+            {% for small in mid.small_categories.all %}
+            <div class="ah-map__node ah-map__node--small">
+              <span class="ah-map__name text-body">{{ small.category }}</span>
+              <span class="ah-badge ah-badge--neutral" title="연결된 제품 수">{{ small.product_count }}</span>
+              <span class="ah-map__actions">
+                <button type="button" class="ah-map__btn" title="이름 수정"
+                        data-modal-open="category-modal"
+                        data-cat-act="update" data-cat-level="small" data-cat-id="{{ small.id }}"
+                        data-cat-name="{{ small.category }}" data-cat-title="소분류 수정">✎</button>
+                <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
+                        data-cat-act="delete" data-cat-level="small" data-cat-id="{{ small.id }}"
+                        data-cat-confirm="이 소분류와 제품 연결이 삭제됩니다. 계속할까요?">🗑</button>
+              </span>
+            </div>
+            {% empty %}
+            <div class="ah-map__empty text-body-sm">소분류 없음</div>
+            {% endfor %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="ah-map__branch">
+          <div class="ah-map__empty text-body-sm">중분류 없음</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="ah-record-empty text-body">등록된 대분류가 없습니다. 우측 상단 ＋ 대분류 추가 로 시작하세요.</p>
+  {% endif %}
+</section>
+
+{# 공유 생성/수정 모달 — extra_js 가 클릭 노드의 data-cat-* 로 필드를 채운다 #}
+<div class="ah-modal" id="category-modal" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="category-modal-title">
+    <div class="ah-modal__head">
+      <h2 id="category-modal-title" class="text-title-md">카테고리</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      <form method="post" class="ah-stack" id="category-modal-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" id="category-modal-action" value="create" />
+        <input type="hidden" name="level" id="category-modal-level" value="big" />
+        <input type="hidden" name="id" id="category-modal-id" value="" />
+        <input type="hidden" name="parent" id="category-modal-parent" value="" />
+        <div class="ah-field">
+          <label class="ah-label" for="category-modal-input">이름</label>
+          <input class="ah-input" type="text" id="category-modal-input" name="category"
+                 maxlength="100" placeholder="예: 비타민" required />
+        </div>
+        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" class="btn btn-primary" id="category-modal-submit">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# 공유 삭제 폼 — 트리의 삭제 버튼이 extra_js 로 level/id 를 채워 제출한다 #}
+<form method="post" id="category-delete-form" hidden>
+  {% csrf_token %}
+  <input type="hidden" name="action" value="delete" />
+  <input type="hidden" name="level" id="category-delete-level" value="" />
+  <input type="hidden" name="id" id="category-delete-id" value="" />
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // 카테고리 트리 노드 액션 — 추가/수정은 공유 모달을 채우고(열기는 interactions.js),
+  // 삭제는 공유 폼을 제출한다. document 위임 + 플래그로 부분로딩 재실행 시 중복 바인딩 방지.
+  (function () {
+    "use strict";
+    if (document._ahCategoryWired) return;
+    document._ahCategoryWired = true;
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("[data-cat-act]") : null;
+      if (!btn) return;
+      var act = btn.getAttribute("data-cat-act");
+      var level = btn.getAttribute("data-cat-level") || "";
+
+      if (act === "delete") {
+        var msg = btn.getAttribute("data-cat-confirm") || "삭제할까요?";
+        if (!window.confirm(msg)) return;
+        $("category-delete-level").value = level;
+        $("category-delete-id").value = btn.getAttribute("data-cat-id") || "";
+        $("category-delete-form").submit();
+        return;
+      }
+
+      // create / update → 공유 모달 필드 채우기
+      $("category-modal-action").value = act;
+      $("category-modal-level").value = level;
+      $("category-modal-id").value =
+        act === "update" ? btn.getAttribute("data-cat-id") || "" : "";
+      $("category-modal-parent").value =
+        act === "create" ? btn.getAttribute("data-cat-parent") || "" : "";
+      var input = $("category-modal-input");
+      input.value = act === "update" ? btn.getAttribute("data-cat-name") || "" : "";
+      $("category-modal-title").textContent =
+        btn.getAttribute("data-cat-title") || "카테고리";
+      $("category-modal-submit").textContent = act === "update" ? "수정" : "추가";
+      // 모달이 열린 뒤 입력에 포커스
+      setTimeout(function () {
+        input.focus();
+      }, 50);
+    });
+  })();
+</script>
+{% endblock %}
