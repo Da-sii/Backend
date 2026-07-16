@@ -1,9 +1,11 @@
 {% extends base_template|default:"admin_home/base.html" %}
 {% comment %}
-  배너 관리 — 목록/추가/삭제. (기존 common admin 배너 기능 이식)
-  단일 뷰(banner_list)에서 POST action(create/delete)으로 분기한다.
-  이미지는 S3 업로드(upload_banner_to_s3) 후 URL 저장, order 는 고유(unique).
-  상세 이미지(BannerDetail) 관리는 별도 태스크에서 각 배너 카드에 추가된다.
+  배너 관리 — 활성/비활성 탭 + 드래그 순서변경 + 수정 모달.
+  · 추가: 토프바 "＋ 배너 추가" → #banner-create-modal (썸네일 + 선택 상세 이미지, 순서 자동 마지막).
+  · 목록: 활성/비활성 탭(패널). 활성 패널은 드래그로 순서 변경(AJAX reorder).
+  · 각 카드: 썸네일/메타 클릭 → 수정 모달(썸네일 교체·상세 이미지·삭제), 토글 스위치 → AJAX 활성/비활성.
+  단일 뷰(banner_list)에서 POST action(create/update/delete/toggle_active/reorder/detail_*)으로 분기.
+  toggle_active·reorder 는 AJAX(JSON) 로 응답해 화면을 유지한다.
 {% endcomment %}
 
 {% block title %}배너 · DASII{% endblock %}
@@ -14,12 +16,39 @@
 
 {% block extra_head %}
 <style>
-  /* 배너 카드 — 디자인 시스템 토큰만 사용 */
-  .ah-banner {
+  /* 탭 (활성/비활성) */
+  .ah-tabs {
+    display: inline-flex;
+    gap: var(--space-1);
+    padding: var(--space-1);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+    margin-bottom: var(--space-4);
+  }
+  .ah-tab {
+    padding: var(--space-1) var(--space-4);
+    border: none;
+    background: transparent;
+    color: var(--text-on-glass);
+    font-size: var(--fs-text-sm);
+    font-weight: var(--font-weight-bold);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: background var(--transition-base);
+  }
+  .ah-tab.is-active {
+    background: var(--glass-bg-strong);
+    box-shadow: var(--shadow-inset-highlight);
+  }
+
+  /* 배너 카드(행) */
+  .ah-banner-list { display: flex; flex-direction: column; gap: var(--space-2); }
+  .ah-banner-card {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: var(--space-3);
-    padding: var(--space-3);
+    padding: var(--space-2) var(--space-3);
     background: var(--glass-bg);
     -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
     backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
@@ -28,39 +57,75 @@
     box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
     color: var(--text-on-glass);
   }
-  .ah-banner__header {
+  .ah-banner-card.is-dragging { opacity: 0.5; }
+  .ah-banner-card__grip {
+    cursor: grab;
+    color: var(--glass-highlight);
+    font-size: var(--fs-text-lg);
+    line-height: 1;
+    padding: 0 var(--space-1);
+    flex: none;
+  }
+  /* 비활성 탭은 드래그 불가 → 그립 숨김 */
+  [data-banner-panel="inactive"] .ah-banner-card__grip { display: none; }
+  .ah-banner-card__main {
+    flex: 1 1 auto;
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    flex-wrap: wrap;
+    min-width: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
   }
+  .ah-banner-card__thumb {
+    height: 56px;
+    max-width: 140px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    object-fit: cover;
+    flex: none;
+  }
+  .ah-banner-card__meta { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+
+  /* 토글 스위치 */
+  .ah-switch { display: inline-flex; align-items: center; gap: var(--space-2); cursor: pointer; user-select: none; flex: none; }
+  .ah-switch__input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .ah-switch__track {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background: var(--glass-border-strong);
+    border-radius: var(--radius-pill);
+    transition: background var(--transition-base);
+  }
+  .ah-switch__thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: var(--color-gray-0);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-glass);
+    transition: transform var(--transition-base);
+  }
+  .ah-switch__input:checked + .ah-switch__track { background: var(--brand-primary); }
+  .ah-switch__input:checked + .ah-switch__track .ah-switch__thumb { transform: translateX(20px); }
+  .ah-switch__input:focus-visible + .ah-switch__track { outline: 2px solid var(--brand-secondary); outline-offset: 2px; }
+  .ah-switch__label { color: var(--glass-highlight); min-width: 3.2em; }
+
+  /* 수정 모달 — 썸네일/상세 이미지 (기존 스타일 유지) */
   .ah-banner__thumb {
     height: 80px;
-    max-width: 200px;
+    max-width: 220px;
     border-radius: var(--radius-md);
     border: 1px solid var(--glass-border);
     object-fit: cover;
-  }
-  .ah-banner__meta {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-  .ah-banner__badges {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    flex-wrap: wrap;
-  }
-  .ah-banner__actions { margin-left: auto; display: flex; gap: var(--space-2); }
-
-  /* 상세 이미지 섹션 */
-  .ah-banner__details {
-    border-top: 1px dashed var(--glass-border);
-    padding-top: var(--space-3);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
   }
   .ah-detail-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
   .ah-detail-item { position: relative; display: inline-block; }
@@ -70,11 +135,7 @@
     border: 1px solid var(--glass-border);
     object-fit: cover;
   }
-  .ah-detail-item__order {
-    position: absolute;
-    top: var(--space-1);
-    left: var(--space-1);
-  }
+  .ah-detail-item__order { position: absolute; top: var(--space-1); left: var(--space-1); }
   .ah-detail-item__del {
     position: absolute;
     top: var(--space-1);
@@ -89,22 +150,12 @@
     border-radius: var(--radius-pill);
     background: var(--color-error);
     color: var(--color-gray-0);
-    font-size: var(--fs-text-sm); /* 18px floor */
+    font-size: var(--fs-text-sm);
     line-height: 1;
     cursor: pointer;
   }
-  .ah-detail-add {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-  }
-
-  /* 파일 입력 — 18px 하한 유지, 유리 톤 */
-  .ah-file {
-    font-size: var(--fs-text-sm);
-    color: var(--text-on-glass);
-  }
+  .ah-detail-add { display: flex; align-items: flex-end; gap: var(--space-2); flex-wrap: wrap; }
+  .ah-file { font-size: var(--fs-text-sm); color: var(--text-on-glass); }
   .ah-file::file-selector-button {
     font-size: var(--fs-text-sm);
     font-weight: var(--font-weight-bold);
@@ -116,10 +167,9 @@
     color: var(--text-on-glass);
     cursor: pointer;
   }
-  .ah-order-input { max-width: 8rem; }
 
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .ah-banner {
+    .ah-banner-card {
       background: var(--glass-bg-fallback);
       color: var(--text-default);
       border-color: var(--color-gray-200);
@@ -129,7 +179,10 @@
 {% endblock %}
 
 {% block content %}
-{# 배너 추가 모달 — 목록 헤더 ＋ 버튼으로 열림 #}
+{# AJAX(토글/순서변경)용 CSRF 토큰 #}
+<input type="hidden" id="banner-csrf" value="{{ csrf_token }}" />
+
+{# 배너 추가 모달 — 썸네일 + 선택 상세 이미지. 순서는 자동으로 마지막에 추가된다. #}
 <div class="ah-modal" id="banner-create-modal" aria-hidden="true">
   <div class="ah-modal__overlay" data-modal-close></div>
   <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
@@ -147,10 +200,10 @@
           <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*" required />
         </div>
         <div class="ah-field">
-          <label class="ah-label" for="banner-order">순서</label>
-          <input class="ah-input ah-order-input" type="number" id="banner-order" name="order"
-                 value="{{ next_order }}" min="1" />
+          <label class="ah-label" for="banner-detail-image">상세 이미지 <span class="text-muted">(선택)</span></label>
+          <input class="ah-file" type="file" id="banner-detail-image" name="detail_image" accept="image/*" />
         </div>
+        <p class="text-caption" style="color: var(--glass-highlight);">순서는 자동으로 맨 마지막에 추가됩니다.</p>
         <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
           <button type="button" class="btn btn-glass" data-modal-close>취소</button>
           <button type="submit" class="btn btn-primary">배너 등록</button>
@@ -160,94 +213,213 @@
   </div>
 </div>
 
-<section class="reveal">
-  <div style="margin-bottom: var(--space-3);">
-    <h2 class="text-title-sm">
-      배너 목록 <span class="text-muted">({{ banners|length }})</span>
-    </h2>
-  </div>
+{# 수정 모달 — 배너 1개당 1개 (활성/비활성 모두) #}
+{% for b in active_banners %}{% include "admin_home/components/_banner_edit_modal.html" with b=b %}{% endfor %}
+{% for b in inactive_banners %}{% include "admin_home/components/_banner_edit_modal.html" with b=b %}{% endfor %}
 
-  {% if banners %}
-  <div class="ah-records" data-reveal-stagger>
-    {% for banner in banners %}
-    <div class="ah-banner reveal">
-      <div class="ah-banner__header">
-        <img class="ah-banner__thumb" src="{{ banner.image_url }}" alt="배너 #{{ banner.id }} 썸네일" />
+{# 탭 (활성/비활성) #}
+<div class="ah-tabs reveal" role="tablist" aria-label="배너 상태">
+  <button type="button" class="ah-tab is-active" data-banner-tab="active" role="tab">
+    활성 (<span data-count-active>{{ active_banners|length }}</span>)
+  </button>
+  <button type="button" class="ah-tab" data-banner-tab="inactive" role="tab">
+    비활성 (<span data-count-inactive>{{ inactive_banners|length }}</span>)
+  </button>
+</div>
 
-        <div class="ah-banner__meta">
-          <p class="text-body">배너 #{{ banner.id }}</p>
-          <div class="ah-banner__badges">
-            <span class="ah-badge ah-badge--neutral">순서 {{ banner.order }}</span>
-            {% if banner.is_active %}
-            <span class="ah-badge ah-badge--ok">활성</span>
-            {% else %}
-            <span class="ah-badge ah-badge--neutral">비활성</span>
-            {% endif %}
-            <span class="ah-badge ah-badge--neutral">상세 {{ banner.details.count }}</span>
-          </div>
-        </div>
-
-        <div class="ah-banner__actions">
-          <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="toggle_active" />
-            <input type="hidden" name="id" value="{{ banner.id }}" />
-            <button type="submit" class="btn btn-glass">
-              {% if banner.is_active %}숨기기{% else %}노출하기{% endif %}
-            </button>
-          </form>
-          <form method="post"
-                onsubmit="return confirm('이 배너와 하위 상세 이미지가 모두 삭제됩니다. 계속할까요?');">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="delete" />
-            <input type="hidden" name="id" value="{{ banner.id }}" />
-            <button type="submit" class="btn btn-danger">삭제</button>
-          </form>
-        </div>
-      </div>
-
-      {# 상세 이미지 — 목록/추가/삭제 #}
-      <div class="ah-banner__details">
-        <p class="text-body-sm text-muted">상세 이미지</p>
-
-        {% if banner.details.all %}
-        <div class="ah-detail-list">
-          {% for detail in banner.details.all %}
-          <div class="ah-detail-item">
-            <img class="ah-detail-item__img" src="{{ detail.detail_image_url }}" alt="상세 이미지 순서 {{ detail.order }}" />
-            <span class="ah-badge ah-badge--neutral ah-detail-item__order">{{ detail.order }}</span>
-            <form method="post" onsubmit="return confirm('이 상세 이미지를 삭제할까요?');">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="detail_delete" />
-              <input type="hidden" name="id" value="{{ detail.id }}" />
-              <button type="submit" class="ah-detail-item__del" aria-label="상세 이미지 삭제" title="삭제">&times;</button>
-            </form>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        <form method="post" enctype="multipart/form-data" class="ah-detail-add">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="detail_create" />
-          <input type="hidden" name="banner_id" value="{{ banner.id }}" />
-          <div class="ah-field">
-            <label class="ah-label" for="detail-image-{{ banner.id }}">상세 이미지</label>
-            <input class="ah-file" type="file" id="detail-image-{{ banner.id }}" name="detail_image" accept="image/*" required />
-          </div>
-          <div class="ah-field">
-            <label class="ah-label" for="detail-order-{{ banner.id }}">순서</label>
-            <input class="ah-input ah-order-input" type="number" id="detail-order-{{ banner.id }}"
-                   name="order" value="{{ banner.details.count|add:1 }}" min="1" />
-          </div>
-          <button type="submit" class="btn btn-glass">상세 추가</button>
-        </form>
-      </div>
-    </div>
+{# 활성 패널 — 드래그로 순서 변경 #}
+<section data-banner-panel="active" class="reveal">
+  <div class="ah-banner-list" data-banner-list>
+    {% for b in active_banners %}
+    {% include "admin_home/components/_banner_card.html" with b=b draggable=True %}
     {% endfor %}
   </div>
-  {% else %}
-  <p class="ah-record-empty text-body">등록된 배너가 없습니다. 위에서 첫 배너를 추가해보세요.</p>
-  {% endif %}
+  <p class="ah-record-empty text-body" data-banner-empty {% if active_banners %}hidden{% endif %}>
+    활성 배너가 없습니다. 우측 상단 ＋ 배너 추가 또는 비활성 탭에서 토글로 활성화하세요.
+  </p>
 </section>
+
+{# 비활성 패널 #}
+<section data-banner-panel="inactive" class="reveal" hidden>
+  <div class="ah-banner-list" data-banner-list>
+    {% for b in inactive_banners %}
+    {% include "admin_home/components/_banner_card.html" with b=b %}
+    {% endfor %}
+  </div>
+  <p class="ah-record-empty text-body" data-banner-empty {% if inactive_banners %}hidden{% endif %}>
+    비활성 배너가 없습니다.
+  </p>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // 배너 탭/드래그 순서변경/토글 — document 위임(멱등). 부분 로딩으로 교체돼도 재배선 불필요.
+  (function () {
+    if (document._ahBannerWired) return;
+    document._ahBannerWired = "1";
+
+    function token() {
+      var el = document.getElementById("banner-csrf");
+      return el ? el.value : "";
+    }
+
+    function post(action, extra) {
+      var body = new FormData();
+      body.append("action", action);
+      body.append("csrfmiddlewaretoken", token());
+      if (extra) extra(body);
+      return fetch(window.location.pathname, {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest", "X-CSRFToken": token() },
+        credentials: "same-origin",
+        body: body,
+      }).then(function (res) {
+        if (res.ok) return res.json().catch(function () { return { ok: true }; });
+        return res.json().then(
+          function (d) { throw new Error(d.error || "요청 실패"); },
+          function () { throw new Error("요청 실패"); }
+        );
+      });
+    }
+
+    function panelList(name) {
+      var p = document.querySelector('[data-banner-panel="' + name + '"] [data-banner-list]');
+      return p;
+    }
+
+    function refreshCountsAndEmpty() {
+      ["active", "inactive"].forEach(function (name) {
+        var list = panelList(name);
+        if (!list) return;
+        var n = list.querySelectorAll(".ah-banner-card").length;
+        var counter = document.querySelector("[data-count-" + name + "]");
+        if (counter) counter.textContent = n;
+        var empty = document.querySelector(
+          '[data-banner-panel="' + name + '"] [data-banner-empty]'
+        );
+        if (empty) empty.hidden = n !== 0;
+      });
+    }
+
+    // 활성 패널의 카드 순서대로 [data-order] 라벨을 1..N 으로 갱신
+    function relabelActiveOrder() {
+      var list = panelList("active");
+      if (!list) return;
+      var cards = list.querySelectorAll(".ah-banner-card");
+      cards.forEach(function (card, i) {
+        var o = card.querySelector("[data-order]");
+        if (o) o.textContent = i + 1;
+      });
+    }
+
+    /* ---- 탭 전환 ---- */
+    document.addEventListener("click", function (e) {
+      var tab = e.target.closest ? e.target.closest("[data-banner-tab]") : null;
+      if (!tab) return;
+      var name = tab.getAttribute("data-banner-tab");
+      document.querySelectorAll("[data-banner-tab]").forEach(function (t) {
+        t.classList.toggle("is-active", t === tab);
+      });
+      document.querySelectorAll("[data-banner-panel]").forEach(function (p) {
+        p.hidden = p.getAttribute("data-banner-panel") !== name;
+      });
+    });
+
+    /* ---- 토글(활성/비활성) ---- */
+    document.addEventListener("change", function (e) {
+      var sw = e.target.closest ? e.target.closest("[data-banner-toggle]") : null;
+      if (!sw) return;
+      var id = sw.getAttribute("data-banner-toggle");
+      var want = sw.checked;
+      sw.disabled = true;
+      post("toggle_active", function (b) { b.append("id", id); })
+        .then(function (data) {
+          var active = data.is_active;
+          var card = document.querySelector('.ah-banner-card[data-banner-id="' + id + '"]');
+          var target = panelList(active ? "active" : "inactive");
+          if (card && target) {
+            card.draggable = !!active;
+            target.appendChild(card);
+            var label = card.querySelector(".ah-switch__label");
+            if (label) label.textContent = active ? "활성" : "비활성";
+          }
+          refreshCountsAndEmpty();
+          relabelActiveOrder();
+          if (window.ahToast) {
+            window.ahToast(active ? "배너를 활성화했습니다." : "배너를 비활성화했습니다.", "success");
+          }
+        })
+        .catch(function (err) {
+          sw.checked = !want; // 실패 시 원복
+          if (window.ahToast) window.ahToast(err.message || "변경에 실패했습니다.", "error");
+        })
+        .then(function () { sw.disabled = false; });
+    });
+
+    /* ---- 드래그 순서변경 (활성 패널) ---- */
+    var dragging = null;
+
+    function afterElement(list, y) {
+      var els = [].slice.call(
+        list.querySelectorAll(".ah-banner-card:not(.is-dragging)")
+      );
+      var closest = { offset: -Infinity, el: null };
+      els.forEach(function (child) {
+        var box = child.getBoundingClientRect();
+        var offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) closest = { offset: offset, el: child };
+      });
+      return closest.el;
+    }
+
+    document.addEventListener("dragstart", function (e) {
+      var card = e.target.closest ? e.target.closest(".ah-banner-card") : null;
+      if (!card || !card.draggable) return;
+      dragging = card;
+      card.classList.add("is-dragging");
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = "move";
+        try { e.dataTransfer.setData("text/plain", card.getAttribute("data-banner-id")); } catch (_) {}
+      }
+    });
+
+    document.addEventListener("dragover", function (e) {
+      if (!dragging) return;
+      var list = e.target.closest
+        ? e.target.closest('[data-banner-panel="active"] [data-banner-list]')
+        : null;
+      if (!list) return;
+      e.preventDefault();
+      var after = afterElement(list, e.clientY);
+      if (after == null) list.appendChild(dragging);
+      else list.insertBefore(dragging, after);
+    });
+
+    document.addEventListener("dragend", function () {
+      if (!dragging) return;
+      dragging.classList.remove("is-dragging");
+      dragging = null;
+      persistOrder();
+    });
+
+    function persistOrder() {
+      var list = panelList("active");
+      if (!list) return;
+      var ids = [].slice.call(list.querySelectorAll(".ah-banner-card")).map(function (c) {
+        return c.getAttribute("data-banner-id");
+      });
+      post("reorder", function (b) {
+        ids.forEach(function (id) { b.append("order[]", id); });
+      })
+        .then(function () {
+          relabelActiveOrder();
+          if (window.ahToast) window.ahToast("배너 순서가 저장되었습니다.", "success");
+        })
+        .catch(function (err) {
+          if (window.ahToast) window.ahToast(err.message || "순서 저장에 실패했습니다.", "error");
+        });
+    }
+  })();
+</script>
 {% endblock %}
