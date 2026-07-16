@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Max, Prefetch, ProtectedError
 from django.db.models.functions import TruncDate
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -278,10 +279,20 @@ def home(request):
     여는 모달에서 확인/삭제한다(action=delete). 모든 집계는 읽기 전용이다.
     """
     if request.method == "POST" and request.POST.get("action") == "delete":
+        # AJAX(모달 내 삭제)면 JSON 으로 응답해 모달·리스트를 유지한 채 처리한다.
+        # 일반 폼 제출이면 기존대로 메시지 + 리다이렉트로 폴백한다.
+        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         try:
             ProductRequest.objects.get(id=request.POST.get("id", "")).delete()
+            if is_ajax:
+                return JsonResponse({"ok": True})
             messages.success(request, "제품 추가 요청이 삭제되었습니다.")
         except (ProductRequest.DoesNotExist, ValueError):
+            if is_ajax:
+                return JsonResponse(
+                    {"ok": False, "error": "제품 추가 요청을 찾을 수 없습니다."},
+                    status=404,
+                )
             messages.error(request, "제품 추가 요청을 찾을 수 없습니다.")
         return redirect("admin_home")
 
