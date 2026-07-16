@@ -764,43 +764,82 @@ def product_list(request):
 # 배너 관리 — Banner (목록/추가/삭제). 상세(BannerDetail)는 별도.
 # 기존 common admin 배너 기능(common.admin.admin_views)을 /admin/home 로 이식.
 # ---------------------------------------------------------------------------
-def _parse_order(raw, default=1):
-    """order 입력값을 1 이상의 정수로 정규화한다."""
-    try:
-        value = int(str(raw).strip())
-    except (TypeError, ValueError):
-        return default
-    return value if value >= 1 else default
+def _next_banner_order():
+    """새 배너의 순서 = 현재 최대 order + 1 (항상 마지막에 추가)."""
+    return (Banner.objects.aggregate(m=Max("order"))["m"] or 0) + 1
+
+
+def _reorder_banners(id_list):
+    """드래그로 정한 순서(id 배열)대로 Banner.order 를 1..N 으로 재배정한다.
+
+    order 가 unique 라 중간 값 충돌을 피하려고, 먼저 큰 오프셋 임시값으로 옮긴 뒤
+    최종값(1..N)을 다시 세팅하는 2단계 update 를 한 트랜잭션에서 수행한다.
+    id_list 에 없는(예: 다른 탭) 배너는 기존 상대 순서를 유지해 뒤에 이어 붙인다.
+    """
+    offset = 1_000_000
+    with transaction.atomic():
+        all_banners = list(Banner.objects.select_for_update().all())
+        by_id = {str(b.id): b for b in all_banners}
+        ordered = [by_id[i] for i in id_list if i in by_id]
+        seen = {str(b.id) for b in ordered}
+        remaining = [b for b in all_banners if str(b.id) not in seen]
+        final = ordered + remaining
+        for idx, banner in enumerate(final):
+            Banner.objects.filter(id=banner.id).update(order=offset + idx + 1)
+        for idx, banner in enumerate(final):
+            Banner.objects.filter(id=banner.id).update(order=idx + 1)
 
 
 def banner_list(request):
-    """배너 관리 — 목록/추가/삭제.
+    """배너 관리 — 활성/비활성 탭 목록 + 추가/수정/삭제/순서변경/토글.
 
     이미지는 common.utils.upload_banner_to_s3 로 S3 업로드 후 URL 을 저장한다.
-    Banner.order 는 고유(unique)라 중복 시 IntegrityError → 에러 메시지로 안내한다.
-    (배너별 상세 이미지 관리는 banner_detail_* 뷰에서 담당)
+    - create: 썸네일(image) + 선택 상세 이미지(detail_image). order 는 항상 마지막(max+1).
+    - update: 썸네일 교체(선택).
+    - toggle_active / reorder: AJAX(X-Requested-With)면 JSON 으로 응답해 화면을 유지한다.
+    - detail_create/detail_delete: 상세 이미지 관리(순서는 자동 max+1).
+    Banner.order 는 unique 라 순서 재배정 시 2단계 update(_reorder_banners)로 충돌을 피한다.
     """
     if request.method == "POST":
         action = request.POST.get("action", "")
+        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
         if action == "create":
             image = request.FILES.get("image")
-            order = _parse_order(request.POST.get("order"))
-            dup_msg = f"순서 {order}은(는) 이미 사용 중입니다. 다른 순서를 입력해주세요."
             if not image:
-                messages.error(request, "배너 이미지를 선택해주세요.")
-            elif Banner.objects.filter(order=order).exists():
-                # 중복이면 S3 업로드 전에 막아 불필요한 업로드/고아 파일을 피한다.
-                messages.error(request, dup_msg)
+                messages.error(request, "썸네일 이미지를 선택해주세요.")
+                return redirect("admin_home_banner")
+            image_url = upload_banner_to_s3(image)
+            detail_image = request.FILES.get("detail_image")
+            detail_url = upload_banner_to_s3(detail_image) if detail_image else None
+            try:
+                with transaction.atomic():
+                    banner = Banner.objects.create(
+                        image_url=image_url, order=_next_banner_order()
+                    )
+                    if detail_url:
+                        BannerDetail.objects.create(
+                            banner=banner, detail_image_url=detail_url, order=1
+                        )
+                messages.success(request, "배너가 추가되었습니다.")
+            except IntegrityError:
+                # 동시 요청 경합 등으로 order 가 중복된 경우의 안전망
+                messages.error(request, "배너 추가 중 순서 충돌이 발생했습니다. 다시 시도해주세요.")
+            return redirect("admin_home_banner")
+
+        if action == "update":
+            try:
+                banner = Banner.objects.get(id=request.POST.get("id", ""))
+            except (Banner.DoesNotExist, ValueError):
+                messages.error(request, "배너를 찾을 수 없습니다.")
+                return redirect("admin_home_banner")
+            image = request.FILES.get("image")
+            if image:
+                banner.image_url = upload_banner_to_s3(image)
+                banner.save(update_fields=["image_url"])
+                messages.success(request, f"배너 #{banner.id} 썸네일이 교체되었습니다.")
             else:
-                image_url = upload_banner_to_s3(image)
-                try:
-                    with transaction.atomic():
-                        Banner.objects.create(image_url=image_url, order=order)
-                    messages.success(request, "배너가 추가되었습니다.")
-                except IntegrityError:
-                    # 동시 요청 경합 등으로 order 가 중복된 경우의 안전망
-                    messages.error(request, dup_msg)
+                messages.info(request, "변경할 썸네일이 없습니다.")
             return redirect("admin_home_banner")
 
         if action == "delete":
@@ -815,12 +854,31 @@ def banner_list(request):
             try:
                 banner = Banner.objects.get(id=request.POST.get("id", ""))
             except (Banner.DoesNotExist, ValueError):
+                if is_ajax:
+                    return JsonResponse(
+                        {"ok": False, "error": "배너를 찾을 수 없습니다."}, status=404
+                    )
                 messages.error(request, "배너를 찾을 수 없습니다.")
                 return redirect("admin_home_banner")
             banner.is_active = not banner.is_active
             banner.save(update_fields=["is_active"])
+            if is_ajax:
+                return JsonResponse({"ok": True, "is_active": banner.is_active})
             state = "노출" if banner.is_active else "숨김"
             messages.success(request, f"배너 #{banner.id}를 {state} 상태로 변경했습니다.")
+            return redirect("admin_home_banner")
+
+        if action == "reorder":
+            ids = [i for i in request.POST.getlist("order[]") if i.strip()]
+            try:
+                _reorder_banners(ids)
+                if is_ajax:
+                    return JsonResponse({"ok": True})
+                messages.success(request, "배너 순서가 변경되었습니다.")
+            except Exception as e:
+                if is_ajax:
+                    return JsonResponse({"ok": False, "error": str(e)}, status=400)
+                messages.error(request, f"순서 변경에 실패했습니다: {e}")
             return redirect("admin_home_banner")
 
         if action == "detail_create":
@@ -830,27 +888,22 @@ def banner_list(request):
                 messages.error(request, "배너를 찾을 수 없습니다.")
                 return redirect("admin_home_banner")
             image = request.FILES.get("detail_image")
-            order = _parse_order(request.POST.get("order"))
-            dup_msg = (
-                f"배너 #{banner.id}에 순서 {order}은(는) 이미 사용 중입니다. "
-                "다른 순서를 입력해주세요."
-            )
             if not image:
                 messages.error(request, "상세 이미지를 선택해주세요.")
-            elif BannerDetail.objects.filter(banner=banner, order=order).exists():
-                messages.error(request, dup_msg)
-            else:
-                detail_image_url = upload_banner_to_s3(image)
-                try:
-                    with transaction.atomic():
-                        BannerDetail.objects.create(
-                            banner=banner,
-                            detail_image_url=detail_image_url,
-                            order=order,
-                        )
-                    messages.success(request, "상세 이미지가 추가되었습니다.")
-                except IntegrityError:
-                    messages.error(request, dup_msg)
+                return redirect("admin_home_banner")
+            existing = BannerDetail.objects.filter(banner=banner)
+            next_detail_order = (existing.aggregate(m=Max("order"))["m"] or 0) + 1
+            detail_image_url = upload_banner_to_s3(image)
+            try:
+                with transaction.atomic():
+                    BannerDetail.objects.create(
+                        banner=banner,
+                        detail_image_url=detail_image_url,
+                        order=next_detail_order,
+                    )
+                messages.success(request, "상세 이미지가 추가되었습니다.")
+            except IntegrityError:
+                messages.error(request, "상세 이미지 순서 충돌이 발생했습니다. 다시 시도해주세요.")
             return redirect("admin_home_banner")
 
         if action == "detail_delete":
@@ -864,12 +917,17 @@ def banner_list(request):
         messages.error(request, "알 수 없는 요청입니다.")
         return redirect("admin_home_banner")
 
-    banners = Banner.objects.prefetch_related("details").all()
-    next_order = (Banner.objects.aggregate(m=Max("order"))["m"] or 0) + 1
+    banners = list(Banner.objects.prefetch_related("details").all())
+    active_banners = [b for b in banners if b.is_active]
+    inactive_banners = [b for b in banners if not b.is_active]
     return _ah_render(
         request,
         "admin_home/banner_list.html",
-        {"banners": banners, "next_order": next_order},
+        {
+            "active_banners": active_banners,
+            "inactive_banners": inactive_banners,
+            "banner_count": len(banners),
+        },
     )
 
 
