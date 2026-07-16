@@ -196,6 +196,8 @@
     border-top: 1px solid var(--glass-border);
     display: flex; justify-content: flex-end;
   }
+  /* 생성 모달 하단(취소/저장 두 버튼) 간격 */
+  .ah-create-footer { gap: var(--space-2); }
   .ah-file { font-size: var(--fs-text-sm); color: var(--text-on-glass); }
   .ah-file::file-selector-button {
     font-size: var(--fs-text-sm);
@@ -236,21 +238,31 @@
       <form method="post" enctype="multipart/form-data" class="ah-stack">
         {% csrf_token %}
         <input type="hidden" name="action" value="create" />
-        <div class="ah-field">
-          <label class="ah-label" for="banner-image">썸네일 이미지</label>
-          <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*" required />
-        </div>
-        <div class="ah-field">
-          <span class="ah-label">상세 이미지
-            <span class="text-muted">(선택 · 여러 장 · 드래그로 순서 지정)</span></span>
-          {# 선택용 입력. 고른 파일은 아래 미리보기로 쌓이고, 실제 전송은 hidden payload 로 한다. #}
-          <input class="ah-file" type="file" id="banner-detail-pick" accept="image/*" multiple
-                 data-detail-pick />
-          <div class="ah-detail-picker" data-detail-previews hidden></div>
-          {# 미리보기에서 정한 순서대로 파일이 담기는 실제 전송 필드 #}
-          <input type="file" name="detail_images" multiple hidden data-detail-payload />
-        </div>
-        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+        <section class="ah-edit-section">
+          <h3 class="ah-edit-section__title text-title-sm">썸네일</h3>
+          <div class="ah-field">
+            <label class="ah-label" for="banner-image">썸네일 이미지</label>
+            <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*" required />
+            {% comment %}등록 전 미리보기. 파일 선택 시 JS 가 objectURL 로 채운다.{% endcomment %}
+            <img class="ah-banner__thumb" data-thumb-preview alt="썸네일 미리보기" hidden />
+          </div>
+        </section>
+        <section class="ah-edit-section">
+          <h3 class="ah-edit-section__title text-title-sm">상세 이미지</h3>
+          <div class="ah-field">
+            <span class="ah-label">상세 이미지
+              <span class="text-muted">(선택 · 여러 장 · 드래그로 순서 지정)</span></span>
+            {% comment %}
+              선택용 입력. 고른 파일은 아래 미리보기로 쌓이고, 실제 전송은 hidden payload 로 한다.
+            {% endcomment %}
+            <input class="ah-file" type="file" id="banner-detail-pick" accept="image/*" multiple
+                   data-detail-pick />
+            <div class="ah-detail-picker" data-detail-previews hidden></div>
+            {% comment %}미리보기에서 정한 순서대로 파일이 담기는 실제 전송 필드{% endcomment %}
+            <input type="file" name="detail_images" multiple hidden data-detail-payload />
+          </div>
+        </section>
+        <div class="ah-edit-footer ah-create-footer">
           <button type="button" class="btn btn-glass" data-modal-close>취소</button>
           <button type="submit" class="btn btn-primary">저장</button>
         </div>
@@ -512,12 +524,51 @@
     function resetCreatePicker() {
       createFiles = [];
       renderCreatePreviews();
+      resetThumbPreview();
     }
 
     // 생성 모달을 열 때마다 이전 선택 초기화(부분 로딩·재오픈 대비)
     document.addEventListener("click", function (e) {
       var op = e.target.closest ? e.target.closest('[data-modal-open="banner-create-modal"]') : null;
       if (op) resetCreatePicker();
+    });
+
+    /* ---- 생성 모달: 썸네일 등록 전 미리보기 ---- */
+    var createThumbUrl = null;
+
+    function thumbPreviewEl() { return document.querySelector("[data-thumb-preview]"); }
+
+    function resetThumbPreview() {
+      if (createThumbUrl) {
+        URL.revokeObjectURL(createThumbUrl);
+        createThumbUrl = null;
+      }
+      var img = thumbPreviewEl();
+      if (img) {
+        img.src = "";
+        img.hidden = true;
+      }
+    }
+
+    // 썸네일 파일 선택 → objectURL 로 미리보기, 선택 취소 시 숨김
+    document.addEventListener("change", function (e) {
+      var thumb = e.target.closest ? e.target.closest("#banner-image") : null;
+      if (!thumb) return;
+      var img = thumbPreviewEl();
+      if (!img) return;
+      if (createThumbUrl) {
+        URL.revokeObjectURL(createThumbUrl);
+        createThumbUrl = null;
+      }
+      var file = thumb.files && thumb.files[0];
+      if (file) {
+        createThumbUrl = URL.createObjectURL(file);
+        img.src = createThumbUrl;
+        img.hidden = false;
+      } else {
+        img.src = "";
+        img.hidden = true;
+      }
     });
 
     // 파일 선택 → 배열에 누적 후 미리보기 갱신(input 은 비워 같은 파일 재선택 허용)
