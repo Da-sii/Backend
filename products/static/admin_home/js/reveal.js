@@ -13,13 +13,23 @@
 
   var observer = null;
 
+  // stagger 지연 상한: 인덱스가 아무리 커도 지연은 이 값까지만(큰 목록에서 수십 초 지연 방지).
+  var STAGGER_MAX = 12;
+  // 안전망 시간: 관찰이 안 잡히거나 스크롤을 안 해도 이 시간 뒤엔 무조건 표시한다.
+  // 데이터 목록(수백 행)이 뷰포트 밖이라는 이유로 숨은 채 남는 사고를 원천 차단한다.
+  var FALLBACK_MS = 600;
+
+  function reveal(el) {
+    el.classList.add("is-visible");
+  }
+
   function getObserver() {
     if (observer) return observer;
     observer = new IntersectionObserver(
       function (entries) {
         entries.forEach(function (entry) {
           if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
+            reveal(entry.target);
             observer.unobserve(entry.target);
           }
         });
@@ -34,14 +44,14 @@
       window.matchMedia &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // stagger index 부여 (아직 처리 안 한 그룹만)
+    // stagger index 부여 (아직 처리 안 한 그룹만). 지연 상한으로 캡.
     document
       .querySelectorAll("[data-reveal-stagger]:not([data-stagger-wired])")
       .forEach(function (group) {
         group.dataset.staggerWired = "1";
         var items = group.querySelectorAll(".reveal");
         items.forEach(function (item, i) {
-          item.style.setProperty("--reveal-index", i);
+          item.style.setProperty("--reveal-index", Math.min(i, STAGGER_MAX));
         });
       });
 
@@ -54,9 +64,7 @@
     });
 
     if (reduceMotion || !("IntersectionObserver" in window)) {
-      targets.forEach(function (el) {
-        el.classList.add("is-visible");
-      });
+      targets.forEach(reveal);
       return;
     }
 
@@ -64,6 +72,17 @@
     targets.forEach(function (el) {
       io.observe(el);
     });
+
+    // 안전망 — FALLBACK_MS 뒤에도 안 뜬 요소는 강제로 표시(관찰 실패/미스크롤 대비).
+    // 이걸로 "뷰포트 밖 목록 행이 영영 opacity:0 로 남는" 문제를 막는다.
+    setTimeout(function () {
+      targets.forEach(function (el) {
+        if (!el.classList.contains("is-visible")) {
+          io.unobserve(el);
+          reveal(el);
+        }
+      });
+    }, FALLBACK_MS);
   }
 
   // 부분 로딩으로 콘텐츠가 교체되면 새 .reveal 을 다시 관찰한다.
