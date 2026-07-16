@@ -701,6 +701,27 @@ def product_list(request):
             messages.error(request, f"오류가 발생했습니다: {str(e)}")
         return redirect("admin_home_product")
 
+    if request.method == "POST" and request.POST.get("action") == "delete":
+        # 제품 삭제 — Product 는 PROTECT(CategoryProduct) 이므로 링크 행을 먼저 지운다.
+        try:
+            product = Product.objects.get(id=request.POST.get("id", ""))
+        except (Product.DoesNotExist, ValueError):
+            messages.error(request, "제품을 찾을 수 없습니다.")
+            return redirect("admin_home_product")
+
+        try:
+            with transaction.atomic():
+                name = product.name
+                CategoryProduct.objects.filter(product=product).delete()
+                ProductIngredient.objects.filter(product=product).delete()
+                ProductOtherIngredient.objects.filter(product=product).delete()
+                ProductImage.objects.filter(product=product).delete()
+                product.delete()
+            messages.success(request, f'"{name}" 제품이 삭제되었습니다.')
+        except Exception as e:
+            messages.error(request, f"삭제 중 오류가 발생했습니다: {str(e)}")
+        return redirect("admin_home_product")
+
     products = Product.objects.annotate(
         image_count=Count("images", distinct=True),
         ingredient_count=Count("ingredients", distinct=True),
