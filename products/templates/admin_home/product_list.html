@@ -163,8 +163,10 @@
           </div>
         </div>
 
-        {# 이미지 — 기존 이미지는 체크해서 삭제(delete_image_ids[], JS 가 채움),
-           추가는 현재 한 번에 한 장만 지원하므로 단일 파일 입력으로 UI 를 맞춘다. #}
+        {% comment %}
+          이미지 — 기존 이미지는 체크해서 삭제(delete_image_ids[], JS 가 채움),
+          추가는 현재 한 번에 한 장만 지원하므로 단일 파일 입력으로 UI 를 맞춘다.
+        {% endcomment %}
         <div class="ah-formsection">
           <h3 class="text-title-sm">제품 이미지</h3>
           <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
