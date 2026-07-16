@@ -1,16 +1,22 @@
 {% comment %}
-  배너 카드 — 그립(드래그 순서변경) + 썸네일/메타(클릭 → 수정 모달) + 활성 토글.
+  배너 카드 — 좌측 순번(활성 탭) + 그립(드래그) + 썸네일/메타(클릭 → 수정 모달) + 활성 토글.
   · draggable=True 로 include 하면 드래그 가능(활성 탭). 비활성 탭은 그립을 CSS 로 숨긴다.
-  · 토글/드래그/수정은 banner_list.html 의 extra_js 가 위임 처리한다.
+  · 활성 탭은 좌측에 "표시 순번"(위에서부터 노출되는 순서)을 붙인다. 드래그/토글 시
+    banner_list.html 의 relabelActiveOrder 가 [data-order] 를 1..N 으로 다시 매긴다.
+  · 배너 구분은 #id·썸네일로 한다(별도 이름 없음).
 {% endcomment %}
 <div class="ah-banner-card reveal" data-banner-id="{{ b.id }}"{% if draggable %} draggable="true"{% endif %}>
+  {# 좌측 순번 — 활성 탭에서만 노출(비활성 패널은 CSS 로 숨김). 토글로 패널 이동 시
+     relabelActiveOrder 가 값을 다시 매긴다. #}
+  <span class="ah-banner-card__num text-body-sm" data-order
+        title="위에서부터 노출되는 순서입니다">{{ index }}</span>
   <span class="ah-banner-card__grip" aria-hidden="true" title="드래그하여 순서 변경">⠿</span>
   <button type="button" class="ah-banner-card__main" data-modal-open="banner-edit-{{ b.id }}"
           title="클릭하여 수정">
     <img class="ah-banner-card__thumb" src="{{ b.image_url }}" alt="배너 #{{ b.id }} 썸네일" />
     <span class="ah-banner-card__meta">
       <span class="text-body">배너 #{{ b.id }}</span>
-      <span class="text-body-sm text-muted">순서 <span data-order>{{ b.order }}</span> · 상세 {{ b.details.count }}장</span>
+      <span class="text-body-sm text-muted">상세 {{ b.details.count }}장</span>
     </span>
   </button>
   <label class="ah-switch" title="활성/비활성 전환">

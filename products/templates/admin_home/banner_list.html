@@ -58,6 +58,21 @@
     color: var(--text-on-glass);
   }
   .ah-banner-card.is-dragging { opacity: 0.5; }
+  /* 좌측 표시 순번(활성 탭) — 위에서부터 노출되는 순서 */
+  .ah-banner-card__num {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9em;
+    height: 1.9em;
+    border-radius: var(--radius-pill);
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    color: var(--glass-highlight);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+  }
   .ah-banner-card__grip {
     cursor: grab;
     color: var(--glass-highlight);
@@ -66,8 +81,9 @@
     padding: 0 var(--space-1);
     flex: none;
   }
-  /* 비활성 탭은 드래그 불가 → 그립 숨김 */
-  [data-banner-panel="inactive"] .ah-banner-card__grip { display: none; }
+  /* 비활성 탭은 드래그 불가·순서 무의미 → 그립·순번 숨김 */
+  [data-banner-panel="inactive"] .ah-banner-card__grip,
+  [data-banner-panel="inactive"] .ah-banner-card__num { display: none; }
   .ah-banner-card__main {
     flex: 1 1 auto;
     display: flex;
@@ -128,7 +144,12 @@
     object-fit: cover;
   }
   .ah-detail-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  /* 생성 모달의 상세 이미지 미리보기(드래그로 순서 지정) */
+  .ah-detail-picker { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
   .ah-detail-item { position: relative; display: inline-block; }
+  /* 드래그 가능한 상세(생성 미리보기 · 수정 모달의 기존 상세) */
+  .ah-detail-item[draggable="true"] { cursor: grab; }
+  .ah-detail-item.is-dragging { opacity: 0.5; }
   .ah-detail-item__img {
     height: 72px;
     border-radius: var(--radius-sm);
@@ -155,6 +176,26 @@
     cursor: pointer;
   }
   .ah-detail-add { display: flex; align-items: flex-end; gap: var(--space-2); flex-wrap: wrap; }
+
+  /* 수정 모달 레이아웃 — 섹션 구획 + 썸네일 교체 행 */
+  .ah-edit-section { padding-top: var(--space-3); border-top: 1px solid var(--glass-border); }
+  .ah-edit-section:first-child { padding-top: 0; border-top: none; }
+  .ah-edit-section__head {
+    display: flex; align-items: baseline; gap: var(--space-2);
+    flex-wrap: wrap; margin-bottom: var(--space-2);
+  }
+  .ah-edit-section__title { margin-bottom: var(--space-2); }
+  .ah-edit-section__head .ah-edit-section__title { margin-bottom: 0; }
+  .ah-edit-thumb { display: flex; align-items: flex-start; gap: var(--space-3); flex-wrap: wrap; }
+  .ah-edit-thumb__ctrl {
+    display: flex; flex-direction: column; gap: var(--space-2);
+    align-items: flex-start; flex: 1 1 220px; min-width: 0;
+  }
+  .ah-edit-footer {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--glass-border);
+    display: flex; justify-content: flex-end;
+  }
   .ah-file { font-size: var(--fs-text-sm); color: var(--text-on-glass); }
   .ah-file::file-selector-button {
     font-size: var(--fs-text-sm);
@@ -200,13 +241,18 @@
           <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*" required />
         </div>
         <div class="ah-field">
-          <label class="ah-label" for="banner-detail-image">상세 이미지 <span class="text-muted">(선택)</span></label>
-          <input class="ah-file" type="file" id="banner-detail-image" name="detail_image" accept="image/*" />
+          <span class="ah-label">상세 이미지
+            <span class="text-muted">(선택 · 여러 장 · 드래그로 순서 지정)</span></span>
+          {# 선택용 입력. 고른 파일은 아래 미리보기로 쌓이고, 실제 전송은 hidden payload 로 한다. #}
+          <input class="ah-file" type="file" id="banner-detail-pick" accept="image/*" multiple
+                 data-detail-pick />
+          <div class="ah-detail-picker" data-detail-previews hidden></div>
+          {# 미리보기에서 정한 순서대로 파일이 담기는 실제 전송 필드 #}
+          <input type="file" name="detail_images" multiple hidden data-detail-payload />
         </div>
-        <p class="text-caption" style="color: var(--glass-highlight);">순서는 자동으로 맨 마지막에 추가됩니다.</p>
         <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
           <button type="button" class="btn btn-glass" data-modal-close>취소</button>
-          <button type="submit" class="btn btn-primary">배너 등록</button>
+          <button type="submit" class="btn btn-primary">저장</button>
         </div>
       </form>
     </div>
@@ -231,7 +277,7 @@
 <section data-banner-panel="active" class="reveal">
   <div class="ah-banner-list" data-banner-list>
     {% for b in active_banners %}
-    {% include "admin_home/components/_banner_card.html" with b=b draggable=True %}
+    {% include "admin_home/components/_banner_card.html" with b=b draggable=True index=forloop.counter %}
     {% endfor %}
   </div>
   <p class="ah-record-empty text-body" data-banner-empty {% if active_banners %}hidden{% endif %}>
@@ -243,7 +289,7 @@
 <section data-banner-panel="inactive" class="reveal" hidden>
   <div class="ah-banner-list" data-banner-list>
     {% for b in inactive_banners %}
-    {% include "admin_home/components/_banner_card.html" with b=b %}
+    {% include "admin_home/components/_banner_card.html" with b=b index=forloop.counter %}
     {% endfor %}
   </div>
   <p class="ah-record-empty text-body" data-banner-empty {% if inactive_banners %}hidden{% endif %}>
@@ -415,6 +461,148 @@
         .then(function () {
           relabelActiveOrder();
           if (window.ahToast) window.ahToast("배너 순서가 저장되었습니다.", "success");
+        })
+        .catch(function (err) {
+          if (window.ahToast) window.ahToast(err.message || "순서 저장에 실패했습니다.", "error");
+        });
+    }
+
+    /* ---- 생성 모달: 상세 이미지 여러 장 선택 + 드래그로 순서 지정 ----
+       파일 input 은 FileList 를 직접 재정렬할 수 없어, 고른 파일을 배열로 들고
+       미리보기를 드래그로 정렬한 뒤 DataTransfer 로 hidden payload 에 순서대로 담는다. */
+    var createFiles = [];
+    var createObjectUrls = [];
+
+    function payloadEl() { return document.querySelector("[data-detail-payload]"); }
+    function previewsEl() { return document.querySelector("[data-detail-previews]"); }
+
+    function syncCreatePayload() {
+      var payload = payloadEl();
+      if (!payload || typeof DataTransfer === "undefined") return;
+      var dt = new DataTransfer();
+      createFiles.forEach(function (f) { dt.items.add(f); });
+      payload.files = dt.files;
+    }
+
+    function renderCreatePreviews() {
+      var wrap = previewsEl();
+      if (!wrap) return;
+      // 이전에 만든 objectURL 정리(메모리 누수 방지)
+      createObjectUrls.forEach(function (u) { URL.revokeObjectURL(u); });
+      createObjectUrls = [];
+      wrap.innerHTML = "";
+      wrap.hidden = createFiles.length === 0;
+      createFiles.forEach(function (f, i) {
+        var url = URL.createObjectURL(f);
+        createObjectUrls.push(url);
+        var item = document.createElement("div");
+        item.className = "ah-detail-item";
+        item.setAttribute("draggable", "true");
+        item.setAttribute("data-create-idx", i);
+        item.innerHTML =
+          '<img class="ah-detail-item__img" src="' + url + '" alt="상세 미리보기 ' + (i + 1) + '" />' +
+          '<span class="ah-badge ah-badge--neutral ah-detail-item__order">' + (i + 1) + "</span>" +
+          '<button type="button" class="ah-detail-item__del" data-create-remove="' + i +
+          '" aria-label="제거" title="제거">&times;</button>';
+        wrap.appendChild(item);
+      });
+      syncCreatePayload();
+    }
+
+    function resetCreatePicker() {
+      createFiles = [];
+      renderCreatePreviews();
+    }
+
+    // 생성 모달을 열 때마다 이전 선택 초기화(부분 로딩·재오픈 대비)
+    document.addEventListener("click", function (e) {
+      var op = e.target.closest ? e.target.closest('[data-modal-open="banner-create-modal"]') : null;
+      if (op) resetCreatePicker();
+    });
+
+    // 파일 선택 → 배열에 누적 후 미리보기 갱신(input 은 비워 같은 파일 재선택 허용)
+    document.addEventListener("change", function (e) {
+      var pick = e.target.closest ? e.target.closest("[data-detail-pick]") : null;
+      if (!pick) return;
+      Array.prototype.forEach.call(pick.files, function (f) { createFiles.push(f); });
+      pick.value = "";
+      renderCreatePreviews();
+    });
+
+    // 미리보기 개별 제거
+    document.addEventListener("click", function (e) {
+      var rm = e.target.closest ? e.target.closest("[data-create-remove]") : null;
+      if (!rm) return;
+      createFiles.splice(parseInt(rm.getAttribute("data-create-remove"), 10), 1);
+      renderCreatePreviews();
+    });
+
+    /* ---- 상세 이미지 드래그 순서 (생성 미리보기 + 수정 모달) ---- */
+    var detailDrag = null;
+
+    function detailAfter(list, x) {
+      var els = [].slice.call(list.querySelectorAll(".ah-detail-item:not(.is-dragging)"));
+      var closest = { offset: -Infinity, el: null };
+      els.forEach(function (child) {
+        var box = child.getBoundingClientRect();
+        var offset = x - box.left - box.width / 2;
+        if (offset < 0 && offset > closest.offset) closest = { offset: offset, el: child };
+      });
+      return closest.el;
+    }
+
+    document.addEventListener("dragstart", function (e) {
+      var item = e.target.closest ? e.target.closest(".ah-detail-item[draggable='true']") : null;
+      if (!item) return;
+      detailDrag = item;
+      item.classList.add("is-dragging");
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+    });
+
+    document.addEventListener("dragover", function (e) {
+      if (!detailDrag) return;
+      var list = detailDrag.parentNode;
+      if (!list || !list.contains(e.target)) return;
+      e.preventDefault();
+      var after = detailAfter(list, e.clientX);
+      if (after == null) list.appendChild(detailDrag);
+      else list.insertBefore(detailDrag, after);
+    });
+
+    document.addEventListener("dragend", function (e) {
+      if (!detailDrag) return;
+      var list = detailDrag.parentNode;
+      detailDrag.classList.remove("is-dragging");
+      detailDrag = null;
+      if (!list) return;
+      if (list.hasAttribute("data-detail-previews")) {
+        // 생성 미리보기 — DOM 순서를 파일 배열에 반영
+        var order = [].slice.call(list.querySelectorAll(".ah-detail-item")).map(function (it) {
+          return parseInt(it.getAttribute("data-create-idx"), 10);
+        });
+        createFiles = order.map(function (idx) { return createFiles[idx]; });
+        renderCreatePreviews();
+      } else if (list.hasAttribute("data-detail-reorder")) {
+        // 수정 모달의 기존 상세 — 서버에 AJAX 로 순서 저장
+        persistDetailOrder(list);
+      }
+    });
+
+    function persistDetailOrder(list) {
+      var bannerId = list.getAttribute("data-detail-reorder");
+      var ids = [].slice.call(list.querySelectorAll(".ah-detail-item")).map(function (c) {
+        return c.getAttribute("data-detail-id");
+      });
+      post("detail_reorder", function (b) {
+        b.append("banner_id", bannerId);
+        ids.forEach(function (id) { b.append("order[]", id); });
+      })
+        .then(function () {
+          [].slice.call(list.querySelectorAll(".ah-detail-item")).forEach(function (c, i) {
+            var o = c.querySelector(".ah-detail-item__order");
+            if (o) o.textContent = i + 1;
+          });
+          if (window.ahToast) window.ahToast("상세 이미지 순서가 저장되었습니다.", "success");
         })
         .catch(function (err) {
           if (window.ahToast) window.ahToast(err.message || "순서 저장에 실패했습니다.", "error");
