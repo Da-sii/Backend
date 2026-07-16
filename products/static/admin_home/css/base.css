@@ -5,17 +5,21 @@
 
 /* ---------------------------------------------------------
    @font-face — Nanum Square Neo Variable
-   폰트 파일이 아직 없어도 fallback 스택으로 정상 렌더된다.
-   (파일을 products/static/admin_home/fonts/ 에 넣으면 자동 적용)
+   ⚠️ 폰트 woff2 파일이 레포에 없어 아래 @font-face 를 켜두면 매 로드마다 404 가 난다.
+   폴백 스택(var(--font-family-base))만으로 정상 렌더되므로 지금은 비활성(주석) 상태로 둔다.
+   실제 Nanum Square Neo 를 쓰려면: woff2 를 products/static/admin_home/fonts/ 에 넣고
+   아래 블록의 주석을 해제하면 된다(바이너리라 파일은 별도 반입 필요).
    --------------------------------------------------------- */
+/*
 @font-face {
   font-family: "NanumSquareNeo";
   src: url("../fonts/NanumSquareNeo-Variable.woff2") format("woff2-variations"),
     url("../fonts/NanumSquareNeo-Variable.woff2") format("woff2");
-  font-weight: 400 800; /* Variable: Regular ~ Extrabold */
+  font-weight: 400 800;
   font-style: normal;
   font-display: swap;
 }
+*/
 
 /* ---------------------------------------------------------
    Reset (최소한)
