@@ -58,17 +58,11 @@
     color: var(--text-on-glass);
   }
   .ah-banner-card.is-dragging { opacity: 0.5; }
-  /* 좌측 표시 순번(활성 탭) — 위에서부터 노출되는 순서 */
+  /* 좌측 표시 순번(활성 탭) — 위에서부터 노출되는 순서. 숫자만 표시(배지 없음) */
   .ah-banner-card__num {
     flex: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.9em;
-    height: 1.9em;
-    border-radius: var(--radius-pill);
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
+    min-width: 1.5em;
+    text-align: center;
     color: var(--glass-highlight);
     font-weight: var(--font-weight-bold);
     line-height: 1;
@@ -143,6 +137,32 @@
     border: 1px solid var(--glass-border);
     object-fit: cover;
   }
+  /* 수정 모달 썸네일 호버 인라인 편집 — 호버/포커스 시 편집 아이콘 오버레이 */
+  .ah-thumb-edit {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    line-height: 0;
+  }
+  .ah-thumb-edit__input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .ah-thumb-edit__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    background: var(--scrim);
+    color: var(--color-gray-0);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+  }
+  .ah-thumb-edit:hover .ah-thumb-edit__overlay,
+  .ah-thumb-edit:focus-within .ah-thumb-edit__overlay { opacity: 1; }
+  .ah-thumb-edit__icon { font-size: var(--fs-text-lg); line-height: 1; }
   .ah-detail-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
   /* 생성 모달의 상세 이미지 미리보기(드래그로 순서 지정) */
   .ah-detail-picker { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
@@ -186,11 +206,6 @@
   }
   .ah-edit-section__title { margin-bottom: var(--space-2); }
   .ah-edit-section__head .ah-edit-section__title { margin-bottom: 0; }
-  .ah-edit-thumb { display: flex; align-items: flex-start; gap: var(--space-3); flex-wrap: wrap; }
-  .ah-edit-thumb__ctrl {
-    display: flex; flex-direction: column; gap: var(--space-2);
-    align-items: flex-start; flex: 1 1 220px; min-width: 0;
-  }
   .ah-edit-footer {
     padding-top: var(--space-3);
     border-top: 1px solid var(--glass-border);
@@ -569,6 +584,19 @@
         img.src = "";
         img.hidden = true;
       }
+    });
+
+    /* ---- 수정 모달: 썸네일 호버 편집 — 파일 선택 즉시 미리보기 후 저장 ---- */
+    document.addEventListener("change", function (e) {
+      var input = e.target.closest ? e.target.closest("[data-thumb-input]") : null;
+      if (!input) return;
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var label = input.closest(".ah-thumb-edit");
+      var img = label ? label.querySelector("[data-thumb-img]") : null;
+      if (img) img.src = URL.createObjectURL(file); // 즉시 미리보기(제출 후 리다이렉트로 정리됨)
+      var form = input.closest("form");
+      if (form) form.submit(); // 기존 update action 재사용 → 저장·리다이렉트·토스트
     });
 
     // 파일 선택 → 배열에 누적 후 미리보기 갱신(input 은 비워 같은 파일 재선택 허용)
