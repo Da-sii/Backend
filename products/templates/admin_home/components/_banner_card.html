@@ -1,0 +1,21 @@
+{% comment %}
+  배너 카드 — 그립(드래그 순서변경) + 썸네일/메타(클릭 → 수정 모달) + 활성 토글.
+  · draggable=True 로 include 하면 드래그 가능(활성 탭). 비활성 탭은 그립을 CSS 로 숨긴다.
+  · 토글/드래그/수정은 banner_list.html 의 extra_js 가 위임 처리한다.
+{% endcomment %}
+<div class="ah-banner-card reveal" data-banner-id="{{ b.id }}"{% if draggable %} draggable="true"{% endif %}>
+  <span class="ah-banner-card__grip" aria-hidden="true" title="드래그하여 순서 변경">⠿</span>
+  <button type="button" class="ah-banner-card__main" data-modal-open="banner-edit-{{ b.id }}"
+          title="클릭하여 수정">
+    <img class="ah-banner-card__thumb" src="{{ b.image_url }}" alt="배너 #{{ b.id }} 썸네일" />
+    <span class="ah-banner-card__meta">
+      <span class="text-body">배너 #{{ b.id }}</span>
+      <span class="text-body-sm text-muted">순서 <span data-order>{{ b.order }}</span> · 상세 {{ b.details.count }}장</span>
+    </span>
+  </button>
+  <label class="ah-switch" title="활성/비활성 전환">
+    <input type="checkbox" class="ah-switch__input" data-banner-toggle="{{ b.id }}"{% if b.is_active %} checked{% endif %} />
+    <span class="ah-switch__track"><span class="ah-switch__thumb"></span></span>
+    <span class="ah-switch__label text-body-sm">{% if b.is_active %}활성{% else %}비활성{% endif %}</span>
+  </label>
+</div>

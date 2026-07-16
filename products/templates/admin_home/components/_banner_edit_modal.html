@@ -1,0 +1,79 @@
+{% comment %}
+  배너 수정 모달 (배너 1개당 1개). 카드 클릭(data-modal-open) 으로 열린다.
+  썸네일 교체 · 상세 이미지 관리(추가/삭제) · 배너 삭제. 각 동작은 전체 페이지 POST 로
+  처리되고 리다이렉트 후 토스트로 결과를 안내한다(활성/비활성 토글·순서는 목록에서 AJAX).
+{% endcomment %}
+<div class="ah-modal" id="banner-edit-{{ b.id }}" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="banner-edit-{{ b.id }}-title" style="width: min(680px, 100%);">
+    <div class="ah-modal__head">
+      <h2 id="banner-edit-{{ b.id }}-title" class="text-title-md">배너 #{{ b.id }} 수정</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      {# 썸네일 교체 #}
+      <div class="ah-field">
+        <span class="ah-label">현재 썸네일</span>
+        <img class="ah-banner__thumb" src="{{ b.image_url }}" alt="배너 #{{ b.id }} 썸네일" />
+      </div>
+      <form method="post" enctype="multipart/form-data" class="ah-stack">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update" />
+        <input type="hidden" name="id" value="{{ b.id }}" />
+        <div class="ah-field">
+          <label class="ah-label" for="banner-edit-image-{{ b.id }}">썸네일 교체</label>
+          <input class="ah-file" type="file" id="banner-edit-image-{{ b.id }}" name="image" accept="image/*" />
+        </div>
+        <div style="display:flex; justify-content:flex-end;">
+          <button type="submit" class="btn btn-primary">썸네일 저장</button>
+        </div>
+      </form>
+
+      {# 상세 이미지 관리 #}
+      <div class="ah-formsection">
+        <h3 class="text-title-sm">상세 이미지</h3>
+      </div>
+      {% if b.details.all %}
+      <div class="ah-detail-list">
+        {% for d in b.details.all %}
+        <div class="ah-detail-item">
+          <img class="ah-detail-item__img" src="{{ d.detail_image_url }}" alt="상세 이미지 순서 {{ d.order }}" />
+          <span class="ah-badge ah-badge--neutral ah-detail-item__order">{{ d.order }}</span>
+          <form method="post" onsubmit="return confirm('이 상세 이미지를 삭제할까요?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="detail_delete" />
+            <input type="hidden" name="id" value="{{ d.id }}" />
+            <button type="submit" class="ah-detail-item__del" aria-label="상세 이미지 삭제" title="삭제">&times;</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-body-sm text-muted">등록된 상세 이미지가 없습니다.</p>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" class="ah-detail-add">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="detail_create" />
+        <input type="hidden" name="banner_id" value="{{ b.id }}" />
+        <div class="ah-field">
+          <label class="ah-label" for="banner-edit-detail-{{ b.id }}">상세 이미지 추가</label>
+          <input class="ah-file" type="file" id="banner-edit-detail-{{ b.id }}" name="detail_image" accept="image/*" required />
+        </div>
+        <button type="submit" class="btn btn-glass">상세 추가</button>
+      </form>
+
+      {# 배너 삭제 #}
+      <div style="margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--glass-border); display:flex; justify-content:flex-end;">
+        <form method="post"
+              onsubmit="return confirm('이 배너와 하위 상세 이미지가 모두 삭제됩니다. 계속할까요?');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete" />
+          <input type="hidden" name="id" value="{{ b.id }}" />
+          <button type="submit" class="btn btn-danger">이 배너 삭제</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
