@@ -6,8 +6,10 @@
   · 배너 구분은 #id·썸네일로 한다(별도 이름 없음).
 {% endcomment %}
 <div class="ah-banner-card reveal" data-banner-id="{{ b.id }}"{% if draggable %} draggable="true"{% endif %}>
-  {# 좌측 순번 — 활성 탭에서만 노출(비활성 패널은 CSS 로 숨김). 토글로 패널 이동 시
-     relabelActiveOrder 가 값을 다시 매긴다. #}
+  {% comment %}
+    좌측 순번 — 활성 탭에서만 노출(비활성 패널은 CSS 로 숨김). 토글로 패널 이동 시
+    relabelActiveOrder 가 값을 다시 매긴다.
+  {% endcomment %}
   <span class="ah-banner-card__num text-body-sm" data-order
         title="위에서부터 노출되는 순서입니다">{{ index }}</span>
   <span class="ah-banner-card__grip" aria-hidden="true" title="드래그하여 순서 변경">⠿</span>
