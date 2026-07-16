@@ -11,7 +11,8 @@
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 600ms ease, transform 600ms ease;
-  will-change: opacity, transform;
+  /* will-change 는 영구 지정하지 않는다 — 목록 수백 행에 붙으면 모바일 컴포지터가
+     과부하로 페인팅을 못 해 내용이 안 보일 수 있다. transition 만으로 충분. */
 }
 .reveal.is-visible {
   opacity: 1;
