@@ -13,20 +13,26 @@
       <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
     </div>
     <div class="ah-modal__body ah-stack">
-      {# ── 썸네일 ── 현재 이미지 + 교체를 한 줄로 묶어 배치 #}
+      {# ── 썸네일 ── 이미지에 호버하면 편집 아이콘 → 클릭 시 파일 선택 → 즉시 미리보기 후 저장 #}
       <section class="ah-edit-section">
-        <h3 class="ah-edit-section__title text-title-sm">썸네일</h3>
-        <form method="post" enctype="multipart/form-data" class="ah-edit-thumb">
+        <div class="ah-edit-section__head">
+          <h3 class="ah-edit-section__title text-title-sm">썸네일</h3>
+          <span class="text-body-sm text-muted">이미지에 마우스를 올려 교체할 수 있습니다.</span>
+        </div>
+        <form method="post" enctype="multipart/form-data" data-thumb-form>
           {% csrf_token %}
           <input type="hidden" name="action" value="update" />
           <input type="hidden" name="id" value="{{ b.id }}" />
-          <img class="ah-banner__thumb" src="{{ b.image_url }}" alt="배너 #{{ b.id }} 썸네일" />
-          <div class="ah-edit-thumb__ctrl">
-            <label class="ah-label" for="banner-edit-image-{{ b.id }}">이미지 교체</label>
-            <input class="ah-file" type="file" id="banner-edit-image-{{ b.id }}"
-                   name="image" accept="image/*" />
-            <button type="submit" class="btn btn-primary">저장</button>
-          </div>
+          <label class="ah-thumb-edit" title="클릭하여 이미지 교체">
+            <img class="ah-banner__thumb" src="{{ b.image_url }}"
+                 alt="배너 #{{ b.id }} 썸네일" data-thumb-img />
+            <span class="ah-thumb-edit__overlay" aria-hidden="true">
+              <span class="ah-thumb-edit__icon">✎</span>
+              <span class="text-body-sm">이미지 교체</span>
+            </span>
+            <input class="ah-thumb-edit__input" type="file" name="image" accept="image/*"
+                   data-thumb-input aria-label="배너 #{{ b.id }} 썸네일 교체" />
+          </label>
         </form>
       </section>
 
