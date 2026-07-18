@@ -7,24 +7,21 @@ from django.conf import settings
 from google import genai
 from google.genai import types
 
+from recommendations.constants import SURVEY_LABEL_MAPS
+
 logger = logging.getLogger(__name__)
 
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 # UserProfile 모델 -> Gemini 프롬프트용 딕셔너리 변환
-def _build_user_context(profile) -> dict:
-    return {
-        "goals" : profile.goals,
-        "age_range": profile.get_age_range_display(),
-        "gender": profile.get_gender_display(),
-        "exercise_frequency": profile.get_exercise_frequency_display(),
-        "caffeine_sensitivity": profile.get_caffeine_sensitivity_display(),
-        "sleep_hours": profile.get_sleep_hours_display(),
-        "meal_regularity": profile.get_meal_regularity_display(),
-        "alcohol_frequency": profile.get_alcohol_frequency_display(),
-        "smoking_status": profile.get_smoking_status_display(),
-    }
+def _build_user_context(survey: dict) -> dict:
+    context = {"goals": survey["goals"]}  # goals는 이미 한글이라 변환 불필요
+
+    for field, label_map in SURVEY_LABEL_MAPS.items():
+        context[field] = label_map[survey[field]]
+
+    return context
 
 # DB 성분 전체 -> Gemini 프롬프트형 리스트 변환
 def _build_ingredient_context() -> list:
@@ -118,9 +115,9 @@ def _get_products_by_ingredient(ingredient_id: int) -> list:
     return result
 
 # 메인 추천 함수
-def get_recommendations(user_profile) -> list:
+def get_recommendations(survey: dict) -> list:
     # 사용자 컨텍스트 구성
-    user_context = _build_user_context(user_profile)
+    user_context = _build_user_context(survey)
 
     # 성분 DB 전체 조회
     ingredient_context = _build_ingredient_context()
