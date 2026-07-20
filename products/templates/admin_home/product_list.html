@@ -288,19 +288,26 @@
   </div>
 
   {% if products %}
-  <div class="ah-records" id="product-records" data-reveal-stagger>
+  <div class="pe-grid" id="product-records" data-reveal-stagger>
     {% for product in products %}
-    <div class="ah-record reveal" data-product-edit="{{ product.id }}"
-         style="cursor:pointer;" title="클릭하여 상세·수정"
+    <div class="pe-card reveal lift" data-product-edit="{{ product.id }}"
+         title="클릭하여 상세·수정"
          data-search="{{ product.name|lower }} {{ product.company|lower }}">
-      {# 표시용 넘버링 — DB id 대신 목록 순번(1~n)이라 앞 항목 삭제 시에도 항상 이어진다 #}
-      <span class="ah-record__id text-body-sm">{{ forloop.counter }}</span>
+      <div class="pe-card__thumb">
+        {% with product.images.first as thumb %}
+        {% if thumb %}
+        <img src="{{ thumb.url }}" alt="{{ product.name }} 썸네일" loading="lazy" />
+        {% else %}
+        <span class="pe-card__noimg text-body-sm text-muted">이미지 없음</span>
+        {% endif %}
+        {% endwith %}
+      </div>
 
-      <div class="ah-product__info">
-        <p class="text-body">{{ product.name }}</p>
+      <div class="pe-card__body">
+        <p class="text-body pe-card__name">{{ product.name }}</p>
         <p class="text-body-sm text-muted">{{ product.company }} · {{ product.productType }}</p>
 
-        {# 소분류·성분(용량)·기타원료를 뱃지 대신 텍스트로 녹여 표기 #}
+        {# 소분류·성분(용량)·기타원료를 텍스트로 녹여 표기 #}
         <dl class="ah-product__meta text-body-sm">
           <dt>카테고리</dt>
           <dd>{% for cp in product.category_products.all %}{{ cp.category.category }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
@@ -325,13 +332,38 @@
 
 {% block extra_head %}
 <style>
-  /* 제품 정보 블록: 이름/브랜드·타입/메타(소분류·성분·기타원료)를 세로로 쌓는다. */
-  .ah-product__info {
+  /* 제품 목록 — 카드 그리드(썸네일 + 3열, 반응형). 여백 과다한 1행1제품 리스트 대체 */
+  .pe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-3);
+  }
+  .pe-card {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
-    flex: 1 1 480px;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+    color: var(--text-on-glass);
+    cursor: pointer;
   }
+  .pe-card__thumb {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg-subtle);
+    overflow: hidden;
+  }
+  .pe-card__thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .pe-card__name { font-weight: var(--font-weight-bold); }
+  .pe-card__body { display: flex; flex-direction: column; gap: var(--space-1); }
   /* 메타 — 라벨(dt) + 값(dd) 2열 그리드. 라벨 폭은 가장 긴 라벨에 맞춰 자동 정렬. */
   .ah-product__meta {
     display: grid;
@@ -451,7 +483,7 @@
   // 클라이언트 사이드 검색 — 제품명/브랜드로 표시되는 행만 필터링한다 (서버 요청 없음).
   (function () {
     var input = document.getElementById("product-search");
-    var records = document.querySelectorAll("#product-records .ah-record");
+    var records = document.querySelectorAll("#product-records .pe-card");
     if (!input || !records.length) return;
 
     input.addEventListener("input", function () {
