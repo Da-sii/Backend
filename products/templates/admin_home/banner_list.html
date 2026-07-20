@@ -196,6 +196,21 @@
     cursor: pointer;
   }
   .ah-detail-add { display: flex; align-items: flex-end; gap: var(--space-2); flex-wrap: wrap; }
+  /* 상세 이미지 추가 "+" 버튼 — 클릭 시 파일 선택 → 즉시 추가 */
+  .ah-addbtn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px dashed var(--glass-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--glass-bg);
+    color: var(--text-on-glass);
+    cursor: pointer;
+    transition: background var(--transition-base);
+  }
+  .ah-addbtn:hover, .ah-addbtn:focus-within { background: var(--glass-bg-strong); }
+  .ah-addbtn__plus { font-size: var(--fs-text-lg); line-height: 1; color: var(--glass-highlight); }
 
   /* 수정 모달 레이아웃 — 섹션 구획 + 썸네일 교체 행 */
   .ah-edit-section { padding-top: var(--space-3); border-top: 1px solid var(--glass-border); }
@@ -597,6 +612,15 @@
       if (img) img.src = URL.createObjectURL(file); // 즉시 미리보기(제출 후 리다이렉트로 정리됨)
       var form = input.closest("form");
       if (form) form.submit(); // 기존 update action 재사용 → 저장·리다이렉트·토스트
+    });
+
+    /* ---- 수정 모달: 상세 이미지 추가 — 파일 선택 완료 시 즉시 추가(별도 버튼 없이) ---- */
+    document.addEventListener("change", function (e) {
+      var input = e.target.closest ? e.target.closest("[data-detail-add-input]") : null;
+      if (!input) return;
+      if (!input.files || !input.files.length) return;
+      var form = input.closest("form");
+      if (form) form.submit(); // 기존 detail_create action 재사용
     });
 
     // 파일 선택 → 배열에 누적 후 미리보기 갱신(input 은 비워 같은 파일 재선택 허용)
