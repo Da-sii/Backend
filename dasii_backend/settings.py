@@ -57,12 +57,19 @@ COUPANG_SECRET_KEY = os.getenv("COUPANG_SECRET_KEY", "")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-qh4(yxhfzw-@f+9^5-0m&izs@o9g#*#7&*4!-m#dhu11j*xr2k"
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = ["dasii.kr", "www.dasii.kr", "127.0.0.1", "localhost", "10.0.2.2"]
+ALLOWED_HOSTS = [
+    "dasii.kr",
+    "www.dasii.kr",
+    "127.0.0.1",
+    "localhost",
+    "10.0.2.2",
+    ".run.app",
+]
 
 
 # Application definition
@@ -103,6 +110,7 @@ SIMPLE_JWT = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -142,6 +150,8 @@ DATABASES = {
         "PASSWORD": config("DB_PASSWORD"),
         "HOST": config("DB_HOST"),
         "PORT": config("DB_PORT"),
+        "CONN_MAX_AGE": 0,
+        "DISABLE_SERVER_SIDE_CURSORS": True,
     }
 }
 
@@ -172,19 +182,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = "users.User"
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "EXCEPTION_HANDLER": "users.exceptions.custom_exception_handler",
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
-    ],
-}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -220,6 +217,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'EXCEPTION_HANDLER': 'users.exceptions.custom_exception_handler',
 }
 
 # DRF Spectacular Settings
@@ -242,6 +240,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://dasii.kr",
     "http://www.dasii.kr",
     "https://www.dasii.kr",
+    "https://*.run.app",
 ]
 
 # API 요청에서 CSRF 토큰 비활성화
@@ -250,13 +249,22 @@ CSRF_COOKIE_HTTPONLY = False
 
 INSTALLED_APPS += ["corsheaders"]
 
-MIDDLEWARE.insert(1, "corsheaders.middleware.CorsMiddleware")
+MIDDLEWARE.insert(2, "corsheaders.middleware.CorsMiddleware")
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
