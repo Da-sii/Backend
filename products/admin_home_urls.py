@@ -12,6 +12,7 @@ from products.admin_home_views import (
     banner_list,
     category_tree,
     home,
+    ingredient_guide,
     ingredient_list,
     ingredient_other,
     product_list,
@@ -36,6 +37,12 @@ urlpatterns = [
         "ingredient/other/",
         admin_auth_required(ingredient_other),
         name="admin_home_ingredient_other",
+    ),
+    # 성분 가이드 · 효과/부작용·핵심 포인트/출처 전용 편집 페이지
+    path(
+        "ingredient-guide/",
+        admin_auth_required(ingredient_guide),
+        name="admin_home_guide",
     ),
     # 배너 관리 · 목록/추가/삭제 (상세 이미지는 하위 라우트에서)
     path("banner/", admin_auth_required(banner_list), name="admin_home_banner"),
