@@ -516,6 +516,15 @@
 }
 .ah-textarea { min-height: calc(var(--space-8) * 2); resize: vertical; }
 
+/* 드롭다운 옵션 목록 — 네이티브 <option> 은 OS 기본 흰 배경으로 렌더되므로,
+   .ah-select 의 흰 글씨(--text-on-glass)를 그대로 상속하면 흰 배경+흰 글씨로 안 보인다.
+   옵션 목록에는 대비되는 어두운 글씨 + 밝은 배경을 명시한다(크롬/사파리/파폭 공통). */
+.ah-select option,
+.ah-select optgroup {
+  color: var(--text-default);
+  background: var(--surface);
+}
+
 .ah-input:focus,
 .ah-select:focus,
 .ah-textarea:focus {
