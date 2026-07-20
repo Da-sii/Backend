@@ -178,15 +178,10 @@
           <div class="ah-formsection">
             <h3 class="text-title-sm">제품 이미지</h3>
             <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
-              기존 이미지에 마우스를 올려 교체하거나, 체크해서 삭제합니다. 새 이미지는 아래에서 추가합니다.
+              이미지에 마우스를 올려 교체합니다.
             </p>
           </div>
           <div class="pe-images" id="pe-images"></div>
-
-          <div class="ah-field">
-            <label class="ah-label" for="pe-images-new">이미지 추가 (한 번에 한 장)</label>
-            <input class="ah-input" type="file" id="pe-images-new" name="image_files" accept="image/*" />
-          </div>
 
           {# 소분류 카테고리 #}
           <div class="ah-formsection">
@@ -356,24 +351,36 @@
     word-break: break-word;
   }
 
-  /* 수정 모달 — 기존 이미지 썸네일 + 호버 교체 + 삭제 체크 */
+  /* 수정 모달 — 제품 이미지 썸네일 + 호버 교체(삭제/추가 UI 없음, 1장 기준) */
   .pe-images { display: flex; flex-wrap: wrap; gap: var(--space-3); }
   .pe-image { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
-  .pe-image.is-replaced .pe-image__del { opacity: 0.5; }
   .pe-image__img {
     height: 72px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--glass-border);
     object-fit: cover;
   }
-  .pe-image__del {
-    display: inline-flex;
+  /* 0장 폴백 "+ 이미지 추가" 타일 */
+  .pe-image__add {
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: var(--space-1);
-    color: var(--glass-highlight);
-    font-size: var(--fs-caption);
+    min-width: 96px;
+    height: 72px;
+    padding: 0 var(--space-3);
+    border: 1px dashed var(--glass-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--glass-bg);
+    color: var(--text-on-glass);
+    cursor: pointer;
+    transition: background var(--transition-base);
   }
-  .pe-image__tag { color: var(--brand-primary); font-weight: var(--font-weight-bold); }
+  .pe-image__add:hover, .pe-image__add:focus-within { background: var(--glass-bg-strong); }
+  .pe-image__add.has-preview { padding: 0; border-style: solid; }
+  .pe-image__add.has-preview > :not(.pe-image__img):not(.ah-thumb-edit__input) { display: none; }
+  .pe-image__addplus { font-size: var(--fs-text-lg); line-height: 1; color: var(--glass-highlight); }
 
   /* 이미지 호버 인라인 교체 — 호버/포커스 시 편집 아이콘 오버레이(배너와 동일 패턴) */
   .ah-thumb-edit {
@@ -545,15 +552,28 @@
       setVal("pe-type", data.productType);
       setVal("pe-coupang", data.coupang);
 
-      // 기존 이미지 썸네일 + 삭제 체크박스
+      // 제품 이미지 — 호버로 교체(삭제/추가 UI 없음). 제품 이미지는 1장 기준.
       var box = document.getElementById("pe-images");
       box.innerHTML = "";
       if (!data.images || !data.images.length) {
-        var empty = document.createElement("p");
-        empty.className = "text-caption";
-        empty.style.color = "var(--glass-highlight)";
-        empty.textContent = "등록된 이미지가 없습니다.";
-        box.appendChild(empty);
+        // 0장 폴백 — "+ 이미지 추가" 타일(파일 선택 후 저장 시 업로드)
+        var addWrap = document.createElement("div");
+        addWrap.className = "pe-image";
+        var addLabel = document.createElement("label");
+        addLabel.className = "pe-image__add";
+        addLabel.title = "이미지 추가";
+        addLabel.innerHTML =
+          '<span class="pe-image__addplus" aria-hidden="true">＋</span>' +
+          '<span class="text-body-sm">이미지 추가</span>';
+        var addFile = document.createElement("input");
+        addFile.type = "file";
+        addFile.name = "image_files";
+        addFile.accept = "image/*";
+        addFile.className = "ah-thumb-edit__input";
+        addFile.setAttribute("data-img-add", "1");
+        addLabel.appendChild(addFile);
+        addWrap.appendChild(addLabel);
+        box.appendChild(addWrap);
       } else {
         data.images.forEach(function (img) {
           var wrap = document.createElement("div");
@@ -583,18 +603,15 @@
           edit.appendChild(overlay);
           edit.appendChild(file);
 
-          // 삭제 체크 (교체하면 JS 가 자동으로 체크한다)
-          var del = document.createElement("label");
-          del.className = "pe-image__del";
+          // 삭제 마킹 — 화면엔 안 보이는 hidden 체크박스(교체 시 JS 가 체크해 기존 이미지 삭제)
           var cb = document.createElement("input");
           cb.type = "checkbox";
           cb.name = "delete_image_ids[]";
           cb.value = String(img.id);
-          del.appendChild(cb);
-          del.appendChild(document.createTextNode(" 삭제"));
+          cb.hidden = true;
 
           wrap.appendChild(edit);
-          wrap.appendChild(del);
+          wrap.appendChild(cb);
           box.appendChild(wrap);
         });
       }
@@ -678,6 +695,25 @@
       var cb = wrap.querySelector('input[name="delete_image_ids[]"]');
       if (cb) cb.checked = true; // 기존 이미지 삭제 + 새 파일 업로드 = 교체
       wrap.classList.add("is-replaced");
+    });
+
+    // 0장 폴백 "+ 이미지 추가" — 파일 선택 시 타일에 미리보기(저장 시 업로드)
+    document.addEventListener("change", function (e) {
+      var input = e.target.closest ? e.target.closest("[data-img-add]") : null;
+      if (!input) return;
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var label = input.closest(".pe-image__add");
+      if (!label) return;
+      var img = label.querySelector(".pe-image__img");
+      if (!img) {
+        img = document.createElement("img");
+        img.className = "pe-image__img";
+        img.alt = "추가할 이미지";
+        label.insertBefore(img, label.firstChild);
+      }
+      img.src = URL.createObjectURL(file);
+      label.classList.add("has-preview");
     });
   })();
 </script>
