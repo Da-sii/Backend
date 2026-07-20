@@ -137,6 +137,9 @@
     border: 1px solid var(--glass-border);
     object-fit: cover;
   }
+  /* base.css 의 img{display:block} 이 UA 의 [hidden] 을 덮어써 빈 미리보기가
+     깨진 이미지로 보이는 문제 방지 — 미선택(hidden) 시 확실히 숨긴다. */
+  .ah-banner__thumb[hidden] { display: none; }
   /* 수정 모달 썸네일 호버 인라인 편집 — 호버/포커스 시 편집 아이콘 오버레이 */
   .ah-thumb-edit {
     position: relative;
@@ -271,22 +274,21 @@
         <section class="ah-edit-section">
           <h3 class="ah-edit-section__title text-title-sm">썸네일</h3>
           <div class="ah-field">
-            <label class="ah-label" for="banner-image">썸네일 이미지</label>
-            <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*" required />
-            {% comment %}등록 전 미리보기. 파일 선택 시 JS 가 objectURL 로 채운다.{% endcomment %}
+            <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*"
+                   required aria-label="썸네일 이미지" />
+            {% comment %}등록 전 미리보기. 파일 선택 시 JS 가 objectURL 로 채운다(미선택 시 hidden).{% endcomment %}
             <img class="ah-banner__thumb" data-thumb-preview alt="썸네일 미리보기" hidden />
           </div>
         </section>
         <section class="ah-edit-section">
-          <h3 class="ah-edit-section__title text-title-sm">상세 이미지</h3>
+          <div class="ah-edit-section__head">
+            <h3 class="ah-edit-section__title text-title-sm">상세 이미지</h3>
+            <span class="text-body-sm text-muted">선택 · 여러 장 · 드래그로 순서 지정</span>
+          </div>
           <div class="ah-field">
-            <span class="ah-label">상세 이미지
-              <span class="text-muted">(선택 · 여러 장 · 드래그로 순서 지정)</span></span>
-            {% comment %}
-              선택용 입력. 고른 파일은 아래 미리보기로 쌓이고, 실제 전송은 hidden payload 로 한다.
-            {% endcomment %}
+            {% comment %}선택용 입력. 고른 파일은 아래 미리보기로 쌓이고, 실제 전송은 hidden payload 로 한다.{% endcomment %}
             <input class="ah-file" type="file" id="banner-detail-pick" accept="image/*" multiple
-                   data-detail-pick />
+                   data-detail-pick aria-label="상세 이미지 선택" />
             <div class="ah-detail-picker" data-detail-previews hidden></div>
             {% comment %}미리보기에서 정한 순서대로 파일이 담기는 실제 전송 필드{% endcomment %}
             <input type="file" name="detail_images" multiple hidden data-detail-payload />
