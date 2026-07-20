@@ -65,18 +65,17 @@
         <p class="text-body-sm text-muted">등록된 상세 이미지가 없습니다.</p>
         {% endif %}
 
+        {# 상세 이미지 추가 — "+" 버튼 클릭 → 파일 선택 → 선택 완료 시 즉시 추가(자동 submit) #}
         <form method="post" enctype="multipart/form-data" class="ah-detail-add">
           {% csrf_token %}
           <input type="hidden" name="action" value="detail_create" />
           <input type="hidden" name="banner_id" value="{{ b.id }}" />
-          <div class="ah-field">
-            <label class="ah-label" for="banner-edit-detail-{{ b.id }}">
-              상세 이미지 추가 <span class="text-muted">(여러 장 선택 가능)</span>
-            </label>
-            <input class="ah-file" type="file" id="banner-edit-detail-{{ b.id }}"
-                   name="detail_image" accept="image/*" multiple required />
-          </div>
-          <button type="submit" class="btn btn-glass">추가</button>
+          <label class="ah-addbtn" title="상세 이미지 추가 (여러 장 선택 가능)">
+            <span class="ah-addbtn__plus" aria-hidden="true">＋</span>
+            <span class="text-body-sm">상세 이미지 추가</span>
+            <input class="ah-thumb-edit__input" type="file" name="detail_image" accept="image/*"
+                   multiple data-detail-add-input aria-label="상세 이미지 추가" />
+          </label>
         </form>
       </section>
 
