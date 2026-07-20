@@ -1,0 +1,231 @@
+{% extends base_template|default:"admin_home/base.html" %}
+{% comment %}
+  성분 가이드 — 성분별 효과·부작용(Ingredient) + 핵심 포인트·출처(IngredientGuide 1:1) 편집.
+  내용이 많아 원료(ingredient_list) 모달에서 분리한 전용 페이지.
+  · 목록 항목 클릭 → 상세 모달(#guide-modal-<id>)에서 네 가지 JSON 리스트 편집·저장.
+  · 모달은 content 블록 직속(비-transform 조상)에 두어 position:fixed 가 뷰포트 기준으로 동작하게 한다.
+  · 리스트 편집 UI 는 제출 직전 JSON 배열로 직렬화(원료 페이지와 동일 패턴).
+{% endcomment %}
+
+{% block title %}성분 가이드 · DASII{% endblock %}
+{% block topbar_title %}성분 가이드{% endblock %}
+
+{% block content %}
+{# ── 상세 모달들 (content 직속 — fixed 위치 정상 동작) ── #}
+{% for ing in ingredients %}
+<div class="ah-modal" id="guide-modal-{{ ing.id }}" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+       aria-labelledby="guide-modal-{{ ing.id }}-title" style="width: min(920px, 100%);">
+    <div class="ah-modal__head">
+      <h2 id="guide-modal-{{ ing.id }}-title" class="text-title-md">{{ ing.name }} · 성분 가이드</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      <form method="post" data-ingredient-form class="ah-stack">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update" />
+        <input type="hidden" name="id" value="{{ ing.id }}" />
+
+        <div class="ah-grid">
+          {# 효과 (JSON 리스트) #}
+          <div class="ah-field">
+            <label class="ah-label">효과</label>
+            <div class="ah-listedit" data-listedit>
+              <div class="ah-listedit__rows">
+                {% for e in ing.effect %}
+                <div class="ah-listedit__row">
+                  <textarea class="ah-textarea text-body" data-listedit-item
+                            rows="2" aria-label="효과 항목">{{ e }}</textarea>
+                  <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                </div>
+                {% endfor %}
+              </div>
+              <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+              <input type="hidden" name="effect" data-listedit-target />
+            </div>
+          </div>
+
+          {# 부작용 (JSON 리스트) #}
+          <div class="ah-field">
+            <label class="ah-label">부작용</label>
+            <div class="ah-listedit" data-listedit>
+              <div class="ah-listedit__rows">
+                {% for s in ing.sideEffect %}
+                <div class="ah-listedit__row">
+                  <textarea class="ah-textarea text-body" data-listedit-item
+                            rows="2" aria-label="부작용 항목">{{ s }}</textarea>
+                  <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                </div>
+                {% endfor %}
+              </div>
+              <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+              <input type="hidden" name="sideEffect" data-listedit-target />
+            </div>
+          </div>
+        </div>
+
+        <div class="ah-formsection">
+          <h3 class="text-title-sm">성분 가이드</h3>
+          <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
+            성분별 핵심 포인트와 출처를 관리합니다. (저장 시 없으면 자동 생성)
+          </p>
+        </div>
+
+        <div class="ah-grid">
+          <div class="ah-field">
+            <label class="ah-label">핵심 포인트</label>
+            <div class="ah-listedit" data-listedit>
+              <div class="ah-listedit__rows">
+                {% for kp in ing.guide.keyPoints %}
+                <div class="ah-listedit__row">
+                  <textarea class="ah-textarea text-body" data-listedit-item
+                            rows="2" aria-label="핵심 포인트 항목">{{ kp }}</textarea>
+                  <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                </div>
+                {% endfor %}
+              </div>
+              <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+              <input type="hidden" name="keyPoints" data-listedit-target />
+            </div>
+          </div>
+
+          <div class="ah-field">
+            <label class="ah-label">출처</label>
+            <div class="ah-listedit" data-listedit>
+              <div class="ah-listedit__rows">
+                {% for src in ing.guide.sources %}
+                <div class="ah-listedit__row">
+                  <textarea class="ah-textarea text-body" data-listedit-item
+                            rows="2" aria-label="출처 항목">{{ src }}</textarea>
+                  <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                </div>
+                {% endfor %}
+              </div>
+              <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+              <input type="hidden" name="sources" data-listedit-target />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" class="btn btn-primary">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{# ── 목록 ── #}
+<section class="reveal">
+  <div style="margin-bottom: var(--space-3);">
+    <h2 class="text-title-sm">
+      성분 목록 <span class="text-muted">({{ ingredients|length }})</span>
+    </h2>
+    <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
+      성분을 클릭해 효과·부작용·핵심 포인트·출처를 편집합니다. 기본 정보(이름·권장량 등)는 원료 메뉴에서 관리합니다.
+    </p>
+  </div>
+
+  {% if ingredients %}
+  <div class="ah-records" data-reveal-stagger>
+    {% for ing in ingredients %}
+    <div class="ah-record reveal" data-modal-open="guide-modal-{{ ing.id }}"
+         style="cursor:pointer;" title="클릭하여 성분 가이드 편집">
+      <span class="ah-record__id text-body-sm">{{ forloop.counter }}</span>
+      <div class="ah-record__edit" style="flex-wrap: wrap;">
+        <span class="text-body">{{ ing.name }}</span>
+        {% if ing.mainIngredient %}
+        <span class="text-body-sm text-muted">· {{ ing.mainIngredient }}</span>
+        {% endif %}
+      </div>
+      <div class="ah-record__actions">
+        {% if ing.effect or ing.sideEffect or ing.guide.keyPoints or ing.guide.sources %}
+        <span class="ah-guideflag ah-guideflag--on text-body-sm" title="작성된 가이드 있음">● 작성됨</span>
+        {% else %}
+        <span class="ah-guideflag ah-guideflag--off text-body-sm" title="가이드 미작성">○ 미작성</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="ah-record-empty text-body">등록된 성분이 없습니다. 먼저 원료 메뉴에서 성분을 추가해주세요.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* 가이드 작성 여부 플래그 — 작성됨은 브랜드 톤, 미작성은 옅은 톤 */
+  .ah-guideflag { white-space: nowrap; font-weight: var(--font-weight-bold); }
+  .ah-guideflag--on { color: var(--color-green-600); }
+  .ah-guideflag--off { color: var(--glass-highlight); font-weight: var(--font-weight-regular); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /* 리스트 편집기 + 제출 직전 JSON 직렬화. 원료 페이지와 동일 로직(document 위임·멱등)이라
+     같은 가드 플래그를 쓴다 — 두 페이지 중 먼저 로드된 쪽이 한 번만 배선하면 양쪽에서 동작한다. */
+  (function () {
+    if (document._ahIngredientWired) return;
+    document._ahIngredientWired = "1";
+
+    function makeRow() {
+      var row = document.createElement("div");
+      row.className = "ah-listedit__row";
+      var ta = document.createElement("textarea");
+      ta.className = "ah-textarea text-body";
+      ta.setAttribute("data-listedit-item", "");
+      ta.setAttribute("rows", "2");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-glass";
+      btn.setAttribute("data-listedit-remove", "");
+      btn.textContent = "삭제";
+      row.appendChild(ta);
+      row.appendChild(btn);
+      return row;
+    }
+
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest) return;
+      var add = e.target.closest("[data-listedit-add]");
+      if (add) {
+        var group = add.closest("[data-listedit]");
+        var rows = group && group.querySelector(".ah-listedit__rows");
+        if (rows) {
+          var row = makeRow();
+          rows.appendChild(row);
+          var ta = row.querySelector("[data-listedit-item]");
+          if (ta) ta.focus();
+        }
+        return;
+      }
+      var rm = e.target.closest("[data-listedit-remove]");
+      if (rm) {
+        var target = rm.closest(".ah-listedit__row");
+        if (target) target.remove();
+      }
+    });
+
+    // 제출 직전 각 편집기의 항목을 JSON 배열로 hidden 필드에 직렬화한다.
+    document.addEventListener("submit", function (e) {
+      var form = e.target.closest ? e.target.closest("[data-ingredient-form]") : null;
+      if (!form) return;
+      form.querySelectorAll("[data-listedit]").forEach(function (group) {
+        var items = [];
+        group.querySelectorAll("[data-listedit-item]").forEach(function (el) {
+          var v = (el.value || "").trim();
+          if (v) items.push(v);
+        });
+        var target = group.querySelector("[data-listedit-target]");
+        if (target) target.value = JSON.stringify(items);
+      });
+    });
+  })();
+</script>
+{% endblock %}

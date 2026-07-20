@@ -71,6 +71,10 @@
           <span class="ah-sidebar__icon" aria-hidden="true">🧪</span>
           <span class="ah-sidebar__label">원료</span>
         </a>
+        <a class="ah-sidebar__item {% if request.resolver_match.url_name == 'admin_home_guide' %}is-active{% endif %}" href="{% url 'admin_home_guide' %}">
+          <span class="ah-sidebar__icon" aria-hidden="true">📖</span>
+          <span class="ah-sidebar__label">성분 가이드</span>
+        </a>
         <a class="ah-sidebar__item {% if 'admin_home_banner' in request.resolver_match.url_name|default:'' %}is-active{% endif %}" href="{% url 'admin_home_banner' %}">
           <span class="ah-sidebar__icon" aria-hidden="true">🖼️</span>
           <span class="ah-sidebar__label">배너</span>
