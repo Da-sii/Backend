@@ -1082,21 +1082,22 @@ def ingredient_list(request):
             if length_error:
                 messages.error(request, length_error)
                 return redirect("admin_home_ingredient")
-            with transaction.atomic():
-                ingredient.name = name
-                ingredient.mainIngredient = (
-                    request.POST.get("mainIngredient", "").strip() or None
-                )
-                ingredient.minRecommended = min_recommended or None
-                ingredient.maxRecommended = max_recommended or None
-                ingredient.effect = _parse_json_list(request.POST.get("effect"))
-                ingredient.sideEffect = _parse_json_list(request.POST.get("sideEffect"))
-                ingredient.save()
-                # 성분 가이드(IngredientGuide, 1:1) — 없으면 만들고 있으면 갱신한다.
-                guide, _ = IngredientGuide.objects.get_or_create(ingredient=ingredient)
-                guide.keyPoints = _parse_json_list(request.POST.get("keyPoints"))
-                guide.sources = _parse_json_list(request.POST.get("sources"))
-                guide.save()
+            # 효과·부작용·핵심 포인트·출처(성분 가이드)는 전용 페이지(ingredient_guide)에서
+            # 편집한다. 여기서는 기본 필드만 저장해 가이드 데이터를 덮어쓰지 않는다.
+            ingredient.name = name
+            ingredient.mainIngredient = (
+                request.POST.get("mainIngredient", "").strip() or None
+            )
+            ingredient.minRecommended = min_recommended or None
+            ingredient.maxRecommended = max_recommended or None
+            ingredient.save(
+                update_fields=[
+                    "name",
+                    "mainIngredient",
+                    "minRecommended",
+                    "maxRecommended",
+                ]
+            )
             messages.success(request, f'"{name}" 성분 정보가 저장되었습니다.')
             return redirect("admin_home_ingredient")
 
@@ -1136,6 +1137,36 @@ def ingredient_list(request):
     return _ah_render(
         request,
         "admin_home/ingredient_list.html",
+        {"ingredients": ingredients},
+    )
+
+
+def ingredient_guide(request):
+    """성분 가이드 — 성분별 효과·부작용(Ingredient) + 핵심 포인트·출처(IngredientGuide 1:1).
+
+    내용이 많아 원료(ingredient_list) 모달에서 분리한 전용 페이지. 성분을 선택해
+    네 가지 JSON 리스트를 편집한다. 저장 시 IngredientGuide 가 없으면 생성한다.
+    """
+    if request.method == "POST" and request.POST.get("action") == "update":
+        ingredient = _get_ingredient(request)
+        if ingredient is None:
+            return redirect("admin_home_guide")
+        with transaction.atomic():
+            ingredient.effect = _parse_json_list(request.POST.get("effect"))
+            ingredient.sideEffect = _parse_json_list(request.POST.get("sideEffect"))
+            ingredient.save(update_fields=["effect", "sideEffect"])
+            # IngredientGuide(1:1) — 없으면 만들고 있으면 갱신한다.
+            guide, _ = IngredientGuide.objects.get_or_create(ingredient=ingredient)
+            guide.keyPoints = _parse_json_list(request.POST.get("keyPoints"))
+            guide.sources = _parse_json_list(request.POST.get("sources"))
+            guide.save()
+        messages.success(request, f'"{ingredient.name}" 성분 가이드가 저장되었습니다.')
+        return redirect("admin_home_guide")
+
+    ingredients = Ingredient.objects.select_related("guide").order_by("id")
+    return _ah_render(
+        request,
+        "admin_home/ingredient_guide.html",
         {"ingredients": ingredients},
     )
 
