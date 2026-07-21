@@ -134,7 +134,7 @@
     {% for ing in ingredients %}
     <div class="ah-record reveal" data-modal-open="guide-modal-{{ ing.id }}"
          style="cursor:pointer;" title="클릭하여 성분 가이드 편집">
-      <span class="ah-record__id text-body-sm">{{ forloop.counter }}</span>
+      <span class="ah-record__id text-body-sm" title="DB id">{{ ing.id }}</span>
       <div class="ah-record__edit" style="flex-wrap: wrap;">
         <span class="text-body">{{ ing.name }}</span>
         {% if ing.mainIngredient %}
