@@ -63,7 +63,7 @@ def _call_gemini(user_context: dict, ingredient_context: list) -> list:
        - alcohol_frequency가 "주 3회 이상": 간 건강 성분 가중치 상향
        - smoking_status가 "흡연" 또는 "금연 중": 항산화 성분 가중치 상향
        - sleep_hours가 "1~4시간": 수면 관련 성분 가중치 상향
-    5. 정확히 3개를 추천하세요.
+    5. 정확히 3개를 추천하세요. fit_score 높은 순으로 정렬하세요.
     6. fit_score는 0~100 사이 정수로, 사용자 프로필과의 적합도를 나타냅니다.
 
     아래 JSON 형식으로만 응답하세요:

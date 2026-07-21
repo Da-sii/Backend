@@ -25,24 +25,22 @@ class UserSurvey(models.Model):
 
 
 class SavedRecommendation(models.Model):
-    """추천 결과 저장"""
+    """추천 결과 저장(유저 당 1건, 재저장 시 교체)"""
 
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="saved_recommendations",
         verbose_name="저장한 사용자",
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "saved_recommendations"
-        indexes = [
-            models.Index(fields=["user", "-created_at"]),
-        ]
 
     def __str__(self):
-        return f"{self.user.email}의 저장된 추천 #{self.id}"
+        return f"{self.user.email}의 저장된 추천"
 
 
 class SavedRecommendationItem(models.Model):
