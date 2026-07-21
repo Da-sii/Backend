@@ -307,8 +307,10 @@
         <p class="text-body pe-card__name">{{ product.name }}</p>
         <p class="text-body-sm text-muted">{{ product.company }} · {{ product.productType }}</p>
 
-        {# 소분류·성분(용량)·기타원료를 텍스트로 녹여 표기 #}
+        {# 소분류·성분(용량)·기타원료를 텍스트로 녹여 표기(맨 위 DB id) #}
         <dl class="ah-product__meta text-body-sm">
+          <dt>ID</dt>
+          <dd>{{ product.id }}</dd>
           <dt>카테고리</dt>
           <dd>{% for cp in product.category_products.all %}{{ cp.category.category }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
           <dt>성분</dt>
