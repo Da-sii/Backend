@@ -756,16 +756,16 @@ def product_list(request):
             "categories": [{"id": cp.category_id} for cp in p.category_products.all()],
         }
 
-    # 모달 추가/수정 폼 렌더용 선택지
-    ingredients = Ingredient.objects.all().order_by("id")
+    # 모달 추가/수정 폼 렌더용 선택지 — 드롭다운 옵션은 가나다순 정렬(찾기 쉽게)
+    ingredients = Ingredient.objects.all().order_by("name")
     other_ingredients = OtherIngredient.objects.all().order_by("name")
     small_categories = (
         SmallCategory.objects.select_related("middle_category__big_category")
         .all()
         .order_by(
-            "middle_category__big_category__id",
-            "middle_category__id",
-            "id",
+            "middle_category__big_category__category",
+            "middle_category__category",
+            "category",
         )
     )
 
