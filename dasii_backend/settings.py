@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     "products",
     "review",
     "common",
+    "recommendations",
 
     # Third-party
     "rest_framework",
@@ -285,3 +286,6 @@ if not DEBUG and SENTRY_DSN:
         traces_sample_rate=0.1,
         send_default_pii=True,
     )
+
+# Gemini
+GEMINI_API_KEY = config('GEMINI_API_KEY')
