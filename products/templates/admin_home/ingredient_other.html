@@ -107,8 +107,8 @@
       {% for oi in others %}
       <div class="ah-record reveal" data-modal-open="oi-modal-{{ oi.id }}"
            style="cursor:pointer;" title="클릭하여 수정">
-        {# 표시용 넘버링 — DB id 대신 목록 순번(1~n)이라 앞 항목 삭제 시에도 항상 이어진다 #}
-        <span class="ah-record__id text-body-sm">{{ forloop.counter }}</span>
+        {# DB id(PK) 표기 — 삭제 시 순번 연속성보다 실제 PK 를 노출한다 #}
+        <span class="ah-record__id text-body-sm" title="DB id">{{ oi.id }}</span>
         <div class="ah-record__edit" style="flex-wrap: wrap;">
           <span class="text-body">{{ oi.name }}</span>
         </div>
