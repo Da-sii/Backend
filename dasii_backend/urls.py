@@ -22,6 +22,7 @@ urlpatterns = [
     path("ingredients/", include("products.urls.ingredient_urls")),
     path("review/", include("review.urls")), # review 앱 라우팅
     path("banners/", include("common.urls") ), # 메인 배너
+    path("recommendations/", include("recommendations.urls")), # recommendation 라우팅
 
     path('.well-known/apple-app-site-association', apple_app_site_association),
     path('.well-known/assetlinks.json', assetlinks),
