@@ -275,16 +275,30 @@
 <section class="reveal">
   <div style="display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
     <h2 class="text-title-sm">
-      제품 목록 <span class="text-muted">({{ products|length }})</span>
+      제품 목록 <span class="text-muted">(<span id="product-count">{{ products|length }}</span>)</span>
     </h2>
-    <input
-      class="ah-input"
-      type="search"
-      id="product-search"
-      placeholder="이름 또는 브랜드로 검색"
-      style="max-width: 32ch;"
-      aria-label="제품 검색"
-    />
+    <div style="display:flex; gap:var(--space-2); flex-wrap:wrap; align-items:center;">
+      {# 카테고리별 보기 — 소분류 선택 시 해당 카테고리 제품만 표시(이름/브랜드 검색과 공존) #}
+      <select class="ah-select" id="product-category-filter" style="max-width: 32ch;"
+              aria-label="카테고리로 필터">
+        <option value="">전체 카테고리</option>
+        {% for sc in small_categories %}
+        <option value="{{ sc.id }}">
+          {{ sc.middle_category.big_category.category }} &gt;
+          {{ sc.middle_category.category }} &gt;
+          {{ sc.category }}
+        </option>
+        {% endfor %}
+      </select>
+      <input
+        class="ah-input"
+        type="search"
+        id="product-search"
+        placeholder="이름 또는 브랜드로 검색"
+        style="max-width: 32ch;"
+        aria-label="제품 검색"
+      />
+    </div>
   </div>
 
   {% if products %}
@@ -292,7 +306,8 @@
     {% for product in products %}
     <div class="pe-card reveal lift" data-product-edit="{{ product.id }}"
          title="클릭하여 상세·수정"
-         data-search="{{ product.name|lower }} {{ product.company|lower }}">
+         data-search="{{ product.name|lower }} {{ product.company|lower }}"
+         data-categories="{% for cp in product.category_products.all %}{{ cp.category_id }} {% endfor %}">
       <div class="pe-card__thumb">
         {% with product.images.first as thumb %}
         {% if thumb %}
@@ -482,19 +497,33 @@
 
 {% block extra_js %}
 <script>
-  // 클라이언트 사이드 검색 — 제품명/브랜드로 표시되는 행만 필터링한다 (서버 요청 없음).
+  // 클라이언트 사이드 필터 — 이름/브랜드 검색 + 카테고리(소분류) 필터를 함께 적용한다(서버 요청 없음).
+  // 카드는 (검색어 일치) AND (선택 카테고리 포함) 일 때만 보인다. 표시 개수도 갱신.
   (function () {
     var input = document.getElementById("product-search");
+    var catFilter = document.getElementById("product-category-filter");
     var records = document.querySelectorAll("#product-records .pe-card");
-    if (!input || !records.length) return;
+    var countEl = document.getElementById("product-count");
+    if (!records.length) return;
 
-    input.addEventListener("input", function () {
-      var term = input.value.trim().toLowerCase();
+    function apply() {
+      var term = input ? input.value.trim().toLowerCase() : "";
+      var cat = catFilter ? catFilter.value : "";
+      var shown = 0;
       records.forEach(function (row) {
         var haystack = row.getAttribute("data-search") || "";
-        row.style.display = haystack.indexOf(term) === -1 ? "none" : "";
+        var cats = " " + (row.getAttribute("data-categories") || "") + " ";
+        var matchTerm = !term || haystack.indexOf(term) !== -1;
+        var matchCat = !cat || cats.indexOf(" " + cat + " ") !== -1;
+        var visible = matchTerm && matchCat;
+        row.style.display = visible ? "" : "none";
+        if (visible) shown++;
       });
-    });
+      if (countEl) countEl.textContent = shown;
+    }
+
+    if (input) input.addEventListener("input", apply);
+    if (catFilter) catFilter.addEventListener("change", apply);
   })();
 
   // 제품 추가 모달의 동적 행(성분+용량 / 기타 원료 / 카테고리) 추가·삭제.
