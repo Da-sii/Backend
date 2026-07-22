@@ -882,3 +882,51 @@ body.ah-modal-open { overflow: hidden; }
   color: var(--glass-highlight);
   padding: var(--space-1) var(--space-2);
 }
+
+/* =========================================================
+   맨 위로 가기 플로팅 버튼 — 긴 목록에서 스크롤 시 우 하단 노출
+   ========================================================= */
+.ah-to-top {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 30; /* 토프바(20) 위, 모달(--z-modal) 아래 */
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+  color: var(--text-on-glass);
+  font-size: var(--fs-text-lg);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity var(--transition-base), transform var(--transition-base),
+    visibility var(--transition-base);
+}
+.ah-to-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ah-to-top {
+    background: var(--glass-bg-fallback);
+    color: var(--text-default);
+    border-color: var(--color-gray-200);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ah-to-top {
+    transform: none;
+    transition: opacity var(--transition-base), visibility var(--transition-base);
+  }
+}
