@@ -109,13 +109,44 @@
             </div>
           </div>
 
-          {# 효과·부작용·핵심 포인트·출처는 좌측 '성분 가이드' 메뉴에서 편집한다(내용 분리). #}
-          <div class="ah-formsection">
-            <h3 class="text-title-sm">성분 가이드</h3>
-            <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
-              효과·부작용·핵심 포인트·출처는 좌측 <strong>성분 가이드</strong> 메뉴에서 편집합니다.
-            </p>
+          {# 효과·부작용 (JSON 리스트) — 이 원료 모달에서 편집. 핵심 포인트·출처는 성분 가이드 메뉴. #}
+          <div class="ah-grid">
+            <div class="ah-field">
+              <label class="ah-label">효과</label>
+              <div class="ah-listedit" data-listedit>
+                <div class="ah-listedit__rows">
+                  {% for e in ing.effect %}
+                  <div class="ah-listedit__row">
+                    <textarea class="ah-textarea text-body" data-listedit-item
+                              rows="2" aria-label="효과 항목">{{ e }}</textarea>
+                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                  </div>
+                  {% endfor %}
+                </div>
+                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <input type="hidden" name="effect" data-listedit-target />
+              </div>
+            </div>
+            <div class="ah-field">
+              <label class="ah-label">부작용</label>
+              <div class="ah-listedit" data-listedit>
+                <div class="ah-listedit__rows">
+                  {% for s in ing.sideEffect %}
+                  <div class="ah-listedit__row">
+                    <textarea class="ah-textarea text-body" data-listedit-item
+                              rows="2" aria-label="부작용 항목">{{ s }}</textarea>
+                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                  </div>
+                  {% endfor %}
+                </div>
+                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <input type="hidden" name="sideEffect" data-listedit-target />
+              </div>
+            </div>
           </div>
+          <p class="text-caption" style="color: var(--glass-highlight);">
+            핵심 포인트·출처는 좌측 <strong>성분 가이드</strong> 메뉴에서 관리합니다.
+          </p>
 
           <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
             <button type="button" class="btn btn-glass" data-modal-close>취소</button>
