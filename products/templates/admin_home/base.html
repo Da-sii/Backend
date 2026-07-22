@@ -113,6 +113,11 @@
     </div>
   </div>
 
+  {# 맨 위로 가기 — 스크롤이 일정 이상일 때만 노출(interactions.js 가 배선). 긴 목록 페이지용 #}
+  <button type="button" class="ah-to-top" id="ah-to-top" aria-label="맨 위로">
+    <span aria-hidden="true">↑</span>
+  </button>
+
   {# 디자인 시스템 인터랙션 스크립트 #}
   <script src="{% static 'admin_home/js/reveal.js' %}" defer></script>
   <script src="{% static 'admin_home/js/interactions.js' %}" defer></script>

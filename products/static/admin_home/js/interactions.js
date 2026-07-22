@@ -179,11 +179,34 @@
     });
   }
 
+  /* -----------------------------------------------------------
+     맨 위로 가기 버튼 — .ah-content-scroll 이 일정 이상 스크롤되면 노출,
+     클릭 시 맨 위로. 셸 요소라 한 번만 배선(_ahToTopWired).
+     ----------------------------------------------------------- */
+  function initToTop() {
+    if (document._ahToTopWired) return;
+    var btn = document.getElementById("ah-to-top");
+    var scroller = document.querySelector(".ah-content-scroll");
+    if (!btn || !scroller) return;
+    document._ahToTopWired = "1";
+
+    var THRESHOLD = 240;
+    function onScroll() {
+      btn.classList.toggle("is-visible", scroller.scrollTop > THRESHOLD);
+    }
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    btn.addEventListener("click", function () {
+      scroller.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+    });
+    onScroll();
+  }
+
   function init() {
     document.querySelectorAll(".glass-nav").forEach(wireNav);
     initGlassSheen();
     initModals();
     initSidebarToggle();
+    initToTop();
   }
 
   // 창 크기 변경 시 모든 nav 인디케이터 위치 재계산 (전역에 한 번만 바인딩)
