@@ -768,6 +768,29 @@
         p.hidden = p.getAttribute("data-ptab-panel") !== "basic";
       });
     });
+
+    // 숨겨진 탭의 필수 입력으로 저장이 조용히 막히는 문제 방지:
+    // 제출 시 required 가 비어 있으면 브라우저가 'invalid' 를 쏘는데, 그 필드가 hidden 패널에
+    // 있으면 포커스/안내가 안 된다. 캡처 단계에서 받아 해당 필드의 탭으로 먼저 전환해준다.
+    // ('invalid' 는 버블링 안 하므로 document 캡처로 수신)
+    document.addEventListener(
+      "invalid",
+      function (e) {
+        var field = e.target;
+        if (!field || !field.closest) return;
+        var panel = field.closest("[data-ptab-panel]");
+        var scope = field.closest(".ah-modal__body");
+        if (!panel || !scope || !panel.hidden) return;
+        var name = panel.getAttribute("data-ptab-panel");
+        scope.querySelectorAll("[data-ptab]").forEach(function (t) {
+          t.classList.toggle("is-active", t.getAttribute("data-ptab") === name);
+        });
+        scope.querySelectorAll("[data-ptab-panel]").forEach(function (p) {
+          p.hidden = p.getAttribute("data-ptab-panel") !== name;
+        });
+      },
+      true
+    );
   })();
 
   // 제품 이미지 호버 교체 — 파일 선택 시 미리보기 교체 + 해당 이미지 삭제 체크(기존 삭제+새 파일 = 교체).
