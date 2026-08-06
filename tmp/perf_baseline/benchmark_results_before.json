@@ -1,0 +1,331 @@
+{
+  "label": "before",
+  "status": "completed",
+  "abort_reason": null,
+  "completed_count": 18,
+  "planned_count": 18,
+  "baseline_snapshot": {
+    "view_count": 370,
+    "daily_view_row_count": 683
+  },
+  "checkpoints": [
+    {
+      "after_n": 5,
+      "snapshot": {
+        "view_count": 370,
+        "daily_view_row_count": 683
+      },
+      "ok": true
+    },
+    {
+      "after_n": 10,
+      "snapshot": {
+        "view_count": 370,
+        "daily_view_row_count": 683
+      },
+      "ok": true
+    },
+    {
+      "after_n": 15,
+      "snapshot": {
+        "view_count": 370,
+        "daily_view_row_count": 683
+      },
+      "ok": true
+    }
+  ],
+  "final_snapshot": {
+    "view_count": 370,
+    "daily_view_row_count": 683
+  },
+  "final_snapshot_ok": true,
+  "results": [
+    {
+      "name": "product_ranking",
+      "method": "GET",
+      "path": "/products/ranking/",
+      "status_code": 200,
+      "avg_ms": 304.09,
+      "p50_ms": 296.13,
+      "p95_ms": 350.35,
+      "avg_query_count": 26,
+      "avg_query_time_ms": 274.17,
+      "n1_suspects": [
+        {
+          "template": "SELECT \"product_images\".\"id\", \"product_images\".\"product_id\", \"product_images\".\"url\" FROM \"product_images\" WHERE \"product_images\".\"product_id\" = ? ORDER BY \"product_images\".\"id\" ASC LIMIT ?",
+          "count": 8
+        },
+        {
+          "template": "SELECT COUNT(*) AS \"__count\" FROM \"reviews\" WHERE \"reviews\".\"product_id\" = ?",
+          "count": 8
+        },
+        {
+          "template": "SELECT AVG(\"reviews\".\"rate\") AS \"avg\" FROM \"reviews\" WHERE \"reviews\".\"product_id\" = ?",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "name": "product_ranking_category",
+      "method": "GET",
+      "path": "/products/ranking/category/",
+      "status_code": 200,
+      "avg_ms": 16.91,
+      "p50_ms": 16.76,
+      "p95_ms": 19.23,
+      "avg_query_count": 1,
+      "avg_query_time_ms": 13.6,
+      "n1_suspects": []
+    },
+    {
+      "name": "product_list",
+      "method": "GET",
+      "path": "/products/list/",
+      "status_code": 200,
+      "avg_ms": 377.25,
+      "p50_ms": 373.11,
+      "p95_ms": 435.32,
+      "avg_query_count": 32,
+      "avg_query_time_ms": 340.57,
+      "n1_suspects": [
+        {
+          "template": "SELECT \"product_images\".\"id\", \"product_images\".\"product_id\", \"product_images\".\"url\" FROM \"product_images\" WHERE \"product_images\".\"product_id\" = ? ORDER BY \"product_images\".\"id\" ASC LIMIT ?",
+          "count": 10
+        },
+        {
+          "template": "SELECT COUNT(*) AS \"__count\" FROM \"reviews\" WHERE \"reviews\".\"product_id\" = ?",
+          "count": 10
+        },
+        {
+          "template": "SELECT AVG(\"reviews\".\"rate\") AS \"avg\" FROM \"reviews\" WHERE \"reviews\".\"product_id\" = ?",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "name": "product_category",
+      "method": "GET",
+      "path": "/products/category/",
+      "status_code": 200,
+      "avg_ms": 104.13,
+      "p50_ms": 102.0,
+      "p95_ms": 116.99,
+      "avg_query_count": 9,
+      "avg_query_time_ms": 93.87,
+      "n1_suspects": [
+        {
+          "template": "SELECT \"small_categories\".\"category\" AS \"category\" FROM \"small_categories\" WHERE \"small_categories\".\"middle_category_id\" = ? ORDER BY \"small_categories\".\"id\" ASC",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "name": "product_search",
+      "method": "GET",
+      "path": "/products/search/",
+      "status_code": 200,
+      "avg_ms": 507.86,
+      "p50_ms": 498.16,
+      "p95_ms": 687.13,
+      "avg_query_count": 32,
+      "avg_query_time_ms": 473.07,
+      "n1_suspects": [
+        {
+          "template": "SELECT \"product_images\".\"id\", \"product_images\".\"product_id\", \"product_images\".\"url\" FROM \"product_images\" WHERE \"product_images\".\"product_id\" = ? ORDER BY \"product_images\".\"id\" ASC LIMIT ?",
+          "count": 10
+        },
+        {
+          "template": "SELECT COUNT(*) AS \"__count\" FROM \"reviews\" WHERE \"reviews\".\"product_id\" = ?",
+          "count": 10
+        },
+        {
+          "template": "SELECT AVG(\"reviews\".\"rate\") AS \"avg\" FROM \"reviews\" WHERE \"reviews\".\"product_id\" = ?",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "name": "product_main",
+      "method": "GET",
+      "path": "/products/main/",
+      "status_code": 200,
+      "avg_ms": 842.12,
+      "p50_ms": 895.09,
+      "p95_ms": 1007.8,
+      "avg_query_count": 53,
+      "avg_query_time_ms": 784.8,
+      "n1_suspects": [
+        {
+          "template": "SELECT \"middle_categories\".\"id\", \"middle_categories\".\"category\", \"middle_categories\".\"big_category_id\" FROM \"middle_categories\" WHERE \"middle_categories\".\"id\" = ? LIMIT ?",
+          "count": 10
+        },
+        {
+          "template": "SELECT \"big_categories\".\"id\", \"big_categories\".\"category\" FROM \"big_categories\" WHERE \"big_categories\".\"id\" = ? LIMIT ?",
+          "count": 10
+        },
+        {
+          "template": "SELECT \"product_images\".\"id\", \"product_images\".\"product_id\", \"product_images\".\"url\" FROM \"product_images\" WHERE \"product_images\".\"product_id\" = ? ORDER BY \"product_images\".\"id\" ASC LIMIT ?",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "name": "banner_list",
+      "method": "GET",
+      "path": "/banners/",
+      "status_code": 200,
+      "avg_ms": 27.13,
+      "p50_ms": 25.49,
+      "p95_ms": 33.24,
+      "avg_query_count": 2,
+      "avg_query_time_ms": 22.9,
+      "n1_suspects": []
+    },
+    {
+      "name": "ingredient_guide_list",
+      "method": "GET",
+      "path": "/ingredients/guides/",
+      "status_code": 200,
+      "avg_ms": 26.66,
+      "p50_ms": 26.36,
+      "p95_ms": 29.79,
+      "avg_query_count": 2,
+      "avg_query_time_ms": 22.93,
+      "n1_suspects": []
+    },
+    {
+      "name": "mypage_user_info",
+      "method": "GET",
+      "path": "/auth/mypage/",
+      "status_code": 200,
+      "avg_ms": 0.36,
+      "p50_ms": 0.33,
+      "p95_ms": 0.55,
+      "avg_query_count": 0,
+      "avg_query_time_ms": 0,
+      "n1_suspects": []
+    },
+    {
+      "name": "product_detail",
+      "method": "GET",
+      "path": "/products/2/",
+      "status_code": 200,
+      "avg_ms": 183.53,
+      "p50_ms": 177.27,
+      "p95_ms": 205.13,
+      "avg_query_count": 15,
+      "avg_query_time_ms": 165.37,
+      "n1_suspects": []
+    },
+    {
+      "name": "review_list",
+      "method": "GET",
+      "path": "/review/product/2/reviews/0/",
+      "status_code": 200,
+      "avg_ms": 60.32,
+      "p50_ms": 59.75,
+      "p95_ms": 66.57,
+      "avg_query_count": 5,
+      "avg_query_time_ms": 52.7,
+      "n1_suspects": []
+    },
+    {
+      "name": "review_product_images",
+      "method": "GET",
+      "path": "/review/product/2/images/0/",
+      "status_code": 200,
+      "avg_ms": 36.53,
+      "p50_ms": 35.72,
+      "p95_ms": 41.58,
+      "avg_query_count": 3,
+      "avg_query_time_ms": 32.13,
+      "n1_suspects": []
+    },
+    {
+      "name": "review_rating_stats",
+      "method": "GET",
+      "path": "/review/product/2/rating/",
+      "status_code": 200,
+      "avg_ms": 90.89,
+      "p50_ms": 89.69,
+      "p95_ms": 100.82,
+      "avg_query_count": 8,
+      "avg_query_time_ms": 82.57,
+      "n1_suspects": [
+        {
+          "template": "SELECT COUNT(*) AS \"__count\" FROM \"reviews\" WHERE (\"reviews\".\"product_id\" = ? AND \"reviews\".\"rate\" = ?)",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "name": "review_user_check",
+      "method": "GET",
+      "path": "/review/product/2/check/",
+      "status_code": 200,
+      "avg_ms": 11.8,
+      "p50_ms": 11.85,
+      "p95_ms": 13.98,
+      "avg_query_count": 1,
+      "avg_query_time_ms": 10.17,
+      "n1_suspects": []
+    },
+    {
+      "name": "ingredient_guide_detail",
+      "method": "GET",
+      "path": "/ingredients/guides/1/",
+      "status_code": 200,
+      "avg_ms": 25.95,
+      "p50_ms": 25.5,
+      "p95_ms": 31.24,
+      "avg_query_count": 2,
+      "avg_query_time_ms": 22.4,
+      "n1_suspects": []
+    },
+    {
+      "name": "review_detail",
+      "method": "GET",
+      "path": "/review/detail/8/",
+      "status_code": 200,
+      "avg_ms": 26.05,
+      "p50_ms": 25.32,
+      "p95_ms": 29.89,
+      "avg_query_count": 2,
+      "avg_query_time_ms": 21.8,
+      "n1_suspects": []
+    },
+    {
+      "name": "user_reviews",
+      "method": "GET",
+      "path": "/review/myReviews/0/",
+      "status_code": 200,
+      "avg_ms": 25.62,
+      "p50_ms": 25.32,
+      "p95_ms": 30.14,
+      "avg_query_count": 2,
+      "avg_query_time_ms": 21.33,
+      "n1_suspects": []
+    },
+    {
+      "name": "random_products",
+      "method": "GET",
+      "path": "/review/random-products/",
+      "status_code": 200,
+      "avg_ms": 117.51,
+      "p50_ms": 112.62,
+      "p95_ms": 171.89,
+      "avg_query_count": 7,
+      "avg_query_time_ms": 94.2,
+      "n1_suspects": [
+        {
+          "template": "SELECT \"product_images\".\"id\", \"product_images\".\"product_id\", \"product_images\".\"url\" FROM \"product_images\" WHERE \"product_images\".\"product_id\" = ? ORDER BY \"product_images\".\"id\" ASC LIMIT ?",
+          "count": 3
+        }
+      ]
+    }
+  ],
+  "skipped": [
+    "product_coupang_redirect : 실제 외부 쿠팡 API 호출이라 baseline에서 제외",
+    "POST/PUT/DELETE류(리뷰 작성/수정/삭제, 회원가입, 로그인 등) : 반복 호출 시 데이터 오염 유발이라 제외"
+  ]
+}
