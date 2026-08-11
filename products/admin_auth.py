@@ -1,10 +1,8 @@
 from functools import wraps
 from django.shortcuts import redirect, render
 from django.contrib import messages
-from django.conf import settings
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import JsonResponse
 from django.urls import reverse
-import os
 from decouple import config
 
 def get_admin_auth_code():
@@ -15,10 +13,6 @@ def admin_auth_required(view_func):
     """관리자 페이지 인증 데코레이터 - 로그인된 상태에서만 접근 가능"""
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        # 운영 환경에서는 접근 차단
-        if settings.DJANGO_ENV == "production":
-            return HttpResponseForbidden("이 페이지는 개발 환경에서만 접근 가능합니다.")
-
         # 세션에 인증 정보가 있는지 확인
         if request.session.get("admin_authenticated", False):
             return view_func(request, *args, **kwargs)
@@ -30,10 +24,6 @@ def admin_auth_required(view_func):
 
 def admin_login_view(request):
     """관리자 로그인 - ADMIN_CODE 입력 및 .env 값과 비교"""
-    # 운영 환경에서는 접근 차단
-    if settings.DJANGO_ENV == "production":
-        return HttpResponseForbidden("이 페이지는 개발 환경에서만 접근 가능합니다.")
-
     # 이미 인증된 경우 홈으로 리다이렉트 (/admin/home)
     if request.session.get("admin_authenticated", False):
         return redirect("admin_home")
