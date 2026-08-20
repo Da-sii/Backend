@@ -17,7 +17,7 @@ from products.models import Product, SmallCategory, ProductIngredient, ProductOt
 from products.serializers import ProductDetailSerializer, ProductSearchSerializer, ProductRankingSerializer, \
     ProductsListSerializer, MainSerializer, ProductRequestSerializer
 from products.serializers.ingredient import MainRandomGuideSerializer
-from products.utils import record_view, upload_images_to_s3
+from products.utils import record_view, upload_images_to_s3, with_list_annotations
 from products.coupang import search_top_product_url, debug_search
 
 # 제품 상세 (GET /products/<id>/)
@@ -128,6 +128,8 @@ class ProductRankingView(generics.ListAPIView):
 
         if category and category != "전체":
             queryset = queryset.filter(category_products__category__category=category)
+
+        queryset = with_list_annotations(queryset)
 
         ranked = queryset.annotate(totalViews=Sum("daily_views__views")).order_by("-totalViews", "id")[:50]
 

@@ -1,9 +1,33 @@
 import boto3, uuid, os
 from typing import List
 from django.utils import timezone
-from django.db.models import F
+from django.db.models import F, OuterRef, Subquery, Count, Avg
 from django.conf import settings
 from products.models import Product, ProductDailyView, ProductImage
+
+def with_list_annotations(qs):
+    """
+    상품 리스트에 image/reviewCount/reviewAvg를 쿼리 한 번으로 불러옴
+
+    Count/Avg를 join으로 붙이면 다른 join(daily_views 등)과 곱해져 (cartesian product) 값이 부풀려질 수 있어,
+    상품별로 독립 실행되는 Subquery(OuterRef) 사용
+    """
+    from review.models import Review  # 지연 import: products <-> review 순환참조 방지
+
+    return qs.annotate(
+        image=Subquery(
+            ProductImage.objects.filter(product=OuterRef("pk"))
+            .order_by("id").values("url")[:1]
+        ),
+        reviewCount=Subquery(
+            Review.objects.filter(product=OuterRef("pk"))
+            .values("product").annotate(c=Count("id")).values("c")
+        ),
+        reviewAvg=Subquery(
+            Review.objects.filter(product=OuterRef("pk"))
+            .values("product").annotate(a=Avg("rate")).values("a")
+        ),
+    )
 
 def record_view(product: Product):
     # 누적 증가

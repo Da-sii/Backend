@@ -242,8 +242,7 @@ class ProductRankingSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "image", "company", "reviewCount", "reviewAvg", "rankDiff")
 
     def get_image(self, obj):
-        first_image = obj.images.order_by("id").first()
-        return first_image.url if first_image else None
+        return obj.image
 
     def get_rankDiff(self, obj):
         current_ranks = self.context.get("current_ranks", {})
@@ -257,11 +256,10 @@ class ProductRankingSerializer(serializers.ModelSerializer):
         return prev - current  # 양수면 상승, 음수면 하락, 0이면 동일
 
     def get_reviewCount(self, obj):
-        return obj.reviews.count()
+        return obj.reviewCount or 0
 
     def get_reviewAvg(self, obj):
-        agg = obj.reviews.aggregate(avg=Avg("rate"))
-        value = agg.get("avg")
+        value = obj.reviewAvg
         return round(float(value), 2) if value is not None else None
 
 class ProductsListSerializer(serializers.ModelSerializer):
