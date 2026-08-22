@@ -33,6 +33,7 @@ RUN SECRET_KEY=build-time-placeholder \
     AWS_S3_REGION_NAME=placeholder \
     AWS_S3_BASE_URL=placeholder \
     CLOUDFRONT_DOMAIN=placeholder \
+    GEMINI_API_KEY=placeholder \
     python manage.py collectstatic --noinput
 
-CMD exec gunicorn dasii_backend.wsgi:application --bind 0.0.0.0:$PORT
+CMD exec gunicorn dasii_backend.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
