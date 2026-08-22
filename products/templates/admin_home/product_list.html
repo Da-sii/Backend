@@ -26,98 +26,109 @@
       <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
     </div>
     <div class="ah-modal__body">
+      {# 상세 모달과 동일한 2탭(기본정보·카테고리 / 성분). 패널은 한 form 안에 있어 저장 시 전체 전송 #}
+      <div class="ah-tabs" role="tablist" aria-label="제품 정보 구분" data-ptabs>
+        <button type="button" class="ah-tab is-active" data-ptab="basic" role="tab">기본 정보 · 카테고리</button>
+        <button type="button" class="ah-tab" data-ptab="ingredients" role="tab">성분</button>
+      </div>
       <form method="post" enctype="multipart/form-data" class="ah-stack">
         {% csrf_token %}
         <input type="hidden" name="action" value="create" />
 
-        <div class="ah-grid">
-          <div class="ah-field">
-            <label class="ah-label" for="pc-name">제품명</label>
-            <input class="ah-input" type="text" id="pc-name" name="name" required />
-          </div>
-          <div class="ah-field">
-            <label class="ah-label" for="pc-company">제조사</label>
-            <input class="ah-input" type="text" id="pc-company" name="company" required />
-          </div>
-          <div class="ah-field">
-            <label class="ah-label" for="pc-type">제품 유형</label>
-            <input class="ah-input" type="text" id="pc-type" name="productType"
-                   placeholder="예: 건강기능식품" required />
-          </div>
-          <div class="ah-field">
-            <label class="ah-label" for="pc-coupang">쿠팡 링크</label>
-            <input class="ah-input" type="text" id="pc-coupang" name="coupang" placeholder="https://..." />
-          </div>
-        </div>
-
-        <div class="ah-field">
-          <label class="ah-label" for="pc-images">제품 이미지</label>
-          <input class="ah-input" type="file" id="pc-images" name="image_files" multiple accept="image/*" />
-        </div>
-
-        {# 성분 — 성분 선택 + 용량, 행 단위로 함께 추가/삭제된다(ingredient_ids[] / amounts[] 인덱스 대응) #}
-        <div class="ah-formsection">
-          <h3 class="text-title-sm">성분</h3>
-          <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
-            성분을 선택하고 용량을 입력합니다.
-          </p>
-        </div>
-        <div class="ah-listedit" data-row-group>
-          <div class="ah-listedit__rows" data-row-list>
-            <div class="ah-listedit__row" data-row>
-              <select class="ah-select" name="ingredient_ids[]" aria-label="성분 선택">
-                <option value="">성분 선택</option>
-                {% for ing in ingredients %}
-                <option value="{{ ing.id }}">{{ ing.name }}</option>
-                {% endfor %}
-              </select>
-              <input class="ah-input" type="text" name="amounts[]" placeholder="예: 1000mg" aria-label="용량" />
-              <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+        {# ── 탭① 기본 정보 · 카테고리 ── #}
+        <div data-ptab-panel="basic">
+          <div class="ah-grid">
+            <div class="ah-field">
+              <label class="ah-label" for="pc-name">제품명</label>
+              <input class="ah-input" type="text" id="pc-name" name="name" required />
+            </div>
+            <div class="ah-field">
+              <label class="ah-label" for="pc-company">제조사</label>
+              <input class="ah-input" type="text" id="pc-company" name="company" required />
+            </div>
+            <div class="ah-field">
+              <label class="ah-label" for="pc-type">제품 유형</label>
+              <input class="ah-input" type="text" id="pc-type" name="productType"
+                     placeholder="예: 건강기능식품" required />
+            </div>
+            <div class="ah-field">
+              <label class="ah-label" for="pc-coupang">쿠팡 링크</label>
+              <input class="ah-input" type="text" id="pc-coupang" name="coupang" placeholder="https://..." />
             </div>
           </div>
-          <button type="button" class="btn btn-glass" data-row-add>+ 성분 추가</button>
+
+          <div class="ah-field">
+            <label class="ah-label" for="pc-images">제품 이미지</label>
+            <input class="ah-input" type="file" id="pc-images" name="image_files" multiple accept="image/*" />
+          </div>
+
+          {# 소분류 카테고리 #}
+          <div class="ah-formsection">
+            <h3 class="text-title-sm">카테고리(소분류)</h3>
+          </div>
+          <div class="ah-listedit" data-row-group>
+            <div class="ah-listedit__rows" data-row-list>
+              <div class="ah-listedit__row" data-row>
+                <select class="ah-select" name="category_ids[]" aria-label="소분류 선택">
+                  <option value="">소분류 선택</option>
+                  {% for sc in small_categories %}
+                  <option value="{{ sc.id }}">
+                    {{ sc.middle_category.big_category.category }} &gt;
+                    {{ sc.middle_category.category }} &gt;
+                    {{ sc.category }}
+                  </option>
+                  {% endfor %}
+                </select>
+                <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-glass" data-row-add>+ 카테고리 추가</button>
+          </div>
         </div>
 
-        {# 기타 원료 #}
-        <div class="ah-formsection">
-          <h3 class="text-title-sm">기타 원료</h3>
-        </div>
-        <div class="ah-listedit" data-row-group>
-          <div class="ah-listedit__rows" data-row-list>
-            <div class="ah-listedit__row" data-row>
-              <select class="ah-select" name="other_ingredient_ids[]" aria-label="기타 원료 선택">
-                <option value="">기타 원료 선택</option>
-                {% for oi in other_ingredients %}
-                <option value="{{ oi.id }}">{{ oi.name }}</option>
-                {% endfor %}
-              </select>
-              <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
-            </div>
+        {# ── 탭② 성분 (성분 + 기타 원료) ── #}
+        <div data-ptab-panel="ingredients" hidden>
+          {# 성분 — 성분 선택 + 용량, 행 단위로 함께 추가/삭제된다(ingredient_ids[] / amounts[] 인덱스 대응) #}
+          <div class="ah-formsection">
+            <h3 class="text-title-sm">성분</h3>
+            <p class="text-caption" style="color: var(--glass-highlight); margin-top: var(--space-1);">
+              성분을 선택하고 용량을 입력합니다.
+            </p>
           </div>
-          <button type="button" class="btn btn-glass" data-row-add>+ 기타 원료 추가</button>
-        </div>
+          <div class="ah-listedit" data-row-group>
+            <div class="ah-listedit__rows" data-row-list>
+              <div class="ah-listedit__row" data-row>
+                <select class="ah-select" name="ingredient_ids[]" aria-label="성분 선택">
+                  <option value="">성분 선택</option>
+                  {% for ing in ingredients %}
+                  <option value="{{ ing.id }}">{{ ing.name }}</option>
+                  {% endfor %}
+                </select>
+                <input class="ah-input" type="text" name="amounts[]" placeholder="예: 1000mg" aria-label="용량" />
+                <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-glass" data-row-add>+ 성분 추가</button>
+          </div>
 
-        {# 소분류 카테고리 #}
-        <div class="ah-formsection">
-          <h3 class="text-title-sm">카테고리(소분류)</h3>
-        </div>
-        <div class="ah-listedit" data-row-group>
-          <div class="ah-listedit__rows" data-row-list>
-            <div class="ah-listedit__row" data-row>
-              <select class="ah-select" name="category_ids[]" aria-label="소분류 선택">
-                <option value="">소분류 선택</option>
-                {% for sc in small_categories %}
-                <option value="{{ sc.id }}">
-                  {{ sc.middle_category.big_category.category }} &gt;
-                  {{ sc.middle_category.category }} &gt;
-                  {{ sc.category }}
-                </option>
-                {% endfor %}
-              </select>
-              <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
-            </div>
+          {# 기타 원료 #}
+          <div class="ah-formsection">
+            <h3 class="text-title-sm">기타 원료</h3>
           </div>
-          <button type="button" class="btn btn-glass" data-row-add>+ 카테고리 추가</button>
+          <div class="ah-listedit" data-row-group>
+            <div class="ah-listedit__rows" data-row-list>
+              <div class="ah-listedit__row" data-row>
+                <select class="ah-select" name="other_ingredient_ids[]" aria-label="기타 원료 선택">
+                  <option value="">기타 원료 선택</option>
+                  {% for oi in other_ingredients %}
+                  <option value="{{ oi.id }}">{{ oi.name }}</option>
+                  {% endfor %}
+                </select>
+                <button type="button" class="btn btn-glass" data-row-remove>삭제</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-glass" data-row-add>+ 기타 원료 추가</button>
+          </div>
         </div>
 
         <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
@@ -275,16 +286,30 @@
 <section class="reveal">
   <div style="display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
     <h2 class="text-title-sm">
-      제품 목록 <span class="text-muted">({{ products|length }})</span>
+      제품 목록 <span class="text-muted">(<span id="product-count">{{ products|length }}</span>)</span>
     </h2>
-    <input
-      class="ah-input"
-      type="search"
-      id="product-search"
-      placeholder="이름 또는 브랜드로 검색"
-      style="max-width: 32ch;"
-      aria-label="제품 검색"
-    />
+    <div style="display:flex; gap:var(--space-2); flex-wrap:wrap; align-items:center;">
+      {# 카테고리별 보기 — 소분류 선택 시 해당 카테고리 제품만 표시(이름/브랜드 검색과 공존) #}
+      <select class="ah-select" id="product-category-filter" style="max-width: 32ch;"
+              aria-label="카테고리로 필터">
+        <option value="">전체 카테고리</option>
+        {% for sc in small_categories %}
+        <option value="{{ sc.id }}">
+          {{ sc.middle_category.big_category.category }} &gt;
+          {{ sc.middle_category.category }} &gt;
+          {{ sc.category }}
+        </option>
+        {% endfor %}
+      </select>
+      <input
+        class="ah-input"
+        type="search"
+        id="product-search"
+        placeholder="이름 또는 브랜드로 검색"
+        style="max-width: 32ch;"
+        aria-label="제품 검색"
+      />
+    </div>
   </div>
 
   {% if products %}
@@ -292,7 +317,8 @@
     {% for product in products %}
     <div class="pe-card reveal lift" data-product-edit="{{ product.id }}"
          title="클릭하여 상세·수정"
-         data-search="{{ product.name|lower }} {{ product.company|lower }}">
+         data-search="{{ product.name|lower }} {{ product.company|lower }}"
+         data-categories="{% for cp in product.category_products.all %}{{ cp.category_id }} {% endfor %}">
       <div class="pe-card__thumb">
         {% with product.images.first as thumb %}
         {% if thumb %}
@@ -307,8 +333,10 @@
         <p class="text-body pe-card__name">{{ product.name }}</p>
         <p class="text-body-sm text-muted">{{ product.company }} · {{ product.productType }}</p>
 
-        {# 소분류·성분(용량)·기타원료를 텍스트로 녹여 표기 #}
+        {# 소분류·성분(용량)·기타원료를 텍스트로 녹여 표기(맨 위 DB id) #}
         <dl class="ah-product__meta text-body-sm">
+          <dt>ID</dt>
+          <dd>{{ product.id }}</dd>
           <dt>카테고리</dt>
           <dd>{% for cp in product.category_products.all %}{{ cp.category.category }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
           <dt>성분</dt>
@@ -480,19 +508,33 @@
 
 {% block extra_js %}
 <script>
-  // 클라이언트 사이드 검색 — 제품명/브랜드로 표시되는 행만 필터링한다 (서버 요청 없음).
+  // 클라이언트 사이드 필터 — 이름/브랜드 검색 + 카테고리(소분류) 필터를 함께 적용한다(서버 요청 없음).
+  // 카드는 (검색어 일치) AND (선택 카테고리 포함) 일 때만 보인다. 표시 개수도 갱신.
   (function () {
     var input = document.getElementById("product-search");
+    var catFilter = document.getElementById("product-category-filter");
     var records = document.querySelectorAll("#product-records .pe-card");
-    if (!input || !records.length) return;
+    var countEl = document.getElementById("product-count");
+    if (!records.length) return;
 
-    input.addEventListener("input", function () {
-      var term = input.value.trim().toLowerCase();
+    function apply() {
+      var term = input ? input.value.trim().toLowerCase() : "";
+      var cat = catFilter ? catFilter.value : "";
+      var shown = 0;
       records.forEach(function (row) {
         var haystack = row.getAttribute("data-search") || "";
-        row.style.display = haystack.indexOf(term) === -1 ? "none" : "";
+        var cats = " " + (row.getAttribute("data-categories") || "") + " ";
+        var matchTerm = !term || haystack.indexOf(term) !== -1;
+        var matchCat = !cat || cats.indexOf(" " + cat + " ") !== -1;
+        var visible = matchTerm && matchCat;
+        row.style.display = visible ? "" : "none";
+        if (visible) shown++;
       });
-    });
+      if (countEl) countEl.textContent = shown;
+    }
+
+    if (input) input.addEventListener("input", apply);
+    if (catFilter) catFilter.addEventListener("change", apply);
   })();
 
   // 제품 추가 모달의 동적 행(성분+용량 / 기타 원료 / 카테고리) 추가·삭제.
@@ -709,6 +751,46 @@
         p.hidden = p.getAttribute("data-ptab-panel") !== name;
       });
     });
+
+    // 추가 모달 열 때 첫 탭(기본 정보)으로 초기화(이전에 성분 탭에서 닫았어도 리셋)
+    document.addEventListener("click", function (e) {
+      var op = e.target.closest
+        ? e.target.closest('[data-modal-open="product-create-modal"]')
+        : null;
+      if (!op) return;
+      var modal = document.getElementById("product-create-modal");
+      var body = modal && modal.querySelector(".ah-modal__body");
+      if (!body) return;
+      body.querySelectorAll("[data-ptab]").forEach(function (t) {
+        t.classList.toggle("is-active", t.getAttribute("data-ptab") === "basic");
+      });
+      body.querySelectorAll("[data-ptab-panel]").forEach(function (p) {
+        p.hidden = p.getAttribute("data-ptab-panel") !== "basic";
+      });
+    });
+
+    // 숨겨진 탭의 필수 입력으로 저장이 조용히 막히는 문제 방지:
+    // 제출 시 required 가 비어 있으면 브라우저가 'invalid' 를 쏘는데, 그 필드가 hidden 패널에
+    // 있으면 포커스/안내가 안 된다. 캡처 단계에서 받아 해당 필드의 탭으로 먼저 전환해준다.
+    // ('invalid' 는 버블링 안 하므로 document 캡처로 수신)
+    document.addEventListener(
+      "invalid",
+      function (e) {
+        var field = e.target;
+        if (!field || !field.closest) return;
+        var panel = field.closest("[data-ptab-panel]");
+        var scope = field.closest(".ah-modal__body");
+        if (!panel || !scope || !panel.hidden) return;
+        var name = panel.getAttribute("data-ptab-panel");
+        scope.querySelectorAll("[data-ptab]").forEach(function (t) {
+          t.classList.toggle("is-active", t.getAttribute("data-ptab") === name);
+        });
+        scope.querySelectorAll("[data-ptab-panel]").forEach(function (p) {
+          p.hidden = p.getAttribute("data-ptab-panel") !== name;
+        });
+      },
+      true
+    );
   })();
 
   // 제품 이미지 호버 교체 — 파일 선택 시 미리보기 교체 + 해당 이미지 삭제 체크(기존 삭제+새 파일 = 교체).
