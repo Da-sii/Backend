@@ -7,6 +7,7 @@ class Ingredient(models.Model):
     maxRecommended = models.CharField(max_length=50, verbose_name="최대권장량", null=True, blank=True)
     effect = models.JSONField(default=list, verbose_name="효과", null=True, blank=True)
     sideEffect = models.JSONField(default=list, verbose_name="부작용", null=True, blank=True)
+    goals = models.JSONField(default=list, verbose_name="추천 목표", blank=True)
 
     class Meta:
         db_table = "ingredients"
