@@ -39,6 +39,7 @@ def _build_ingredient_context(goals: list) -> list:
             "sideEffect": i["sideEffect"] or [],
             "minRecommended": i["minRecommended"],
             "maxRecommended": i["maxRecommended"],
+            "goals": i["goals"] or [],
         }
         for i in ingredients
         if i["effect"] and selected_goals & set(i["goals"] or [])
@@ -56,7 +57,7 @@ def _call_gemini(user_context: dict, ingredient_context: list) -> list:
 
     규칙:
     1. 반드시 위 성분 데이터 목록 안에서만 추천하세요. 목록에 없는 성분을 만들어내지 마세요.
-    2. 사용자의 목표(goals)와 가장 관련 있는 성분을 우선하세요.
+    2. 각 성분의 goals 필드와 사용자의 목표(goals)가 겹치는 개수가 많을수록 우선하세요.
     3. sideEffect 항목이 사용자 상태와 충돌하면 반드시 제외하세요.
        - caffeine_sensitivity가 "예민한 편": 카페인 함유 성분 제외
        - sleep_hours가 "1~4시간": 카페인 함유 성분 제외
