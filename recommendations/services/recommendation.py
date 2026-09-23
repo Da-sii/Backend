@@ -23,11 +23,13 @@ def _build_user_context(survey: dict) -> dict:
 
     return context
 
-# DB 성분 전체 -> Gemini 프롬프트형 리스트 변환
-def _build_ingredient_context() -> list:
+# DB 성분 -> Gemini 프롬프트형 리스트 변환 (사용자가 선택한 goals와 하나라도 겹치는 성분만)
+def _build_ingredient_context(goals: list) -> list:
     ingredients = Ingredient.objects.values(
-        "id", "name", "effect", "sideEffect", "minRecommended", "maxRecommended"
+        "id", "name", "effect", "sideEffect", "minRecommended", "maxRecommended", "goals"
     )
+
+    selected_goals = set(goals)
 
     return [
         {
@@ -39,7 +41,7 @@ def _build_ingredient_context() -> list:
             "maxRecommended": i["maxRecommended"],
         }
         for i in ingredients
-        if i["effect"]
+        if i["effect"] and selected_goals & set(i["goals"] or [])
     ]
 
 # Gemini API 호출 -> 추천 성분 리스트 반환
@@ -119,8 +121,8 @@ def get_recommendations(survey: dict) -> list:
     # 사용자 컨텍스트 구성
     user_context = _build_user_context(survey)
 
-    # 성분 DB 전체 조회
-    ingredient_context = _build_ingredient_context()
+    # 성분 DB 조회 (선택한 goals와 관련 있는 성분만)
+    ingredient_context = _build_ingredient_context(survey["goals"])
 
     # Gemini 호출
     raw_recommendations = _call_gemini(user_context, ingredient_context)

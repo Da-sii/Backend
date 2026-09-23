@@ -188,3 +188,5 @@ docs/
 
 # Ingredient goal 태깅 검수용 임시 파일
 ingredient_goals_review.json
+ingredient_goals_labeling_gold.csv
+ingredient_goals_labeling_gold.numbers
