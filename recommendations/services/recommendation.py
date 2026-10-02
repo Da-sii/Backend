@@ -23,11 +23,13 @@ def _build_user_context(survey: dict) -> dict:
 
     return context
 
-# DB 성분 전체 -> Gemini 프롬프트형 리스트 변환
-def _build_ingredient_context() -> list:
+# DB 성분 -> Gemini 프롬프트형 리스트 변환 (사용자가 선택한 goals와 하나라도 겹치는 성분만)
+def _build_ingredient_context(goals: list) -> list:
     ingredients = Ingredient.objects.values(
-        "id", "name", "effect", "sideEffect", "minRecommended", "maxRecommended"
+        "id", "name", "effect", "sideEffect", "minRecommended", "maxRecommended", "goals"
     )
+
+    selected_goals = set(goals)
 
     return [
         {
@@ -37,13 +39,17 @@ def _build_ingredient_context() -> list:
             "sideEffect": i["sideEffect"] or [],
             "minRecommended": i["minRecommended"],
             "maxRecommended": i["maxRecommended"],
+            "goals": i["goals"] or [],
         }
         for i in ingredients
-        if i["effect"]
+        if i["effect"] and selected_goals & set(i["goals"] or [])
     ]
 
 # Gemini API 호출 -> 추천 성분 리스트 반환
-def _call_gemini(user_context: dict, ingredient_context: list) -> list:
+# thinking_budget=0: 응답 시간 60초대 -> 3~6초대로 단축(성분 5~56개 조건에서 검증).
+# 단, fit_score가 80~95 구간으로 압축되는 현상 확인됨(budget=512로 올려도 압축은 그대로, 속도만 2배 느려짐).
+# 추천 순위 자체는 안 흔들리지만, 점수를 절대값으로 노출하는 화면이 있다면 실사용 데이터로 UX 영향 재검토 필요.
+def _call_gemini(user_context: dict, ingredient_context: list, thinking_budget: int = 0) -> list:
     prompt = f"""당신은 건강기능식품 성분 추천 전문가입니다.
 
     아래는 실제 보유 중인 성분 데이터입니다:
@@ -54,7 +60,7 @@ def _call_gemini(user_context: dict, ingredient_context: list) -> list:
 
     규칙:
     1. 반드시 위 성분 데이터 목록 안에서만 추천하세요. 목록에 없는 성분을 만들어내지 마세요.
-    2. 사용자의 목표(goals)와 가장 관련 있는 성분을 우선하세요.
+    2. 각 성분의 goals 필드와 사용자의 목표(goals)가 겹치는 개수가 많을수록 우선하세요.
     3. sideEffect 항목이 사용자 상태와 충돌하면 반드시 제외하세요.
        - caffeine_sensitivity가 "예민한 편": 카페인 함유 성분 제외
        - sleep_hours가 "1~4시간": 카페인 함유 성분 제외
@@ -84,6 +90,7 @@ def _call_gemini(user_context: dict, ingredient_context: list) -> list:
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
+            thinking_config=types.ThinkingConfig(thinking_budget=thinking_budget),
         )
     )
 
@@ -119,8 +126,8 @@ def get_recommendations(survey: dict) -> list:
     # 사용자 컨텍스트 구성
     user_context = _build_user_context(survey)
 
-    # 성분 DB 전체 조회
-    ingredient_context = _build_ingredient_context()
+    # 성분 DB 조회 (선택한 goals와 관련 있는 성분만)
+    ingredient_context = _build_ingredient_context(survey["goals"])
 
     # Gemini 호출
     raw_recommendations = _call_gemini(user_context, ingredient_context)
