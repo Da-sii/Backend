@@ -186,6 +186,10 @@ CLAUDE.md
 # Project docs (local only)
 docs/
 
+# Cloud Run 배포용 로컬 env 파일 (시크릿 포함, 커밋 금지)
+env.yaml
+docs/env.yaml
+
 # Ingredient goal 태깅 검수용 임시 파일
 ingredient_goals_review.json
 ingredient_goals_labeling_gold.csv
