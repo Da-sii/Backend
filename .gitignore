@@ -184,4 +184,5 @@ AuthKey_*.p8
 CLAUDE.md
 
 # Project docs (local only)
-docs/
+docs/env.yaml
+env.yaml

@@ -1,16 +1,13 @@
+import logging
+
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
-import traceback
+
+logger = logging.getLogger(__name__)
 
 def custom_exception_handler(exc, context):
-    # 에러 디버깅 로그 추가(배포 시, 삭제 필요)
-    print("=== Custom Exception Handler ===")
-    print("Exception type:", type(exc))
-    print("Exception message:", str(exc))
-    traceback.print_exc()
-    print("Context:", context)
-    print("===============================")
+    logger.exception("Exception raised in %s", context.get("view"))
 
     # 기본 DRF exception 처리
     response = exception_handler(exc, context)
