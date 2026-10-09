@@ -1,7 +1,8 @@
 import boto3, uuid, os
 from typing import List
 from django.utils import timezone
-from django.db.models import F
+from django.db.models import F, TextField, Value
+from django.db.models.functions import Replace
 from django.conf import settings
 from products.models import Product, ProductDailyView, ProductImage
 
@@ -15,6 +16,14 @@ def record_view(product: Product):
     )
     daily_view.views = F("views") + 1
     daily_view.save()
+
+def remove_spaces(field: str) -> Replace:
+    """DB 필드 값에서 공백을 제거하는 표현식 (띄어쓰기 무시 검색용)"""
+    return Replace(field, Value(" "), Value(""), output_field=TextField())
+
+def normalize_keyword(keyword: str) -> str:
+    """검색어에서 모든 공백(탭, 연속 공백 포함)을 제거"""
+    return "".join(keyword.split())
 
 def upload_images_to_s3(product: Product, images: List) -> List[ProductImage]:
     """
