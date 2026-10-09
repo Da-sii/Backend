@@ -17,7 +17,7 @@ from products.models import Product, SmallCategory, ProductIngredient, ProductOt
 from products.serializers import ProductDetailSerializer, ProductSearchSerializer, ProductRankingSerializer, \
     ProductsListSerializer, MainSerializer, ProductRequestSerializer
 from products.serializers.ingredient import MainRandomGuideSerializer
-from products.utils import record_view, upload_images_to_s3
+from products.utils import record_view, upload_images_to_s3, remove_spaces, normalize_keyword
 from products.coupang import search_top_product_url, debug_search
 
 # 제품 상세 (GET /products/<id>/)
@@ -345,26 +345,37 @@ class ProductSearchView(generics.ListAPIView):
 
         qs = Product.objects.all()
 
+        # 검색어·DB 값 양쪽의 공백을 제거하고 비교 (띄어쓰기 무시 검색)
+        query = normalize_keyword(query or "")
         if query:
-            query = query.strip()
-
-            ingredient_product_ids = ProductIngredient.objects.filter(
-                ingredient__name__icontains=query
+            ingredient_product_ids = ProductIngredient.objects.annotate(
+                ingredient_name_ns=remove_spaces("ingredient__name")
+            ).filter(
+                ingredient_name_ns__icontains=query
             ).values_list("product_id", flat=True)
 
-            other_ingredient_product_ids = ProductOtherIngredient.objects.filter(
-                other_ingredient__name__icontains=query
+            other_ingredient_product_ids = ProductOtherIngredient.objects.annotate(
+                other_ingredient_name_ns=remove_spaces("other_ingredient__name")
+            ).filter(
+                other_ingredient_name_ns__icontains=query
             ).values_list("product_id", flat=True)
 
-            category_product_ids = CategoryProduct.objects.filter(
-                Q(category__category__icontains=query) |
-                Q(category__middle_category__category__icontains=query) |
-                Q(category__middle_category__big_category__category__icontains=query)
+            category_product_ids = CategoryProduct.objects.annotate(
+                small_ns=remove_spaces("category__category"),
+                middle_ns=remove_spaces("category__middle_category__category"),
+                big_ns=remove_spaces("category__middle_category__big_category__category"),
+            ).filter(
+                Q(small_ns__icontains=query) |
+                Q(middle_ns__icontains=query) |
+                Q(big_ns__icontains=query)
             ).values_list("product_id", flat=True)
 
-            qs = qs.filter(
-                Q(name__icontains=query) |
-                Q(company__icontains=query) |
+            qs = qs.annotate(
+                name_ns=remove_spaces("name"),
+                company_ns=remove_spaces("company"),
+            ).filter(
+                Q(name_ns__icontains=query) |
+                Q(company_ns__icontains=query) |
                 Q(id__in=ingredient_product_ids) |
                 Q(id__in=other_ingredient_product_ids) |
                 Q(id__in=category_product_ids)

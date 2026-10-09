@@ -1,4 +1,3 @@
-from django.db.models import Q
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.response import Response
@@ -8,6 +7,7 @@ from rest_framework.permissions import AllowAny
 
 from products.models import IngredientGuide
 from products.serializers.ingredient import GuideListSerializer, GuideDetailSerializer
+from products.utils import remove_spaces, normalize_keyword
 
 
 # 성분 가이드 리스트(검색)
@@ -60,13 +60,12 @@ class GuideListView(generics.ListAPIView):
             .order_by("ingredient__name") # 항상 가나다 순
         )
 
+        # 검색어·DB 값 양쪽의 공백을 제거하고 비교 (띄어쓰기 무시 검색)
+        keyword = normalize_keyword(keyword)
         if keyword:
-            keyword_no_space = keyword.replace(" ", "")
-
-            queryset = queryset.filter(
-                Q(ingredient__name__icontains=keyword) |
-                Q(ingredient__name__icontains=keyword_no_space)
-            )
+            queryset = queryset.annotate(
+                ingredient_name_ns=remove_spaces("ingredient__name")
+            ).filter(ingredient_name_ns__icontains=keyword)
 
         return queryset
 
