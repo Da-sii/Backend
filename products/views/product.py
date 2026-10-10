@@ -323,6 +323,13 @@ class ProductSearchView(generics.ListAPIView):
                 required=False,
             ),
             OpenApiParameter(
+                name="tag",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="해시태그 검색(띄어쓰기 무시, 정확히 일치). 전달 시 word는 무시",
+                required=False,
+            ),
+            OpenApiParameter(
                 name="sort",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
@@ -339,6 +346,7 @@ class ProductSearchView(generics.ListAPIView):
     def get_queryset(self):
         sort = self.request.query_params.get("sort", "monthly_rank")
         query = self.request.query_params.get("word")
+        tag = normalize_keyword(self.request.query_params.get("tag", "")).lstrip("#")
 
         today = timezone.now().date()
         start_date = today - timedelta(days=30)
@@ -347,7 +355,14 @@ class ProductSearchView(generics.ListAPIView):
 
         # 검색어·DB 값 양쪽의 공백을 제거하고 비교 (띄어쓰기 무시 검색)
         query = normalize_keyword(query or "")
-        if query:
+        if tag:
+            # 해시태그 검색: 해당 태그를 가진 성분이 포함된 제품만
+            tag_product_ids = ProductIngredient.objects.filter(
+                ingredient__hashtags__contains=[tag]
+            ).values_list("product_id", flat=True)
+
+            qs = qs.filter(id__in=tag_product_ids)
+        elif query:
             ingredient_product_ids = ProductIngredient.objects.annotate(
                 ingredient_name_ns=remove_spaces("ingredient__name")
             ).filter(
