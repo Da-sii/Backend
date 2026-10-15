@@ -8,12 +8,25 @@ class Ingredient(models.Model):
     effect = models.JSONField(default=list, verbose_name="효과", null=True, blank=True)
     sideEffect = models.JSONField(default=list, verbose_name="부작용", null=True, blank=True)
     goals = models.JSONField(default=list, verbose_name="추천 목표", blank=True)
+    hashtags = models.JSONField(default=list, verbose_name="해시태그", blank=True)
 
     class Meta:
         db_table = "ingredients"
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # 해시태그는 공백 제거 후 저장 (띄어쓰기 무시 검색용), 빈 값·중복 제거
+        # 주의: QuerySet.update(), bulk_create(), bulk_update(), raw SQL은 save()를 호출하지 않아
+        #       정규화가 적용되지 않음 → hashtags를 저장할 때는 반드시 save()(또는 create()) 사용
+        hashtags = []
+        for tag in self.hashtags or []:
+            tag = "".join(str(tag).split()).lstrip("#")
+            if tag and tag not in hashtags:
+                hashtags.append(tag)
+        self.hashtags = hashtags
+        super().save(*args, **kwargs)
 
 class ProductIngredient(models.Model):
     product = models.ForeignKey(

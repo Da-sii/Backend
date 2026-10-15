@@ -159,10 +159,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     reviewCount = serializers.SerializerMethodField()
     reviewAvg = serializers.SerializerMethodField()
     isMyReview = serializers.SerializerMethodField()
+    hashtags = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "productType", "coupang", "isMyReview", "reviewCount", "reviewAvg", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients", "otherIngredientsCount", "otherIngredients")
+        fields = ("id", "name", "company", "productType", "coupang", "isMyReview", "reviewCount", "reviewAvg", "hashtags", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients", "otherIngredientsCount", "otherIngredients")
 
     def get_reviewImages(self, obj):
         # 해당 제품의 리뷰 이미지를 최신순 6개 반환
@@ -179,6 +180,15 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         agg = obj.reviews.aggregate(avg=Avg("rate"))
         value = agg.get("avg")
         return round(float(value), 2) if value is not None else None
+
+    def get_hashtags(self, obj: Product) -> list[str]:
+        # 제품에 포함된 성분들의 해시태그를 중복 없이 순서대로 합침
+        hashtags = []
+        for product_ingredient in obj.ingredients.all():
+            for tag in product_ingredient.ingredient.hashtags or []:
+                if tag not in hashtags:
+                    hashtags.append(tag)
+        return hashtags
 
     def get_ingredientsCount(self, obj: Product) -> int:
         return obj.ingredients.count()

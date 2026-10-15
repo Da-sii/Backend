@@ -7,7 +7,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from django.utils import timezone
 from django.shortcuts import redirect
 from datetime import timedelta
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
@@ -323,6 +323,20 @@ class ProductSearchView(generics.ListAPIView):
                 required=False,
             ),
             OpenApiParameter(
+                name="tag",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "해시태그 검색. 해시태그를 눌렀을 때 사용\n\n"
+                    "- `#` 없이 태그 이름만 전달 (예: `#탄수중독` → `tag=탄수중독`)\n"
+                    "- URL에서 `#`은 서버로 전달되지 않아 `tag=#탄수중독`으로 보내면 전체 제품이 조회됨\n"
+                    "- 띄어쓰기 무시, 태그 이름이 정확히 일치하는 제품만 조회\n"
+                    "- 전달 시 `word`는 무시"
+                ),
+                required=False,
+                examples=[OpenApiExample("해시태그 검색", value="탄수중독")],
+            ),
+            OpenApiParameter(
                 name="sort",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
@@ -339,6 +353,7 @@ class ProductSearchView(generics.ListAPIView):
     def get_queryset(self):
         sort = self.request.query_params.get("sort", "monthly_rank")
         query = self.request.query_params.get("word")
+        tag = normalize_keyword(self.request.query_params.get("tag", "")).lstrip("#")
 
         today = timezone.now().date()
         start_date = today - timedelta(days=30)
@@ -347,7 +362,14 @@ class ProductSearchView(generics.ListAPIView):
 
         # 검색어·DB 값 양쪽의 공백을 제거하고 비교 (띄어쓰기 무시 검색)
         query = normalize_keyword(query or "")
-        if query:
+        if tag:
+            # 해시태그 검색: 해당 태그를 가진 성분이 포함된 제품만
+            tag_product_ids = ProductIngredient.objects.filter(
+                ingredient__hashtags__contains=[tag]
+            ).values_list("product_id", flat=True)
+
+            qs = qs.filter(id__in=tag_product_ids)
+        elif query:
             ingredient_product_ids = ProductIngredient.objects.annotate(
                 ingredient_name_ns=remove_spaces("ingredient__name")
             ).filter(
