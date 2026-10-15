@@ -7,7 +7,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from django.utils import timezone
 from django.shortcuts import redirect
 from datetime import timedelta
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
@@ -326,8 +326,15 @@ class ProductSearchView(generics.ListAPIView):
                 name="tag",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="해시태그 검색(띄어쓰기 무시, 정확히 일치). 전달 시 word는 무시",
+                description=(
+                    "해시태그 검색. 해시태그를 눌렀을 때 사용\n\n"
+                    "- `#` 없이 태그 이름만 전달 (예: `#탄수중독` → `tag=탄수중독`)\n"
+                    "- URL에서 `#`은 서버로 전달되지 않아 `tag=#탄수중독`으로 보내면 전체 제품이 조회됨\n"
+                    "- 띄어쓰기 무시, 태그 이름이 정확히 일치하는 제품만 조회\n"
+                    "- 전달 시 `word`는 무시"
+                ),
                 required=False,
+                examples=[OpenApiExample("해시태그 검색", value="탄수중독")],
             ),
             OpenApiParameter(
                 name="sort",
