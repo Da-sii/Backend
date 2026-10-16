@@ -10,96 +10,62 @@
 
 {% block title %}배너 · DASII{% endblock %}
 {% block topbar_title %}배너 관리{% endblock %}
-{% block topbar_actions %}
-<button type="button" class="btn btn-primary" data-modal-open="banner-create-modal">＋ 배너 추가</button>
-{% endblock %}
 
 {% block extra_head %}
 <style>
-  /* 탭 (활성/비활성) */
+  /* 탭 (활성/비활성) — 세그먼트 */
   .ah-tabs {
     display: inline-flex;
     gap: var(--space-1);
     padding: var(--space-1);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
     border-radius: var(--radius-pill);
-    margin-bottom: var(--space-4);
   }
   .ah-tab {
     padding: var(--space-1) var(--space-4);
     border: none;
     background: transparent;
-    color: var(--text-on-glass);
+    color: var(--text-muted);
     font-size: var(--fs-text-sm);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-medium);
     border-radius: var(--radius-pill);
     cursor: pointer;
-    transition: background var(--transition-base);
+    transition: background var(--transition-base), color var(--transition-base);
   }
+  .ah-tab:hover { color: var(--text-strong); }
   .ah-tab.is-active {
-    background: var(--glass-bg-strong);
-    box-shadow: var(--shadow-inset-highlight);
+    background: var(--surface-raised); /* 다크에서도 바탕(surface-subtle)과 구분되게 한 단계 띄운 면 */
+    color: var(--text-strong);
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-sm);
   }
 
-  /* 배너 카드(행) */
-  .ah-banner-list { display: flex; flex-direction: column; gap: var(--space-2); }
-  .ah-banner-card {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-2) var(--space-3);
-    background: var(--glass-bg);
-    -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
-    backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
-    color: var(--text-on-glass);
-  }
-  .ah-banner-card.is-dragging { opacity: 0.5; }
-  /* 좌측 표시 순번(활성 탭) — 위에서부터 노출되는 순서. 숫자만 표시(배지 없음) */
-  .ah-banner-card__num {
-    flex: none;
-    min-width: 1.5em;
-    text-align: center;
-    color: var(--glass-highlight);
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
-  }
-  .ah-banner-card__grip {
-    cursor: grab;
-    color: var(--glass-highlight);
-    font-size: var(--fs-text-lg);
-    line-height: 1;
-    padding: 0 var(--space-1);
-    flex: none;
-  }
-  /* 비활성 탭은 드래그 불가·순서 무의미 → 그립·순번 숨김 */
-  [data-banner-panel="inactive"] .ah-banner-card__grip,
-  [data-banner-panel="inactive"] .ah-banner-card__num { display: none; }
-  .ah-banner-card__main {
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    min-width: 0;
+  /* 시각적으로 숨긴 머리글(스크린리더용) */
+  .pe-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* 배너 표 — 공통 .ah-table 위 보조 스타일 */
+  .bn-hint { font-size: var(--fs-caption); color: var(--text-muted); }
+  .bn-order { font-weight: var(--font-weight-bold); color: var(--text-strong); }
+  .bn-table .bn-col-order { width: 1%; white-space: nowrap; }
+  /* 비활성 탭은 순서가 없다 → 순번·핸들 열 숨김(머리글 포함) */
+  [data-banner-panel="inactive"] .bn-col-order { display: none; }
+  /* 행이 하나도 없으면 머리글도 숨기고 빈 상태만 보인다 */
+  .bn-table:has(tbody:not(:has(tr))) thead { display: none; }
+  .ah-banner-card[draggable="true"] { cursor: grab; }
+  .ah-banner-card[draggable="true"]:active { cursor: grabbing; }
+  /* 배너 정보 셀 — 행 안의 수정 모달 열기 버튼(텍스트처럼 보이게) */
+  .bn-open {
+    display: block;
     padding: 0;
-    background: transparent;
     border: none;
+    background: none;
     color: inherit;
-    cursor: pointer;
+    font: inherit;
     text-align: left;
+    cursor: pointer;
   }
-  .ah-banner-card__thumb {
-    height: 56px;
-    max-width: 140px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--glass-border);
-    object-fit: cover;
-    flex: none;
-  }
-  .ah-banner-card__meta { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+  .bn-open:hover .ah-table__title { color: var(--brand-text); }
 
   /* 토글 스위치 */
   .ah-switch { display: inline-flex; align-items: center; gap: var(--space-2); cursor: pointer; user-select: none; flex: none; }
@@ -109,7 +75,7 @@
     display: inline-block;
     width: 44px;
     height: 24px;
-    background: var(--glass-border-strong);
+    background: var(--border-strong);
     border-radius: var(--radius-pill);
     transition: background var(--transition-base);
   }
@@ -119,15 +85,16 @@
     left: 2px;
     width: 20px;
     height: 20px;
-    background: var(--color-gray-0);
+    background: var(--color-gray-0); /* 트랙 위 손잡이 — 테마와 무관하게 흰색 */
     border-radius: var(--radius-pill);
-    box-shadow: var(--shadow-glass);
+    box-shadow: var(--shadow-sm);
     transition: transform var(--transition-base);
   }
   .ah-switch__input:checked + .ah-switch__track { background: var(--brand-primary); }
   .ah-switch__input:checked + .ah-switch__track .ah-switch__thumb { transform: translateX(20px); }
-  .ah-switch__input:focus-visible + .ah-switch__track { outline: 2px solid var(--brand-secondary); outline-offset: 2px; }
-  .ah-switch__label { color: var(--glass-highlight); min-width: 3.2em; }
+  .ah-switch__input:focus-visible + .ah-switch__track { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .ah-switch__input:disabled + .ah-switch__track { opacity: 0.6; }
+  .ah-switch__label { font-size: var(--fs-caption); color: var(--text-muted); min-width: 3.2em; }
 
   /* 수정 모달 — 썸네일/상세 이미지 (기존 스타일 유지) */
   .ah-banner__thumb {
@@ -244,13 +211,6 @@
     cursor: pointer;
   }
 
-  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .ah-banner-card {
-      background: var(--glass-bg-fallback);
-      color: var(--text-default);
-      border-color: var(--color-gray-200);
-    }
-  }
 </style>
 {% endblock %}
 
@@ -307,38 +267,82 @@
 {% for b in active_banners %}{% include "admin_home/components/_banner_edit_modal.html" with b=b %}{% endfor %}
 {% for b in inactive_banners %}{% include "admin_home/components/_banner_edit_modal.html" with b=b %}{% endfor %}
 
+<header class="ah-page-header">
+  <div>
+    <h2 class="ah-page-header__title">배너</h2>
+    <p class="ah-page-header__desc">앱 메인에 노출되는 배너를 관리해요. 활성 배너는 끌어서 순서를 바꿀 수 있어요.</p>
+  </div>
+  <div class="ah-page-header__actions">
+    <button type="button" class="btn btn-primary" data-modal-open="banner-create-modal">배너 추가</button>
+  </div>
+</header>
+
 {# 탭 (활성/비활성) #}
-<div class="ah-tabs reveal" role="tablist" aria-label="배너 상태">
-  <button type="button" class="ah-tab is-active" data-banner-tab="active" role="tab">
-    활성 (<span data-count-active>{{ active_banners|length }}</span>)
-  </button>
-  <button type="button" class="ah-tab" data-banner-tab="inactive" role="tab">
-    비활성 (<span data-count-inactive>{{ inactive_banners|length }}</span>)
-  </button>
+<div class="ah-toolbar reveal">
+  <div class="ah-tabs" role="tablist" aria-label="배너 상태">
+    <button type="button" class="ah-tab is-active" data-banner-tab="active" role="tab">
+      활성 <span data-count-active>{{ active_banners|length }}</span>
+    </button>
+    <button type="button" class="ah-tab" data-banner-tab="inactive" role="tab">
+      비활성 <span data-count-inactive>{{ inactive_banners|length }}</span>
+    </button>
+  </div>
+  <span class="ah-toolbar__meta bn-hint">순서는 위에서부터 앱에 보이는 순서예요.</span>
 </div>
 
-{# 활성 패널 — 드래그로 순서 변경 #}
+{# 활성/비활성 패널 — 같은 열 구성의 표(토글 시 행이 패널 사이를 이동). 활성은 행 드래그로 순서 변경 #}
 <section data-banner-panel="active" class="reveal">
-  <div class="ah-banner-list" data-banner-list>
-    {% for b in active_banners %}
-    {% include "admin_home/components/_banner_card.html" with b=b draggable=True index=forloop.counter %}
-    {% endfor %}
+  <div class="ah-table-wrap">
+    <table class="ah-table bn-table">
+      <thead>
+        <tr>
+          <th class="ah-table__num bn-col-order">순서</th>
+          <th class="bn-col-order"><span class="pe-sr">이동</span></th>
+          <th class="ah-table__thumb">이미지</th>
+          <th>배너</th>
+          <th>노출</th>
+          <th class="ah-table__actions"><span class="pe-sr">관리</span></th>
+        </tr>
+      </thead>
+      <tbody data-banner-list>
+        {% for b in active_banners %}
+        {% include "admin_home/components/_banner_card.html" with b=b draggable=True index=forloop.counter %}
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="ah-empty" data-banner-empty {% if active_banners %}hidden{% endif %}>
+      <div class="ah-empty__icon" aria-hidden="true">🖼️</div>
+      <p class="ah-empty__title">노출 중인 배너가 없어요</p>
+      <p class="ah-empty__desc">새 배너를 추가하거나, 비활성 탭에서 토글을 켜 주세요.</p>
+    </div>
   </div>
-  <p class="ah-record-empty text-body" data-banner-empty {% if active_banners %}hidden{% endif %}>
-    활성 배너가 없습니다. 우측 상단 ＋ 배너 추가 또는 비활성 탭에서 토글로 활성화하세요.
-  </p>
 </section>
 
-{# 비활성 패널 #}
 <section data-banner-panel="inactive" class="reveal" hidden>
-  <div class="ah-banner-list" data-banner-list>
-    {% for b in inactive_banners %}
-    {% include "admin_home/components/_banner_card.html" with b=b index=forloop.counter %}
-    {% endfor %}
+  <div class="ah-table-wrap">
+    <table class="ah-table bn-table">
+      <thead>
+        <tr>
+          <th class="ah-table__num bn-col-order">순서</th>
+          <th class="bn-col-order"><span class="pe-sr">이동</span></th>
+          <th class="ah-table__thumb">이미지</th>
+          <th>배너</th>
+          <th>노출</th>
+          <th class="ah-table__actions"><span class="pe-sr">관리</span></th>
+        </tr>
+      </thead>
+      <tbody data-banner-list>
+        {% for b in inactive_banners %}
+        {% include "admin_home/components/_banner_card.html" with b=b index=forloop.counter %}
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="ah-empty" data-banner-empty {% if inactive_banners %}hidden{% endif %}>
+      <div class="ah-empty__icon" aria-hidden="true">📭</div>
+      <p class="ah-empty__title">비활성 배너가 없어요</p>
+      <p class="ah-empty__desc">노출을 끈 배너가 여기에 모여요.</p>
+    </div>
   </div>
-  <p class="ah-record-empty text-body" data-banner-empty {% if inactive_banners %}hidden{% endif %}>
-    비활성 배너가 없습니다.
-  </p>
 </section>
 {% endblock %}
 
