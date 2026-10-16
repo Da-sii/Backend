@@ -1,7 +1,7 @@
 {% extends base_template|default:"admin_home/base.html" %}
 {% comment %}
   /admin/home 랜딩(홈) — 대시보드 개요.
-  상단 KPI 스탯 타일 행 + 가입 추이 패널 + 제품 추가 요청 위젯(모달).
+  인사말 헤더 + KPI 스탯 타일 행 + 가입 추이 패널 + 제품 추가 요청 위젯(모달).
   신규 관리자 기능은 이 아래(/admin/home/<name>/)에 추가된다.
 {% endcomment %}
 
@@ -10,10 +10,29 @@
 
 {% block extra_head %}
 <style>
-  /* 대시보드 2단 그리드 + 가입 추이 미니 차트 — 토큰만 사용, 외부 라이브러리 없음 */
+  /* 홈 대시보드 — 시맨틱 토큰만 사용, 외부 라이브러리 없음 */
+
+  /* KPI 타일 행: 7칸이 한 줄에 들어가도록 라벨·숫자 왼쪽, 아이콘 오른쪽 위로 배치 */
+  .ah-home-stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: var(--space-6); }
+  .ah-home-stats .ah-stat {
+    height: 100%;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-4);
+  }
+  .ah-home-stats .ah-stat__icon {
+    width: var(--control-h-sm);
+    height: var(--control-h-sm);
+    font-size: var(--fs-text-md);
+  }
+  .ah-home-stats .ah-stat__label { white-space: nowrap; }
+
+  /* 대시보드 2단 그리드 */
   .ah-dashboard-grid {
     display: grid;
-    gap: var(--space-3);
+    gap: var(--space-4);
     grid-template-columns: 2fr 1fr;
     align-items: start;
   }
@@ -21,21 +40,29 @@
     .ah-dashboard-grid { grid-template-columns: 1fr; }
   }
 
+  /* 카드 헤더: 제목 + 오른쪽 보조 정보 */
   .sc-chart__head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    gap: var(--space-3);
-    margin-bottom: var(--space-2);
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-4);
   }
+  .sc-chart__title { color: var(--text-strong); font-weight: var(--font-weight-bold); }
+  .sc-chart__meta { color: var(--text-muted); }
+  .sc-chart__sub { margin-bottom: var(--space-2); color: var(--text-muted); font-weight: var(--font-weight-semibold); }
 
-  /* 신규 가입 막대 */
+  /* 신규 가입 막대 — 가로 보조선(--border) 위에 브랜드 초록 막대 */
   .sc-bars {
     display: flex;
     align-items: flex-end;
     gap: var(--space-1);
-    height: 140px;
+    height: calc(var(--space-10) * 4);
     padding-top: var(--space-2);
+    background-image: repeating-linear-gradient(
+      to bottom, var(--border) 0, var(--border) 1px, transparent 1px, transparent 33.33%);
+    border-bottom: 1px solid var(--border-strong);
   }
   .sc-bar {
     flex: 1 1 0;
@@ -47,19 +74,21 @@
   .sc-bar__fill {
     width: 100%;
     min-height: 2px;
-    border-radius: var(--radius-sm);
-    background: var(--gradient-bar);
-    transition: opacity var(--transition-base);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background: var(--brand-primary);
+    transition: background var(--transition-base);
   }
-  .sc-bar:hover .sc-bar__fill { opacity: 0.75; }
+  .sc-bar__fill.is-zero { background: var(--border-strong); }
+  .sc-bar:hover .sc-bar__fill { background: var(--brand-primary-hover); }
+  .sc-bar:hover .sc-bar__fill.is-zero { background: var(--text-subtle); }
 
   /* 누적 총합 스파크라인 */
   .sc-spark { margin-top: var(--space-6); }
-  .sc-spark__svg { display: block; width: 100%; height: 64px; }
-  .sc-spark__area { fill: var(--color-green-500); opacity: 0.14; }
+  .sc-spark__svg { display: block; width: 100%; height: calc(var(--space-10) * 1.6); }
+  .sc-spark__area { fill: var(--brand-weak); }
   .sc-spark__line {
     fill: none;
-    stroke: var(--color-green-500);
+    stroke: var(--brand-primary);
     stroke-width: 2;
     stroke-linejoin: round;
     stroke-linecap: round;
@@ -68,31 +97,31 @@
     display: flex;
     justify-content: space-between;
     margin-top: var(--space-2);
-    color: var(--glass-highlight);
+    color: var(--text-muted);
   }
 
-  /* 스크롤 영역 — 디자인 시스템 톤의 얇은 유리 스크롤바 (요청 리스트 모달 등) */
-  .ah-scroll { scrollbar-width: thin; scrollbar-color: var(--glass-border-strong) transparent; }
+  /* 스크롤 영역 — 얇은 스크롤바 (요청 리스트 모달 등) */
+  .ah-scroll { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
   .ah-scroll::-webkit-scrollbar { width: 10px; }
   .ah-scroll::-webkit-scrollbar-track { background: transparent; }
   .ah-scroll::-webkit-scrollbar-thumb {
-    background: var(--glass-border-strong);
+    background: var(--border-strong);
     border-radius: var(--radius-pill);
     border: 2px solid transparent;
     background-clip: padding-box;
   }
   .ah-scroll::-webkit-scrollbar-thumb:hover {
-    background: var(--glass-highlight);
+    background: var(--text-subtle);
     border: 2px solid transparent;
     background-clip: padding-box;
   }
 
   /* 제품 추가 요청 위젯의 최근 항목 미리보기 */
-  .pr-preview { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); }
+  .pr-preview { display: flex; flex-direction: column; gap: var(--space-2); }
   .pr-preview__item {
-    padding: var(--space-2) var(--space-3);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    padding: var(--space-3);
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
   }
   .pr-preview__content {
@@ -100,14 +129,29 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    color: var(--text-strong);
+    font-weight: var(--font-weight-medium);
   }
-  .pr-preview__date { color: var(--glass-highlight); }
+  .pr-preview__date { display: block; margin-top: var(--space-1); color: var(--text-muted); }
+  /* 작은 빈 상태 변형 */
+  .ah-empty--sm { padding: var(--space-6) var(--space-3); }
+  .ah-empty--sm .ah-empty__icon { font-size: var(--fs-title-lg); }
+  .ah-empty--sm .ah-empty__title { font-size: var(--fs-text-md); }
+  .pr-more { margin-top: var(--space-4); width: 100%; }
 </style>
 {% endblock %}
 
 {% block content %}
+{# 인사말 헤더 — 상단바의 "홈" 제목과 겹치지 않게 환영 문구로 구성 #}
+<header class="ah-page-header reveal">
+  <div>
+    <h2 class="ah-page-header__title">안녕하세요, 오늘의 현황이에요</h2>
+    <p class="ah-page-header__desc">회원과 콘텐츠, 새로 들어온 요청을 한눈에 확인해요.</p>
+  </div>
+</header>
+
 {# 상단 KPI 스탯 타일 행 #}
-<section class="ah-grid ah-grid--stats" data-reveal-stagger style="margin-bottom: var(--space-6);">
+<section class="ah-grid ah-grid--stats ah-home-stats" data-reveal-stagger>
   {% for s in kpis %}
   <div class="reveal">
     {% include "admin_home/components/_stat.html" with label=s.label value=s.value icon=s.icon href=s.href sub=s.sub %}
@@ -119,9 +163,9 @@
   {# 가입 추이 — 최근 30일 신규 가입(막대) + 누적 총 회원(스파크라인) #}
   <section class="glass-panel reveal">
     <div class="sc-chart__head">
-      <h2 class="text-title-md">가입 추이</h2>
-      <span class="text-body-sm" style="color: var(--glass-highlight);">
-        최근 {{ signup_chart.days }}일 · KST · 신규 {{ signup_chart.new_total }}명 / 누적 {{ signup_chart.grand_total }}명
+      <h2 class="sc-chart__title text-title-sm">가입 추이</h2>
+      <span class="sc-chart__meta text-caption">
+        최근 {{ signup_chart.days }}일 · 신규 {{ signup_chart.new_total }}명 / 누적 {{ signup_chart.grand_total }}명
       </span>
     </div>
 
@@ -130,7 +174,7 @@
       {% for p in signup_chart.points %}
       <div class="sc-bar"
            title="{{ p.date|date:'n/j' }} · 신규 {{ p.new }}명 · 누적 {{ p.total }}명">
-        <div class="sc-bar__fill" style="height: {{ p.bar_pct }}%;"></div>
+        <div class="sc-bar__fill{% if not p.new %} is-zero{% endif %}" style="height: {{ p.bar_pct }}%;"></div>
       </div>
       {% endfor %}
     </div>
@@ -140,9 +184,7 @@
     </div>
 
     <div class="sc-spark">
-      <div class="sc-chart__head">
-        <span class="text-body-sm">누적 총 회원</span>
-      </div>
+      <p class="sc-chart__sub text-caption">누적 총 회원</p>
       <svg class="sc-spark__svg" viewBox="0 0 {{ signup_chart.spark_w }} {{ signup_chart.spark_h }}"
            preserveAspectRatio="none" role="img"
            aria-label="최근 {{ signup_chart.days }}일 누적 총 회원 수 추이">
@@ -158,10 +200,9 @@
   {# 제품 추가 요청 위젯 — 최근 몇 건 미리보기 + 전체 보기(모달) #}
   <section class="glass-panel reveal">
     <div class="sc-chart__head">
-      <h2 class="text-title-md">제품 추가 요청</h2>
+      <h2 class="sc-chart__title text-title-sm">제품 추가 요청</h2>
       <span class="ah-badge ah-badge--neutral" id="pr-count">{{ product_requests|length }}건</span>
     </div>
-    <p class="text-body-sm" style="color: var(--glass-highlight);">사용자가 보낸 제품 추가 요청입니다.</p>
 
     <div class="pr-preview">
       {% for req in product_requests|slice:":3" %}
@@ -170,12 +211,15 @@
         <span class="pr-preview__date text-caption">{{ req.created_at|date:"Y-m-d H:i" }}</span>
       </div>
       {% empty %}
-      <p class="text-body-sm" style="color: var(--glass-highlight);">아직 제품 추가 요청이 없습니다.</p>
+      <div class="ah-empty ah-empty--sm">
+        <div class="ah-empty__icon" aria-hidden="true">📭</div>
+        <p class="ah-empty__title">아직 들어온 제품 추가 요청이 없어요</p>
+        <p class="ah-empty__desc text-caption">사용자가 요청을 보내면 여기에 보여요.</p>
+      </div>
       {% endfor %}
     </div>
 
-    <button type="button" class="btn btn-glass" data-modal-open="pr-modal" id="pr-viewall"
-            style="margin-top: var(--space-3); width: 100%;">
+    <button type="button" class="btn btn-glass pr-more" data-modal-open="pr-modal" id="pr-viewall">
       전체 보기 ({{ product_requests|length }})
     </button>
   </section>
@@ -209,7 +253,7 @@
         </div>
       </article>
       {% endfor %}
-      <p class="text-body-sm" id="pr-empty" {% if product_requests %}hidden{% endif %}>아직 제품 추가 요청이 없습니다.</p>
+      <p class="ah-empty ah-empty--sm" id="pr-empty" {% if product_requests %}hidden{% endif %}>아직 들어온 제품 추가 요청이 없어요</p>
     </div>
   </div>
 </div>
@@ -224,7 +268,7 @@
       <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
     </div>
     <div class="ah-modal__body">
-      <p class="text-body">이 제품 추가 요청을 삭제하시겠습니까?</p>
+      <p class="text-body">이 제품 추가 요청을 삭제할까요?</p>
       <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-3);">
         <button type="button" class="btn btn-glass" data-modal-close>취소</button>
         <button type="button" class="btn btn-danger" id="pr-delete-confirm">삭제</button>
