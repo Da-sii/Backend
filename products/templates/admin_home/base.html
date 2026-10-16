@@ -6,8 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Admin Home{% endblock %}</title>
 
-  {# 테마 결정 — CSS 보다 먼저 실행해 첫 화면 깜빡임을 막는다.
-     저장된 선택(localStorage "ah-theme") → 없으면 OS 설정(prefers-color-scheme). 토글은 theme.js #}
+  {% comment %}
+    테마 결정 — CSS 보다 먼저 실행해 첫 화면 깜빡임을 막는다.
+    저장된 선택(localStorage "ah-theme") → 없으면 OS 설정(prefers-color-scheme). 토글은 theme.js
+  {% endcomment %}
   <script>
     (function () {
       var t = null;
