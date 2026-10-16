@@ -2,18 +2,16 @@
 {% comment %}
   원료 · 기타 원료(OtherIngredient) 관리 — 목록/추가/수정/삭제 (전부 모달, 기능성 원료와 통일).
   단일 뷰(ingredient_other)에서 POST action(create/update/delete)으로 분기한다.
-  · 목록 헤더 ＋ 버튼 → 추가 모달(#oi-create-modal).
-  · 목록 항목 클릭 → 수정 모달(#oi-modal-<id>), 삭제 버튼도 모달 안에.
-  · 모달은 #ah-subcontent 직속(비-transform)에 두어 position:fixed 가 뷰포트 기준으로 동작하게 한다.
+  · 페이지 헤더 "기타 원료 추가" → 추가 모달(#oi-create-modal).
+  · 표 행 클릭(또는 Enter) → 수정 모달(#oi-modal-<id>), 삭제 버튼은 모달 하단 고정 푸터.
+  · 서브내비 전환 시 #ah-subcontent 안쪽만 교체되므로, 페이지 전용 <style>/<script> 도 그 안에 둔다.
+  · 모달은 #ah-subcontent 직속(비-transform 조상)에 두어 position:fixed 가 뷰포트 기준으로 동작하게 한다.
   ProductOtherIngredient.other_ingredient 는 PROTECT 이므로, 제품이 사용 중인 기타 원료는
   삭제 버튼을 비활성화하고 사용 중인 제품 수를 안내한다.
 {% endcomment %}
 
 {% block title %}원료 · 기타 원료 · DASII{% endblock %}
 {% block topbar_title %}원료 관리{% endblock %}
-{% block topbar_actions %}
-<button type="button" class="btn btn-primary" data-modal-open="oi-create-modal">＋ 기타 원료 추가</button>
-{% endblock %}
 
 {% block content %}
 {% include "admin_home/components/_ingredient_subnav.html" %}
@@ -21,73 +19,84 @@
 {# 서브내비 아래 영역 — 기능성/기타 전환 시 이 안쪽만 부분 교체된다(서브내비는 유지) #}
 <div id="ah-subcontent">
 
-  {# 추가 모달 — 목록 헤더 ＋ 버튼으로 열림 #}
+  {# 추가 모달 — 페이지 헤더 버튼으로 열림 #}
   <div class="ah-modal" id="oi-create-modal" aria-hidden="true">
     <div class="ah-modal__overlay" data-modal-close></div>
-    <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+    <div class="ah-modal__dialog glass-panel ing-dialog ing-dialog--sm" role="dialog" aria-modal="true"
          aria-labelledby="oi-create-modal-title">
       <div class="ah-modal__head">
         <h2 id="oi-create-modal-title" class="text-title-md">기타 원료 추가</h2>
         <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
       </div>
       <div class="ah-modal__body">
-        <form method="post" class="ah-stack">
+        <form method="post" class="ah-stack" id="oi-create-form">
           {% csrf_token %}
           <input type="hidden" name="action" value="create" />
           <div class="ah-field">
-            <label class="ah-label" for="new-name">기타 원료 이름</label>
+            <label class="ah-label" for="new-name">기타 원료 이름<span class="ing-req" aria-hidden="true">*</span></label>
             <input class="ah-input" type="text" id="new-name" name="name"
                    maxlength="255" placeholder="예: 정제수" required />
-          </div>
-          <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
-            <button type="button" class="btn btn-glass" data-modal-close>취소</button>
-            <button type="submit" class="btn btn-primary">추가</button>
+            <p class="ah-help">같은 이름은 두 번 등록할 수 없어요.</p>
           </div>
         </form>
+      </div>
+      <div class="ing-modal-footer">
+        <p class="ing-reqnote"><span class="ing-req" aria-hidden="true">*</span> 표시는 꼭 입력해야 해요.</p>
+        <div class="ing-modal-footer__main">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" form="oi-create-form" class="btn btn-primary">추가</button>
+        </div>
       </div>
     </div>
   </div>
 
-  {# 수정/삭제 모달 — 목록 항목 클릭 시 열림 #}
+  {# 수정/삭제 모달 — 표 행 클릭 시 열림 #}
   {% for oi in others %}
   <div class="ah-modal" id="oi-modal-{{ oi.id }}" aria-hidden="true">
     <div class="ah-modal__overlay" data-modal-close></div>
-    <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+    <div class="ah-modal__dialog glass-panel ing-dialog ing-dialog--sm" role="dialog" aria-modal="true"
          aria-labelledby="oi-modal-{{ oi.id }}-title">
       <div class="ah-modal__head">
-        <h2 id="oi-modal-{{ oi.id }}-title" class="text-title-md">기타 원료 · #{{ oi.id }}</h2>
+        <h2 id="oi-modal-{{ oi.id }}-title" class="text-title-md">기타 원료 <span class="ing-dialog__id">#{{ oi.id }}</span></h2>
         <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
       </div>
       <div class="ah-modal__body">
-        <form method="post" class="ah-stack">
+        <form method="post" class="ah-stack" id="oi-form-{{ oi.id }}">
           {% csrf_token %}
           <input type="hidden" name="action" value="update" />
           <input type="hidden" name="id" value="{{ oi.id }}" />
           <div class="ah-field">
-            <label class="ah-label">기타 원료 이름</label>
+            <label class="ah-label">기타 원료 이름<span class="ing-req" aria-hidden="true">*</span></label>
             <input class="ah-input" type="text" name="name" value="{{ oi.name }}"
                    maxlength="255" aria-label="기타 원료 이름" required />
           </div>
-          <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
-            <button type="button" class="btn btn-glass" data-modal-close>취소</button>
-            <button type="submit" class="btn btn-primary">저장</button>
-          </div>
+          <p class="ah-help">현재 제품 {{ oi.product_count }}개에서 쓰고 있어요.</p>
         </form>
 
-        {# 삭제 — update 폼과 중첩되지 않도록 별도 폼. PROTECT 시 비활성화. #}
-        <div style="margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--glass-border); display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap;">
-          <span class="ah-badge ah-badge--neutral" title="사용 중인 제품 수">사용 중 제품 {{ oi.product_count }}</span>
+        {# 삭제 — update 폼과 중첩되지 않도록 별도 폼(하단 푸터 버튼이 form= 으로 참조). PROTECT 시 비활성화. #}
+        {% if not oi.product_count %}
+        <form method="post" id="oi-del-{{ oi.id }}"
+              onsubmit="return confirm('이 기타 원료를 삭제할까요?\n삭제하면 되돌릴 수 없어요.');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete" />
+          <input type="hidden" name="id" value="{{ oi.id }}" />
+        </form>
+        {% endif %}
+      </div>
+      {# 하단 고정 푸터 — 삭제·사용 현황(좌) / 취소·저장(우) #}
+      <div class="ing-modal-footer">
+        <div class="ing-modal-footer__side">
           {% if oi.product_count %}
           <button type="button" class="btn btn-danger" disabled
-                  title="제품 {{ oi.product_count }}개에서 사용 중이라 삭제할 수 없습니다.">삭제</button>
+                  title="제품 {{ oi.product_count }}개에서 쓰고 있어서 삭제할 수 없어요.">삭제</button>
+          <span class="ing-reqnote">제품 {{ oi.product_count }}개에서 쓰고 있어서 삭제할 수 없어요.</span>
           {% else %}
-          <form method="post" onsubmit="return confirm('이 기타 원료를 삭제할까요?');">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="delete" />
-            <input type="hidden" name="id" value="{{ oi.id }}" />
-            <button type="submit" class="btn btn-danger">이 기타 원료 삭제</button>
-          </form>
+          <button type="submit" form="oi-del-{{ oi.id }}" class="btn btn-danger">삭제</button>
           {% endif %}
+        </div>
+        <div class="ing-modal-footer__main">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" form="oi-form-{{ oi.id }}" class="btn btn-primary">저장</button>
         </div>
       </div>
     </div>
@@ -95,32 +104,136 @@
   {% endfor %}
 
   {# ── 목록 ── #}
+  <header class="ah-page-header">
+    <div>
+      <h2 class="ah-page-header__title">기타 원료</h2>
+      <p class="ah-page-header__desc">행을 누르면 이름을 수정하거나 삭제할 수 있어요.</p>
+    </div>
+    <div class="ah-page-header__actions">
+      <button type="button" class="btn btn-primary" data-modal-open="oi-create-modal">기타 원료 추가</button>
+    </div>
+  </header>
+
   <section class="reveal">
-    <div style="margin-bottom: var(--space-3);">
-      <h2 class="text-title-sm">
-        기타 원료 목록 <span class="text-muted">({{ others|length }})</span>
-      </h2>
+    <div class="ah-toolbar">
+      <input class="ah-input ah-toolbar__search" type="search" id="oi-search"
+             placeholder="원료명으로 검색해요" aria-label="기타 원료 검색" />
+      <span class="ah-toolbar__meta">총 <b id="oi-count">{{ others|length }}</b>개</span>
     </div>
 
-    {% if others %}
-    <div class="ah-records" data-reveal-stagger>
-      {% for oi in others %}
-      <div class="ah-record reveal" data-modal-open="oi-modal-{{ oi.id }}"
-           style="cursor:pointer;" title="클릭하여 수정">
-        {# DB id(PK) 표기 — 삭제 시 순번 연속성보다 실제 PK 를 노출한다 #}
-        <span class="ah-record__id text-body-sm" title="DB id">{{ oi.id }}</span>
-        <div class="ah-record__edit" style="flex-wrap: wrap;">
-          <span class="text-body">{{ oi.name }}</span>
-        </div>
-        <div class="ah-record__actions">
-          <span class="text-body-sm text-muted" title="사용 중인 제품 수">제품 {{ oi.product_count }}개</span>
-        </div>
-      </div>
-      {% endfor %}
+    <div class="ah-table-wrap">
+      <table class="ah-table" id="oi-table">
+        <thead>
+          <tr>
+            <th>원료명</th>
+            <th class="ah-table__num">사용 제품</th>
+            <th class="ah-table__num">ID</th>
+            <th class="ah-table__actions"><span class="ing-sr">관리</span></th>
+          </tr>
+        </thead>
+        <tbody id="oi-records">
+          {% for oi in others %}
+          <tr class="ah-table__row--link" tabindex="0" data-modal-open="oi-modal-{{ oi.id }}"
+              data-search="{{ oi.name|lower }}">
+            <td><span class="ah-table__title">{{ oi.name }}</span></td>
+            <td class="ah-table__num">{{ oi.product_count }}</td>
+            <td class="ah-table__num ah-table__muted">{{ oi.id }}</td>
+            <td class="ah-table__actions">
+              <span class="ah-table__actions-inner">
+                <button type="button" class="btn btn-ghost btn-sm" tabindex="-1">수정</button>
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td class="ah-table__empty" colspan="4">
+              <div class="ah-empty">
+                <div class="ah-empty__icon" aria-hidden="true">🧴</div>
+                <p class="ah-empty__title">아직 등록된 기타 원료가 없어요</p>
+                <p class="ah-empty__desc">첫 기타 원료를 추가해 보세요.</p>
+                <div class="ah-empty__action">
+                  <button type="button" class="btn btn-primary" data-modal-open="oi-create-modal">기타 원료 추가</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if others %}
+          {# 검색 결과가 0건일 때만 JS 가 보여준다 #}
+          <tr id="oi-noresult" hidden>
+            <td class="ah-table__empty" colspan="4">
+              <div class="ah-empty">
+                <div class="ah-empty__icon" aria-hidden="true">🔍</div>
+                <p class="ah-empty__title">조건에 맞는 원료가 없어요</p>
+                <p class="ah-empty__desc">검색어를 바꿔 보세요.</p>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
     </div>
-    {% else %}
-    <p class="ah-record-empty text-body">등록된 기타 원료가 없습니다. 우측 상단 ＋ 기타 원료 추가 로 첫 기타 원료를 추가해보세요.</p>
-    {% endif %}
   </section>
+
+  {# 페이지 전용 스타일·스크립트 — #ah-subcontent 안에 두어 서브내비 부분 교체 시에도 함께 적용된다 #}
+  <style>
+    .ing-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    #oi-records tr[data-modal-open]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+
+    /* 모달 */
+    .ing-dialog { width: min(920px, 100%); }
+    .ing-dialog--sm { width: min(560px, 100%); }
+    .ing-dialog__id { font-size: var(--fs-caption); font-weight: var(--font-weight-regular); color: var(--text-muted); }
+    .ing-req { margin-left: 2px; color: var(--danger); }
+    .ing-reqnote { font-size: var(--fs-caption); color: var(--text-muted); }
+    .ing-modal-footer {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--border);
+    }
+    .ing-modal-footer__side { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+    .ing-modal-footer__main { display: flex; gap: var(--space-2); margin-left: auto; }
+  </style>
+
+  <script>
+    // 검색(원료명) — 일치하는 행만 표시, 건수·결과 없음 갱신.
+    (function () {
+      var input = document.getElementById("oi-search");
+      var rows = document.querySelectorAll("#oi-records tr[data-modal-open]");
+      var countEl = document.getElementById("oi-count");
+      var noResult = document.getElementById("oi-noresult");
+      if (!rows.length) return;
+      function apply() {
+        var term = input ? input.value.trim().toLowerCase() : "";
+        var shown = 0;
+        rows.forEach(function (row) {
+          row.hidden = !!term && (row.getAttribute("data-search") || "").indexOf(term) === -1;
+          if (!row.hidden) shown++;
+        });
+        if (countEl) countEl.textContent = shown;
+        if (noResult) noResult.hidden = shown !== 0;
+      }
+      if (input) input.addEventListener("input", apply);
+    })();
+
+    // 키보드 접근 — 포커스된 행에서 Enter/Space 로 수정 모달 열기(document 위임, 멱등)
+    (function () {
+      if (document._ahOiRowKeysWired) return;
+      document._ahOiRowKeysWired = "1";
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        var row = e.target.matches && e.target.matches("#oi-records tr[data-modal-open]") ? e.target : null;
+        if (!row) return;
+        e.preventDefault();
+        row.click();
+      });
+    })();
+  </script>
 </div>
 {% endblock %}
