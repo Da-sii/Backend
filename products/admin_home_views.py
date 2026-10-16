@@ -34,6 +34,7 @@ from products.models import (
     SmallCategory,
 )
 from products.utils import upload_images_to_s3
+from recommendations.constants import GOAL_CHOICES
 from users.models import User
 
 
@@ -1039,7 +1040,7 @@ def _parse_json_list(raw):
 def ingredient_list(request):
     """원료 · 기능성 원료(Ingredient) 관리 — 목록/추가/삭제.
 
-    이름/주성분/권장량 등 기본 필드만 다룬다(효과·부작용 상세는 상세 모달 태스크).
+    이름/주성분/권장량 + 효과·부작용 + 추천 목표(goals)·해시태그(hashtags)를 다룬다.
     ProductIngredient.ingredient 는 PROTECT 이므로, 제품이 사용 중인 성분은
     삭제하지 않고 사용 중인 제품 수를 안내한다(기존 admin 은 연결을 강제 삭제했으나
     /admin/home 에서는 실수 삭제를 막기 위해 방지·안내로 바꾼다).
@@ -1093,6 +1094,11 @@ def ingredient_list(request):
             ingredient.maxRecommended = max_recommended or None
             ingredient.effect = _parse_json_list(request.POST.get("effect"))
             ingredient.sideEffect = _parse_json_list(request.POST.get("sideEffect"))
+            # 추천 목표: 허용 값(GOAL_CHOICES)만 저장하고 GOAL_CHOICES 순서를 유지한다.
+            selected_goals = set(request.POST.getlist("goals"))
+            ingredient.goals = [g for g in GOAL_CHOICES if g in selected_goals]
+            # 해시태그: 자유 입력 리스트. 정규화는 Ingredient.save() 에서 수행한다.
+            ingredient.hashtags = _parse_json_list(request.POST.get("hashtags"))
             ingredient.save(
                 update_fields=[
                     "name",
@@ -1101,6 +1107,8 @@ def ingredient_list(request):
                     "maxRecommended",
                     "effect",
                     "sideEffect",
+                    "goals",
+                    "hashtags",
                 ]
             )
             messages.success(request, f'"{name}" 성분 정보가 저장되었습니다.')
@@ -1142,7 +1150,7 @@ def ingredient_list(request):
     return _ah_render(
         request,
         "admin_home/ingredient_list.html",
-        {"ingredients": ingredients},
+        {"ingredients": ingredients, "goal_choices": GOAL_CHOICES},
     )
 
 
