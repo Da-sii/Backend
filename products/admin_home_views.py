@@ -1003,7 +1003,7 @@ def _get_ingredient(request):
     try:
         return Ingredient.objects.get(id=request.POST.get("id", ""))
     except (Ingredient.DoesNotExist, ValueError):
-        messages.error(request, "성분을 찾을 수 없습니다.")
+        messages.error(request, "성분을 찾을 수 없어요.")
         return None
 
 
@@ -1020,7 +1020,7 @@ def _recommended_length_error(min_recommended, max_recommended):
     for label, (value, field_name) in fields.items():
         max_length = Ingredient._meta.get_field(field_name).max_length
         if value and len(value) > max_length:
-            return f"{label}은 {max_length}자를 초과할 수 없습니다."
+            return f"{label}은 {max_length}자까지만 입력할 수 있어요."
     return None
 
 
@@ -1056,7 +1056,7 @@ def ingredient_list(request):
             max_recommended = request.POST.get("maxRecommended", "").strip()
             length_error = _recommended_length_error(min_recommended, max_recommended)
             if not name:
-                messages.error(request, "성분 이름을 입력해주세요.")
+                messages.error(request, "성분 이름을 입력해 주세요.")
             elif length_error:
                 messages.error(request, length_error)
             else:
@@ -1067,7 +1067,7 @@ def ingredient_list(request):
                     minRecommended=min_recommended or None,
                     maxRecommended=max_recommended or None,
                 )
-                messages.success(request, f'"{name}" 성분이 추가되었습니다.')
+                messages.success(request, f'"{name}" 성분을 추가했어요.')
             return redirect("admin_home_ingredient")
 
         if action == "update":
@@ -1079,7 +1079,7 @@ def ingredient_list(request):
             min_recommended = request.POST.get("minRecommended", "").strip()
             max_recommended = request.POST.get("maxRecommended", "").strip()
             if not name:
-                messages.error(request, "성분 이름을 입력해주세요.")
+                messages.error(request, "성분 이름을 입력해 주세요.")
                 return redirect("admin_home_ingredient")
             length_error = _recommended_length_error(min_recommended, max_recommended)
             if length_error:
@@ -1113,7 +1113,7 @@ def ingredient_list(request):
                     "hashtags",
                 ]
             )
-            messages.success(request, f'"{name}" 성분 정보가 저장되었습니다.')
+            messages.success(request, f'"{name}" 성분 정보를 저장했어요.')
             return redirect("admin_home_ingredient")
 
         if action == "delete":
@@ -1125,23 +1125,23 @@ def ingredient_list(request):
                 # PROTECT — 제품이 사용 중이면 삭제를 막고 사용처를 안내한다.
                 messages.error(
                     request,
-                    f'"{ingredient.name}" 성분은 제품 {used}개에서 사용 중이라 '
-                    "삭제할 수 없습니다. 먼저 해당 제품에서 성분 연결을 해제해주세요.",
+                    f'"{ingredient.name}" 성분은 제품 {used}개에서 쓰고 있어서 '
+                    "삭제할 수 없어요. 먼저 해당 제품에서 성분 연결을 해제해 주세요.",
                 )
             else:
                 name = ingredient.name
                 try:
                     ingredient.delete()
-                    messages.success(request, f'"{name}" 성분이 삭제되었습니다.')
+                    messages.success(request, f'"{name}" 성분을 삭제했어요.')
                 except ProtectedError:
                     # count() 확인 이후 경합으로 연결이 생긴 경우의 2차 방어
                     messages.error(
                         request,
-                        f'"{name}" 성분은 사용 중이라 삭제할 수 없습니다.',
+                        f'"{name}" 성분은 사용 중이라 삭제할 수 없어요.',
                     )
             return redirect("admin_home_ingredient")
 
-        messages.error(request, "알 수 없는 요청입니다.")
+        messages.error(request, "알 수 없는 요청이에요.")
         return redirect("admin_home_ingredient")
 
     ingredients = (
@@ -1173,7 +1173,7 @@ def ingredient_guide(request):
             guide.keyPoints = _parse_json_list(request.POST.get("keyPoints"))
             guide.sources = _parse_json_list(request.POST.get("sources"))
             guide.save()
-        messages.success(request, f'"{ingredient.name}" 성분 가이드가 저장되었습니다.')
+        messages.success(request, f'"{ingredient.name}" 성분 가이드를 저장했어요.')
         return redirect("admin_home_guide")
 
     ingredients = Ingredient.objects.select_related("guide").order_by("id")
@@ -1189,7 +1189,7 @@ def _get_other_ingredient(request):
     try:
         return OtherIngredient.objects.get(id=request.POST.get("id", ""))
     except (OtherIngredient.DoesNotExist, ValueError):
-        messages.error(request, "기타 원료를 찾을 수 없습니다.")
+        messages.error(request, "기타 원료를 찾을 수 없어요.")
         return None
 
 
@@ -1207,12 +1207,12 @@ def ingredient_other(request):
         if action == "create":
             name = request.POST.get("name", "").strip()
             if not name:
-                messages.error(request, "기타 원료 이름을 입력해주세요.")
+                messages.error(request, "기타 원료 이름을 입력해 주세요.")
             elif OtherIngredient.objects.filter(name=name).exists():
-                messages.error(request, f'"{name}" 기타 원료가 이미 존재합니다.')
+                messages.error(request, f'"{name}" 기타 원료가 이미 있어요.')
             else:
                 OtherIngredient.objects.create(name=name)
-                messages.success(request, f'"{name}" 기타 원료가 추가되었습니다.')
+                messages.success(request, f'"{name}" 기타 원료를 추가했어요.')
             return redirect("admin_home_ingredient_other")
 
         if action == "update":
@@ -1221,17 +1221,17 @@ def ingredient_other(request):
                 return redirect("admin_home_ingredient_other")
             name = request.POST.get("name", "").strip()
             if not name:
-                messages.error(request, "기타 원료 이름을 입력해주세요.")
+                messages.error(request, "기타 원료 이름을 입력해 주세요.")
             elif (
                 OtherIngredient.objects.filter(name=name)
                 .exclude(id=other.id)
                 .exists()
             ):
-                messages.error(request, f'"{name}" 기타 원료가 이미 존재합니다.')
+                messages.error(request, f'"{name}" 기타 원료가 이미 있어요.')
             else:
                 other.name = name
                 other.save()
-                messages.success(request, f'"{name}" 기타 원료가 수정되었습니다.')
+                messages.success(request, f'"{name}" 기타 원료를 수정했어요.')
             return redirect("admin_home_ingredient_other")
 
         if action == "delete":
@@ -1243,23 +1243,23 @@ def ingredient_other(request):
                 # PROTECT — 제품이 사용 중이면 삭제를 막고 사용처를 안내한다.
                 messages.error(
                     request,
-                    f'"{other.name}" 기타 원료는 제품 {used}개에서 사용 중이라 '
-                    "삭제할 수 없습니다. 먼저 해당 제품에서 연결을 해제해주세요.",
+                    f'"{other.name}" 기타 원료는 제품 {used}개에서 쓰고 있어서 '
+                    "삭제할 수 없어요. 먼저 해당 제품에서 연결을 해제해 주세요.",
                 )
             else:
                 name = other.name
                 try:
                     other.delete()
-                    messages.success(request, f'"{name}" 기타 원료가 삭제되었습니다.')
+                    messages.success(request, f'"{name}" 기타 원료를 삭제했어요.')
                 except ProtectedError:
                     # count() 확인 이후 경합으로 연결이 생긴 경우의 2차 방어
                     messages.error(
                         request,
-                        f'"{name}" 기타 원료는 사용 중이라 삭제할 수 없습니다.',
+                        f'"{name}" 기타 원료는 사용 중이라 삭제할 수 없어요.',
                     )
             return redirect("admin_home_ingredient_other")
 
-        messages.error(request, "알 수 없는 요청입니다.")
+        messages.error(request, "알 수 없는 요청이에요.")
         return redirect("admin_home_ingredient_other")
 
     others = OtherIngredient.objects.annotate(
