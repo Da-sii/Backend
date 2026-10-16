@@ -2,8 +2,10 @@
 {% comment %}
   원료 · 기능성 원료(Ingredient) 관리 — 목록/추가/수정/삭제 (전부 모달).
   단일 뷰(ingredient_list)에서 POST action(create/update/delete)으로 분기한다.
-  · 목록 헤더 ＋ 버튼 → 추가 모달(#ing-create-modal).
-  · 목록 항목 클릭 → 상세/수정 모달(#ing-modal-<id>), 삭제 버튼도 모달 안에.
+  · 페이지 헤더 "기능성 원료 추가" → 추가 모달(#ing-create-modal).
+  · 표 행 클릭(또는 Enter) → 상세/수정 모달(#ing-modal-<id>), 삭제 버튼은 모달 하단 고정 푸터.
+  · 서브내비 전환 시 #ah-subcontent 안쪽만 교체되므로, 페이지 전용 <style>/<script> 도 그 안에 둔다
+    (밖에 두면 기타 원료 → 기능성 원료로 전환할 때 스타일·JS 가 빠진다).
   · 모달은 #ah-subcontent 직속(비-transform 조상)에 두어 position:fixed 가 뷰포트 기준으로 동작하게 한다
     (.reveal 등 transform/will-change 조상 안에 넣으면 중앙 정렬·오버레이가 깨진다).
   · 제품이 사용 중인 성분은 PROTECT 로 삭제가 막히며, 사용 중인 제품 수를 안내한다.
@@ -12,9 +14,6 @@
 
 {% block title %}원료 · 기능성 원료 · DASII{% endblock %}
 {% block topbar_title %}원료 관리{% endblock %}
-{% block topbar_actions %}
-<button type="button" class="btn btn-primary" data-modal-open="ing-create-modal">＋ 기능성 원료 추가</button>
-{% endblock %}
 
 {% block content %}
 {% include "admin_home/components/_ingredient_subnav.html" %}
@@ -27,18 +26,18 @@
   {# 추가 모달 — 목록 헤더 ＋ 버튼으로 열림 #}
   <div class="ah-modal" id="ing-create-modal" aria-hidden="true">
     <div class="ah-modal__overlay" data-modal-close></div>
-    <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+    <div class="ah-modal__dialog glass-panel ing-dialog ing-dialog--sm" role="dialog" aria-modal="true"
          aria-labelledby="ing-create-modal-title">
       <div class="ah-modal__head">
         <h2 id="ing-create-modal-title" class="text-title-md">기능성 원료 추가</h2>
         <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
       </div>
       <div class="ah-modal__body">
-        <form method="post" class="ah-stack">
+        <form method="post" class="ah-stack" id="ing-create-form">
           {% csrf_token %}
           <input type="hidden" name="action" value="create" />
           <div class="ah-field">
-            <label class="ah-label" for="new-name">성분 이름</label>
+            <label class="ah-label" for="new-name">성분 이름<span class="ing-req" aria-hidden="true">*</span></label>
             <input class="ah-input" type="text" id="new-name" name="name"
                    placeholder="예: 비타민C" required />
           </div>
@@ -47,23 +46,27 @@
             <input class="ah-input" type="text" id="new-main" name="mainIngredient"
                    maxlength="100" placeholder="예: 아스코르브산" />
           </div>
-          <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
-            <div class="ah-field" style="flex:1 1 160px;">
+          <div class="ing-row2">
+            <div class="ah-field">
               <label class="ah-label" for="new-min">최소 권장량</label>
               <input class="ah-input" type="text" id="new-min" name="minRecommended"
                      maxlength="50" placeholder="예: 100mg" />
             </div>
-            <div class="ah-field" style="flex:1 1 160px;">
+            <div class="ah-field">
               <label class="ah-label" for="new-max">최대 권장량</label>
               <input class="ah-input" type="text" id="new-max" name="maxRecommended"
                      maxlength="50" placeholder="예: 1000mg" />
             </div>
           </div>
-          <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
-            <button type="button" class="btn btn-glass" data-modal-close>취소</button>
-            <button type="submit" class="btn btn-primary">추가</button>
-          </div>
+          <p class="ah-help">효과·부작용·추천 목표·해시태그는 추가한 뒤 목록에서 원료를 눌러 입력할 수 있어요.</p>
         </form>
+      </div>
+      <div class="ing-modal-footer">
+        <p class="ing-reqnote"><span class="ing-req" aria-hidden="true">*</span> 표시는 꼭 입력해야 해요.</p>
+        <div class="ing-modal-footer__main">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" form="ing-create-form" class="btn btn-primary">추가</button>
+        </div>
       </div>
     </div>
   </div>
@@ -72,21 +75,21 @@
   {% for ing in ingredients %}
   <div class="ah-modal" id="ing-modal-{{ ing.id }}" aria-hidden="true">
     <div class="ah-modal__overlay" data-modal-close></div>
-    <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
-         aria-labelledby="ing-modal-{{ ing.id }}-title" style="width: min(920px, 100%);">
+    <div class="ah-modal__dialog glass-panel ing-dialog" role="dialog" aria-modal="true"
+         aria-labelledby="ing-modal-{{ ing.id }}-title">
       <div class="ah-modal__head">
-        <h2 id="ing-modal-{{ ing.id }}-title" class="text-title-md">성분 상세 · #{{ ing.id }}</h2>
+        <h2 id="ing-modal-{{ ing.id }}-title" class="text-title-md">{{ ing.name }} <span class="ing-dialog__id">#{{ ing.id }}</span></h2>
         <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
       </div>
       <div class="ah-modal__body">
-        <form method="post" data-ingredient-form class="ah-stack">
+        <form method="post" data-ingredient-form class="ah-stack" id="ing-form-{{ ing.id }}">
           {% csrf_token %}
           <input type="hidden" name="action" value="update" />
           <input type="hidden" name="id" value="{{ ing.id }}" />
 
           <div class="ah-grid">
             <div class="ah-field">
-              <label class="ah-label">성분 이름</label>
+              <label class="ah-label">성분 이름<span class="ing-req" aria-hidden="true">*</span></label>
               <input class="ah-input" type="text" name="name" value="{{ ing.name }}"
                      aria-label="성분 이름" required />
             </div>
@@ -96,13 +99,13 @@
                      value="{{ ing.mainIngredient|default:'' }}" aria-label="주성분" />
             </div>
           </div>
-          <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
-            <div class="ah-field" style="flex:1 1 160px;">
+          <div class="ing-row2">
+            <div class="ah-field">
               <label class="ah-label">최소 권장량</label>
               <input class="ah-input" type="text" name="minRecommended" maxlength="50"
                      value="{{ ing.minRecommended|default:'' }}" aria-label="최소 권장량" />
             </div>
-            <div class="ah-field" style="flex:1 1 160px;">
+            <div class="ah-field">
               <label class="ah-label">최대 권장량</label>
               <input class="ah-input" type="text" name="maxRecommended" maxlength="50"
                      value="{{ ing.maxRecommended|default:'' }}" aria-label="최대 권장량" />
@@ -110,6 +113,7 @@
           </div>
 
           {# 효과·부작용 (JSON 리스트) — 이 원료 모달에서 편집. 핵심 포인트·출처는 성분 가이드 메뉴. #}
+          <div class="ah-formsection"><h3 class="text-title-sm">효과 · 부작용</h3></div>
           <div class="ah-grid">
             <div class="ah-field">
               <label class="ah-label">효과</label>
@@ -119,11 +123,11 @@
                   <div class="ah-listedit__row">
                     <textarea class="ah-textarea text-body" data-listedit-item
                               rows="2" aria-label="효과 항목">{{ e }}</textarea>
-                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-listedit-remove>삭제</button>
                   </div>
                   {% endfor %}
                 </div>
-                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <button type="button" class="btn btn-glass btn-sm" data-listedit-add>+ 줄 추가</button>
                 <input type="hidden" name="effect" data-listedit-target />
               </div>
             </div>
@@ -135,27 +139,29 @@
                   <div class="ah-listedit__row">
                     <textarea class="ah-textarea text-body" data-listedit-item
                               rows="2" aria-label="부작용 항목">{{ s }}</textarea>
-                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-listedit-remove>삭제</button>
                   </div>
                   {% endfor %}
                 </div>
-                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <button type="button" class="btn btn-glass btn-sm" data-listedit-add>+ 줄 추가</button>
                 <input type="hidden" name="sideEffect" data-listedit-target />
               </div>
             </div>
           </div>
-          {# 추천 목표(goals, 고정 선택지 다중 선택) + 해시태그(hashtags, 자유 입력 리스트) #}
+          {# 추천 목표(goals, 고정 선택지 다중 선택 — 칩 모양 체크박스) + 해시태그(hashtags, 자유 입력 리스트) #}
+          <div class="ah-formsection"><h3 class="text-title-sm">추천 목표 · 해시태그</h3></div>
           <div class="ah-grid">
             <div class="ah-field">
-              <label class="ah-label">추천 목표</label>
-              <div style="display:flex; flex-wrap:wrap; gap:var(--space-2) var(--space-4);">
+              <span class="ah-label">추천 목표</span>
+              <div class="ing-chips">
                 {% for g in goal_choices %}
-                <label class="text-body-sm" style="display:inline-flex; align-items:center; gap:var(--space-2); cursor:pointer;">
+                <label class="ing-chip">
                   <input type="checkbox" name="goals" value="{{ g }}"{% if g in ing.goals %} checked{% endif %} />
-                  {{ g }}
+                  <span>{{ g }}</span>
                 </label>
                 {% endfor %}
               </div>
+              <p class="ah-help">해당하는 목표를 모두 골라 주세요.</p>
             </div>
             <div class="ah-field">
               <label class="ah-label">해시태그</label>
@@ -165,39 +171,42 @@
                   <div class="ah-listedit__row">
                     <textarea class="ah-textarea text-body" data-listedit-item
                               rows="1" aria-label="해시태그 항목">{{ h }}</textarea>
-                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-listedit-remove>삭제</button>
                   </div>
                   {% endfor %}
                 </div>
-                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <button type="button" class="btn btn-glass btn-sm" data-listedit-add>+ 줄 추가</button>
                 <input type="hidden" name="hashtags" data-listedit-target />
               </div>
             </div>
           </div>
-          <p class="text-caption" style="color: var(--glass-highlight);">
-            핵심 포인트·출처는 좌측 <strong>성분 가이드</strong> 메뉴에서 관리합니다.
-          </p>
-
-          <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
-            <button type="button" class="btn btn-glass" data-modal-close>취소</button>
-            <button type="submit" class="btn btn-primary">저장</button>
-          </div>
+          <p class="ah-help">핵심 포인트·출처는 왼쪽 <strong>성분 가이드</strong> 메뉴에서 관리해요.</p>
         </form>
 
-        {# 삭제 — update 폼과 중첩되지 않도록 별도 폼. PROTECT 시 비활성화. #}
-        <div style="margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--glass-border); display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); flex-wrap: wrap;">
-          <span class="ah-badge ah-badge--neutral" title="사용 중인 제품 수">사용 중 제품 {{ ing.product_count }}</span>
+        {# 삭제 — update 폼과 중첩되지 않도록 별도 폼(하단 푸터 버튼이 form= 으로 참조). PROTECT 시 비활성화. #}
+        {% if not ing.product_count %}
+        <form method="post" id="ing-del-{{ ing.id }}"
+              onsubmit="return confirm('이 원료를 삭제할까요?\n삭제하면 되돌릴 수 없어요.');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete" />
+          <input type="hidden" name="id" value="{{ ing.id }}" />
+        </form>
+        {% endif %}
+      </div>
+      {# 하단 고정 푸터 — 삭제·사용 현황(좌) / 취소·저장(우) #}
+      <div class="ing-modal-footer">
+        <div class="ing-modal-footer__side">
           {% if ing.product_count %}
           <button type="button" class="btn btn-danger" disabled
-                  title="제품 {{ ing.product_count }}개에서 사용 중이라 삭제할 수 없습니다.">삭제</button>
+                  title="제품 {{ ing.product_count }}개에서 쓰고 있어서 삭제할 수 없어요.">삭제</button>
+          <span class="ing-reqnote">제품 {{ ing.product_count }}개에서 쓰고 있어서 삭제할 수 없어요.</span>
           {% else %}
-          <form method="post" onsubmit="return confirm('이 성분을 삭제할까요?');">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="delete" />
-            <input type="hidden" name="id" value="{{ ing.id }}" />
-            <button type="submit" class="btn btn-danger">이 성분 삭제</button>
-          </form>
+          <button type="submit" form="ing-del-{{ ing.id }}" class="btn btn-danger">삭제</button>
           {% endif %}
+        </div>
+        <div class="ing-modal-footer__main">
+          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+          <button type="submit" form="ing-form-{{ ing.id }}" class="btn btn-primary">저장</button>
         </div>
       </div>
     </div>
@@ -205,128 +214,275 @@
   {% endfor %}
 
   {# ── 목록 ── #}
+  <header class="ah-page-header">
+    <div>
+      <h2 class="ah-page-header__title">기능성 원료</h2>
+      <p class="ah-page-header__desc">행을 누르면 효과·부작용·추천 목표·해시태그를 수정할 수 있어요.</p>
+    </div>
+    <div class="ah-page-header__actions">
+      <button type="button" class="btn btn-primary" data-modal-open="ing-create-modal">기능성 원료 추가</button>
+    </div>
+  </header>
+
   <section class="reveal">
-    <div style="margin-bottom: var(--space-3);">
-      <h2 class="text-title-sm">
-        기능성 원료 목록 <span class="text-muted">({{ ingredients|length }})</span>
-      </h2>
+    {# 검색(이름·주성분·해시태그) + 추천 목표 필터 — 클라이언트 사이드 #}
+    <div class="ah-toolbar">
+      <input class="ah-input ah-toolbar__search" type="search" id="ing-search"
+             placeholder="원료명·주성분·해시태그로 검색해요" aria-label="원료 검색" />
+      <select class="ah-select ah-toolbar__filter" id="ing-goal-filter" aria-label="추천 목표로 필터">
+        <option value="">전체 추천 목표</option>
+        {% for g in goal_choices %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+      </select>
+      <span class="ah-toolbar__meta">총 <b id="ing-count">{{ ingredients|length }}</b>개</span>
     </div>
 
-    {% if ingredients %}
-    <div class="ah-records" data-reveal-stagger>
-      {% for ing in ingredients %}
-      <div class="ah-record reveal" data-modal-open="ing-modal-{{ ing.id }}"
-           style="cursor:pointer;" title="클릭하여 상세·수정">
-        {# DB id(PK) 표기 — 삭제 시 순번 연속성보다 실제 PK 를 노출한다 #}
-        <span class="ah-record__id text-body-sm" title="DB id">{{ ing.id }}</span>
-
-        <div class="ah-record__edit" style="flex-wrap: wrap;">
-          <span class="text-body">{{ ing.name }}</span>
-          {% if ing.mainIngredient %}
-          <span class="text-body-sm text-muted">· {{ ing.mainIngredient }}</span>
+    <div class="ah-table-wrap">
+      <table class="ah-table" id="ing-table">
+        <thead>
+          <tr>
+            <th>원료</th>
+            <th>권장량</th>
+            <th>추천 목표</th>
+            <th>해시태그</th>
+            <th>가이드</th>
+            <th class="ah-table__num">사용 제품</th>
+            <th class="ah-table__num">ID</th>
+            <th class="ah-table__actions"><span class="ing-sr">관리</span></th>
+          </tr>
+        </thead>
+        <tbody id="ing-records">
+          {% for ing in ingredients %}
+          <tr class="ah-table__row--link" tabindex="0" data-modal-open="ing-modal-{{ ing.id }}"
+              data-search="{{ ing.name|lower }} {{ ing.mainIngredient|default:''|lower }}{% for h in ing.hashtags %} {{ h|lower }}{% endfor %}"
+              data-goals="|{% for g in ing.goals %}{{ g }}|{% endfor %}">
+            <td>
+              <span class="ah-table__title">{{ ing.name }}</span>
+              {% if ing.mainIngredient %}<span class="ah-table__sub">{{ ing.mainIngredient }}</span>{% endif %}
+            </td>
+            <td class="ah-table__shrink">
+              {% if ing.minRecommended or ing.maxRecommended %}
+              {{ ing.minRecommended|default:"-" }} ~ {{ ing.maxRecommended|default:"-" }}
+              {% else %}<span class="ah-table__muted">미입력</span>{% endif %}
+            </td>
+            <td>
+              <div class="ing-badges">
+                {% for g in ing.goals %}<span class="ah-badge ah-badge--ok">{{ g }}</span>{% empty %}<span class="ah-table__muted">미지정</span>{% endfor %}
+              </div>
+            </td>
+            <td>
+              {% if ing.hashtags %}
+              <span class="ing-clamp" title="{% for h in ing.hashtags %}#{{ h }} {% endfor %}">{% for h in ing.hashtags %}#{{ h }} {% endfor %}</span>
+              {% else %}<span class="ah-table__muted">없음</span>{% endif %}
+            </td>
+            <td class="ah-table__shrink">
+              {# 성분 가이드 유무 — 핵심 포인트/출처 중 하나라도 있으면 '있음' #}
+              {% if ing.guide.keyPoints or ing.guide.sources %}
+              <span class="ah-badge ah-badge--info">있음</span>
+              {% else %}
+              <span class="ah-table__muted">없음</span>
+              {% endif %}
+            </td>
+            <td class="ah-table__num">{{ ing.product_count }}</td>
+            <td class="ah-table__num ah-table__muted">{{ ing.id }}</td>
+            <td class="ah-table__actions">
+              <span class="ah-table__actions-inner">
+                <button type="button" class="btn btn-ghost btn-sm" tabindex="-1">수정</button>
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td class="ah-table__empty" colspan="8">
+              <div class="ah-empty">
+                <div class="ah-empty__icon" aria-hidden="true">🧪</div>
+                <p class="ah-empty__title">아직 등록된 기능성 원료가 없어요</p>
+                <p class="ah-empty__desc">첫 원료를 추가해 보세요.</p>
+                <div class="ah-empty__action">
+                  <button type="button" class="btn btn-primary" data-modal-open="ing-create-modal">기능성 원료 추가</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if ingredients %}
+          {# 검색/필터 결과가 0건일 때만 JS 가 보여준다 #}
+          <tr id="ing-noresult" hidden>
+            <td class="ah-table__empty" colspan="8">
+              <div class="ah-empty">
+                <div class="ah-empty__icon" aria-hidden="true">🔍</div>
+                <p class="ah-empty__title">조건에 맞는 원료가 없어요</p>
+                <p class="ah-empty__desc">검색어나 추천 목표를 바꿔 보세요.</p>
+              </div>
+            </td>
+          </tr>
           {% endif %}
-          {% if ing.minRecommended or ing.maxRecommended %}
-          <span class="text-body-sm text-muted">
-            · 권장 {{ ing.minRecommended|default:"-" }} ~ {{ ing.maxRecommended|default:"-" }}
-          </span>
-          {% endif %}
-        </div>
-
-        {% if ing.goals or ing.hashtags %}
-        <div style="flex-basis:100%; display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2);">
-          {% for g in ing.goals %}<span class="ah-badge ah-badge--neutral">{{ g }}</span>{% endfor %}
-          {% for h in ing.hashtags %}<span class="text-caption text-muted">#{{ h }}</span>{% endfor %}
-        </div>
-        {% endif %}
-
-        <div class="ah-record__actions">
-          {# 성분 가이드 유무 — 핵심 포인트/출처 중 하나라도 있으면 '있음' #}
-          {% if ing.guide.keyPoints or ing.guide.sources %}
-          <span class="ah-guideflag ah-guideflag--on text-body-sm" title="성분 가이드 있음">● 가이드 있음</span>
-          {% else %}
-          <span class="ah-guideflag ah-guideflag--off text-body-sm" title="성분 가이드 없음">○ 가이드 없음</span>
-          {% endif %}
-          <span class="text-body-sm text-muted" title="사용 중인 제품 수">제품 {{ ing.product_count }}개</span>
-        </div>
-      </div>
-      {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% else %}
-    <p class="ah-record-empty text-body">등록된 기능성 원료가 없습니다. 우측 상단 ＋ 기능성 원료 추가 로 첫 성분을 추가해보세요.</p>
-    {% endif %}
   </section>
-</div>
-{% endblock %}
 
-{% block extra_head %}
-<style>
-  /* 성분 가이드 유무 플래그 — 있음은 브랜드 톤, 없음은 옅은 톤(텍스트로 한눈에 구분) */
-  .ah-guideflag { white-space: nowrap; font-weight: var(--font-weight-bold); }
-  .ah-guideflag--on { color: var(--color-green-600); }
-  .ah-guideflag--off { color: var(--glass-highlight); font-weight: var(--font-weight-regular); }
-</style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-  /* 리스트 편집기 + 제출 직전 JSON 직렬화.
-     document 위임(멱등) — 부분 로딩으로 콘텐츠가 교체돼도 재배선이 필요 없다. */
-  (function () {
-    if (document._ahIngredientWired) return;
-    document._ahIngredientWired = "1";
-
-    function makeRow() {
-      var row = document.createElement("div");
-      row.className = "ah-listedit__row";
-      var ta = document.createElement("textarea");
-      ta.className = "ah-textarea text-body";
-      ta.setAttribute("data-listedit-item", "");
-      ta.setAttribute("rows", "2");
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn btn-glass";
-      btn.setAttribute("data-listedit-remove", "");
-      btn.textContent = "삭제";
-      row.appendChild(ta);
-      row.appendChild(btn);
-      return row;
+  {# 페이지 전용 스타일·스크립트 — #ah-subcontent 안에 두어 서브내비 부분 교체 시에도 함께 적용된다 #}
+  <style>
+    .ing-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .ing-badges { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+    .ing-clamp {
+      display: block;
+      max-width: 28ch;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
     }
+    #ing-records tr[data-modal-open]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 
-    document.addEventListener("click", function (e) {
-      if (!e.target.closest) return;
-      var add = e.target.closest("[data-listedit-add]");
-      if (add) {
-        var group = add.closest("[data-listedit]");
-        var rows = group && group.querySelector(".ah-listedit__rows");
-        if (rows) {
-          var row = makeRow();
-          rows.appendChild(row);
-          var ta = row.querySelector("[data-listedit-item]");
-          if (ta) ta.focus();
-        }
-        return;
-      }
-      var rm = e.target.closest("[data-listedit-remove]");
-      if (rm) {
-        var target = rm.closest(".ah-listedit__row");
-        if (target) target.remove();
-      }
-    });
+    /* 모달 */
+    .ing-dialog { width: min(920px, 100%); }
+    .ing-dialog--sm { width: min(560px, 100%); }
+    .ing-dialog__id { font-size: var(--fs-caption); font-weight: var(--font-weight-regular); color: var(--text-muted); }
+    .ing-row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); }
+    .ing-req { margin-left: 2px; color: var(--danger); }
+    .ing-reqnote { font-size: var(--fs-caption); color: var(--text-muted); }
+    .ing-modal-footer {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--border);
+    }
+    .ing-modal-footer__side { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+    .ing-modal-footer__main { display: flex; gap: var(--space-2); margin-left: auto; }
 
-    // 제출 직전 각 편집기의 항목을 JSON 배열로 hidden 필드에 직렬화한다.
-    document.addEventListener("submit", function (e) {
-      var form = e.target.closest ? e.target.closest("[data-ingredient-form]") : null;
-      if (!form) return;
-      form.querySelectorAll("[data-listedit]").forEach(function (group) {
-        var items = [];
-        group.querySelectorAll("[data-listedit-item]").forEach(function (el) {
-          var v = (el.value || "").trim();
-          if (v) items.push(v);
+    /* 추천 목표 — 칩 모양 체크박스(선택 시 초록 틴트) */
+    .ing-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .ing-chip { position: relative; display: inline-flex; cursor: pointer; }
+    .ing-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .ing-chip span {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--control-h-sm);
+      padding: 0 var(--space-3);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      color: var(--text-default);
+      font-size: var(--fs-caption);
+      font-weight: var(--font-weight-medium);
+      transition: background var(--transition-base), border-color var(--transition-base), color var(--transition-base);
+    }
+    .ing-chip:hover span { background: var(--surface-hover); }
+    .ing-chip input:checked + span {
+      background: var(--brand-weak);
+      border-color: var(--focus-ring);
+      color: var(--brand-text);
+      font-weight: var(--font-weight-bold);
+    }
+    .ing-chip input:checked + span::before { content: "✓"; margin-right: var(--space-1); }
+    .ing-chip input:focus-visible + span { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  </style>
+
+  <script>
+    // 검색(원료명·주성분·해시태그) + 추천 목표 필터 — 둘 다 만족하는 행만 표시, 건수·결과 없음 갱신.
+    (function () {
+      var input = document.getElementById("ing-search");
+      var goal = document.getElementById("ing-goal-filter");
+      var rows = document.querySelectorAll("#ing-records tr[data-modal-open]");
+      var countEl = document.getElementById("ing-count");
+      var noResult = document.getElementById("ing-noresult");
+      if (!rows.length) return;
+      function apply() {
+        var term = input ? input.value.trim().toLowerCase().replace(/^#/, "") : "";
+        var g = goal ? goal.value : "";
+        var shown = 0;
+        rows.forEach(function (row) {
+          var okTerm = !term || (row.getAttribute("data-search") || "").indexOf(term) !== -1;
+          var okGoal = !g || (row.getAttribute("data-goals") || "").indexOf("|" + g + "|") !== -1;
+          row.hidden = !(okTerm && okGoal);
+          if (!row.hidden) shown++;
         });
-        var target = group.querySelector("[data-listedit-target]");
-        if (target) target.value = JSON.stringify(items);
+        if (countEl) countEl.textContent = shown;
+        if (noResult) noResult.hidden = shown !== 0;
+      }
+      if (input) input.addEventListener("input", apply);
+      if (goal) goal.addEventListener("change", apply);
+    })();
+
+    // 키보드 접근 — 포커스된 행에서 Enter/Space 로 상세 모달 열기(document 위임, 멱등)
+    (function () {
+      if (document._ahIngRowKeysWired) return;
+      document._ahIngRowKeysWired = "1";
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        var row = e.target.matches && e.target.matches("#ing-records tr[data-modal-open]") ? e.target : null;
+        if (!row) return;
+        e.preventDefault();
+        row.click();
       });
-    });
-  })();
-</script>
+    })();
+  </script>
+  <script>
+    /* 리스트 편집기 + 제출 직전 JSON 직렬화.
+       document 위임(멱등) — 부분 로딩으로 콘텐츠가 교체돼도 재배선이 필요 없다. */
+    (function () {
+      if (document._ahIngredientWired) return;
+      document._ahIngredientWired = "1";
+  
+      function makeRow() {
+        var row = document.createElement("div");
+        row.className = "ah-listedit__row";
+        var ta = document.createElement("textarea");
+        ta.className = "ah-textarea text-body";
+        ta.setAttribute("data-listedit-item", "");
+        ta.setAttribute("rows", "2");
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-ghost btn-sm";
+        btn.setAttribute("data-listedit-remove", "");
+        btn.textContent = "삭제";
+        row.appendChild(ta);
+        row.appendChild(btn);
+        return row;
+      }
+  
+      document.addEventListener("click", function (e) {
+        if (!e.target.closest) return;
+        var add = e.target.closest("[data-listedit-add]");
+        if (add) {
+          var group = add.closest("[data-listedit]");
+          var rows = group && group.querySelector(".ah-listedit__rows");
+          if (rows) {
+            var row = makeRow();
+            rows.appendChild(row);
+            var ta = row.querySelector("[data-listedit-item]");
+            if (ta) ta.focus();
+          }
+          return;
+        }
+        var rm = e.target.closest("[data-listedit-remove]");
+        if (rm) {
+          var target = rm.closest(".ah-listedit__row");
+          if (target) target.remove();
+        }
+      });
+  
+      // 제출 직전 각 편집기의 항목을 JSON 배열로 hidden 필드에 직렬화한다.
+      document.addEventListener("submit", function (e) {
+        var form = e.target.closest ? e.target.closest("[data-ingredient-form]") : null;
+        if (!form) return;
+        form.querySelectorAll("[data-listedit]").forEach(function (group) {
+          var items = [];
+          group.querySelectorAll("[data-listedit-item]").forEach(function (el) {
+            var v = (el.value || "").trim();
+            if (v) items.push(v);
+          });
+          var target = group.querySelector("[data-listedit-target]");
+          if (target) target.value = JSON.stringify(items);
+        });
+      });
+    })();
+  </script>
+</div>
 {% endblock %}
