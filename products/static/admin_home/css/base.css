@@ -47,6 +47,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* hidden 속성은 항상 숨김 — 컴포넌트의 display(flex/block 등)가 UA 의 [hidden] 을
+   덮어써 JS 로 숨긴 요소(빈 상태·미리보기 등)가 보이는 문제를 막는다. */
+[hidden] {
+  display: none !important;
+}
+
 h1,
 h2,
 h3,
