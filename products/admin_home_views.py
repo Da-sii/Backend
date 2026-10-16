@@ -852,7 +852,7 @@ def banner_list(request):
         if action == "create":
             image = request.FILES.get("image")
             if not image:
-                messages.error(request, "썸네일 이미지를 선택해주세요.")
+                messages.error(request, "썸네일 이미지를 골라 주세요.")
                 return redirect("admin_home_banner")
             image_url = upload_banner_to_s3(image)
             # 상세 이미지는 여러 장 가능. 폼에서 드래그로 정한 순서대로 전송되며,
@@ -868,33 +868,33 @@ def banner_list(request):
                         BannerDetail.objects.create(
                             banner=banner, detail_image_url=detail_url, order=idx
                         )
-                messages.success(request, "배너가 추가되었습니다.")
+                messages.success(request, "배너를 추가했어요.")
             except IntegrityError:
                 # 동시 요청 경합 등으로 order 가 중복된 경우의 안전망
-                messages.error(request, "배너 추가 중 순서 충돌이 발생했습니다. 다시 시도해주세요.")
+                messages.error(request, "배너를 추가하는 중에 순서가 겹쳤어요. 다시 시도해 주세요.")
             return redirect("admin_home_banner")
 
         if action == "update":
             try:
                 banner = Banner.objects.get(id=request.POST.get("id", ""))
             except (Banner.DoesNotExist, ValueError):
-                messages.error(request, "배너를 찾을 수 없습니다.")
+                messages.error(request, "배너를 찾을 수 없어요.")
                 return redirect("admin_home_banner")
             image = request.FILES.get("image")
             if image:
                 banner.image_url = upload_banner_to_s3(image)
                 banner.save(update_fields=["image_url"])
-                messages.success(request, f"배너 #{banner.id} 썸네일이 교체되었습니다.")
+                messages.success(request, f"배너 #{banner.id} 썸네일을 바꿨어요.")
             else:
-                messages.info(request, "변경할 썸네일이 없습니다.")
+                messages.info(request, "바꿀 썸네일이 없어요.")
             return redirect("admin_home_banner")
 
         if action == "delete":
             try:
                 Banner.objects.get(id=request.POST.get("id", "")).delete()
-                messages.success(request, "배너가 삭제되었습니다.")
+                messages.success(request, "배너를 삭제했어요.")
             except (Banner.DoesNotExist, ValueError):
-                messages.error(request, "배너를 찾을 수 없습니다.")
+                messages.error(request, "배너를 찾을 수 없어요.")
             return redirect("admin_home_banner")
 
         if action == "toggle_active":
@@ -903,16 +903,16 @@ def banner_list(request):
             except (Banner.DoesNotExist, ValueError):
                 if is_ajax:
                     return JsonResponse(
-                        {"ok": False, "error": "배너를 찾을 수 없습니다."}, status=404
+                        {"ok": False, "error": "배너를 찾을 수 없어요."}, status=404
                     )
-                messages.error(request, "배너를 찾을 수 없습니다.")
+                messages.error(request, "배너를 찾을 수 없어요.")
                 return redirect("admin_home_banner")
             banner.is_active = not banner.is_active
             banner.save(update_fields=["is_active"])
             if is_ajax:
                 return JsonResponse({"ok": True, "is_active": banner.is_active})
             state = "노출" if banner.is_active else "숨김"
-            messages.success(request, f"배너 #{banner.id}를 {state} 상태로 변경했습니다.")
+            messages.success(request, f"배너 #{banner.id}를 {state} 상태로 바꿨어요.")
             return redirect("admin_home_banner")
 
         if action == "reorder":
@@ -921,22 +921,22 @@ def banner_list(request):
                 _reorder_banners(ids)
                 if is_ajax:
                     return JsonResponse({"ok": True})
-                messages.success(request, "배너 순서가 변경되었습니다.")
+                messages.success(request, "배너 순서를 바꿨어요.")
             except Exception as e:
                 if is_ajax:
                     return JsonResponse({"ok": False, "error": str(e)}, status=400)
-                messages.error(request, f"순서 변경에 실패했습니다: {e}")
+                messages.error(request, f"순서를 바꾸지 못했어요: {e}")
             return redirect("admin_home_banner")
 
         if action == "detail_create":
             try:
                 banner = Banner.objects.get(id=request.POST.get("banner_id", ""))
             except (Banner.DoesNotExist, ValueError):
-                messages.error(request, "배너를 찾을 수 없습니다.")
+                messages.error(request, "배너를 찾을 수 없어요.")
                 return redirect("admin_home_banner")
             images = [f for f in request.FILES.getlist("detail_image") if f]
             if not images:
-                messages.error(request, "상세 이미지를 선택해주세요.")
+                messages.error(request, "상세 이미지를 골라 주세요.")
                 return redirect("admin_home_banner")
             existing = BannerDetail.objects.filter(banner=banner)
             next_detail_order = (existing.aggregate(m=Max("order"))["m"] or 0) + 1
@@ -949,9 +949,9 @@ def banner_list(request):
                             detail_image_url=detail_image_url,
                             order=next_detail_order + offset,
                         )
-                messages.success(request, "상세 이미지가 추가되었습니다.")
+                messages.success(request, "상세 이미지를 추가했어요.")
             except IntegrityError:
-                messages.error(request, "상세 이미지 순서 충돌이 발생했습니다. 다시 시도해주세요.")
+                messages.error(request, "상세 이미지 순서가 겹쳤어요. 다시 시도해 주세요.")
             return redirect("admin_home_banner")
 
         if action == "detail_reorder":
@@ -961,22 +961,22 @@ def banner_list(request):
                 _reorder_banner_details(banner_id, ids)
                 if is_ajax:
                     return JsonResponse({"ok": True})
-                messages.success(request, "상세 이미지 순서가 변경되었습니다.")
+                messages.success(request, "상세 이미지 순서를 바꿨어요.")
             except Exception as e:
                 if is_ajax:
                     return JsonResponse({"ok": False, "error": str(e)}, status=400)
-                messages.error(request, f"순서 변경에 실패했습니다: {e}")
+                messages.error(request, f"순서를 바꾸지 못했어요: {e}")
             return redirect("admin_home_banner")
 
         if action == "detail_delete":
             try:
                 BannerDetail.objects.get(id=request.POST.get("id", "")).delete()
-                messages.success(request, "상세 이미지가 삭제되었습니다.")
+                messages.success(request, "상세 이미지를 삭제했어요.")
             except (BannerDetail.DoesNotExist, ValueError):
-                messages.error(request, "상세 이미지를 찾을 수 없습니다.")
+                messages.error(request, "상세 이미지를 찾을 수 없어요.")
             return redirect("admin_home_banner")
 
-        messages.error(request, "알 수 없는 요청입니다.")
+        messages.error(request, "알 수 없는 요청이에요.")
         return redirect("admin_home_banner")
 
     banners = list(Banner.objects.prefetch_related("details").all())
