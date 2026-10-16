@@ -1,8 +1,8 @@
 /* =============================================================
    toast.css — /admin/home 토스트 알림 시스템
    Django messages 를 화면 우측 상단에 잠시 떠 있는 카드로 렌더링.
-   ⚠️ raw hex 금지: 색/여백/radius/blur/shadow 는 전부 토큰(var).
-   ⚠️ 18px floor: 모든 텍스트 >= 18px.
+   ⚠️ raw hex/rgba 금지: 색/여백/radius/shadow 는 전부 시맨틱 토큰(var).
+   ⚠️ 글자 크기는 --fs-* 토큰만 사용(최소 --fs-caption).
    모션은 animations.css 의 전역 prefers-reduced-motion 규칙을 따른다.
    ============================================================= */
 
@@ -26,16 +26,14 @@
   gap: var(--space-2);
   width: fit-content;
   max-width: min(420px, calc(100vw - var(--space-3) * 2));
-  padding: var(--space-2) var(--space-3);
-  background: var(--glass-bg-strong);
-  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
-  backdrop-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
-  border: 1px solid var(--glass-border);
-  border-left: 4px solid var(--glass-border-strong);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
-  color: var(--text-on-glass);
-  font-size: var(--fs-text-sm); /* 18px floor */
+  box-shadow: var(--shadow-raised);
+  color: var(--text-strong);
+  font-size: var(--fs-text-sm);
   line-height: var(--lh-text-sm);
   animation: ah-toast-in 300ms ease both;
 }
@@ -47,16 +45,16 @@
 /* 메시지 레벨(Django message.tags) → 강조색 */
 .ah-toast[data-toast-tag~="success"],
 .ah-toast[data-toast-tag~="ok"] {
-  border-left-color: var(--color-ok);
+  border-left-color: var(--success);
 }
 .ah-toast[data-toast-tag~="error"] {
-  border-left-color: var(--color-error);
+  border-left-color: var(--danger);
 }
 .ah-toast[data-toast-tag~="warning"] {
-  border-left-color: var(--color-orange);
+  border-left-color: var(--warning);
 }
 .ah-toast[data-toast-tag~="info"] {
-  border-left-color: var(--brand-secondary);
+  border-left-color: var(--info);
 }
 
 .ah-toast__msg {
@@ -81,11 +79,5 @@
   to {
     opacity: 0;
     transform: translateX(24px);
-  }
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .ah-toast {
-    background: var(--glass-bg-dark-fallback);
   }
 }
