@@ -32,6 +32,7 @@ class SmallCategory(models.Model):
         related_name="small_categories",
         verbose_name="중분류 외래키",
     )
+    icon_url = models.URLField(blank=True, default="", verbose_name="아이콘 URL")
 
     class Meta:
         db_table = "small_categories"
