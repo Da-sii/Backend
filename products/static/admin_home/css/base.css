@@ -1,14 +1,12 @@
 /* =============================================================
-   base.css — reset + 폰트 로드 + 기본 타이포 + 텍스트 유틸
-   ⚠️ 18px floor: 어떤 요소도 18px 미만 폰트를 쓰지 않는다.
+   base.css — reset + 폰트 + 기본 타이포 + 텍스트 유틸
+   ⚠️ 폰트 크기는 --fs-* 토큰만 사용. 최소는 --fs-caption(14px @ scale 1).
    ============================================================= */
 
 /* ---------------------------------------------------------
-   @font-face — Nanum Square Neo Variable
-   ⚠️ 폰트 woff2 파일이 레포에 없어 아래 @font-face 를 켜두면 매 로드마다 404 가 난다.
-   폴백 스택(var(--font-family-base))만으로 정상 렌더되므로 지금은 비활성(주석) 상태로 둔다.
-   실제 Nanum Square Neo 를 쓰려면: woff2 를 products/static/admin_home/fonts/ 에 넣고
-   아래 블록의 주석을 해제하면 된다(바이너리라 파일은 별도 반입 필요).
+   폰트 — 본문은 Pretendard(base.html 에서 CDN 스타일시트로 로드).
+   아래 Nanum Square Neo @font-face 는 폴백용으로만 남겨 둔 비활성 블록이다
+   (woff2 가 레포에 없어 켜면 404). 필요 시 파일 반입 후 주석 해제.
    --------------------------------------------------------- */
 /*
 @font-face {
@@ -38,11 +36,13 @@ html {
 body {
   margin: 0;
   font-family: var(--font-family-base);
-  /* 기본 body 텍스트 = text-sm(18px) : floor */
+  /* 기본 body 텍스트 = text-sm */
   font-size: var(--fs-text-sm);
   line-height: var(--lh-text-sm);
   font-weight: var(--font-weight-regular);
+  letter-spacing: var(--letter-spacing-body);
   color: var(--text-default);
+  background: var(--bg-page);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -81,16 +81,15 @@ input,
 select,
 textarea {
   font-family: inherit;
-  /* 폼 요소도 18px floor */
+  letter-spacing: inherit;
   font-size: var(--fs-text-sm);
   line-height: var(--lh-text-sm);
   color: inherit;
 }
 
-/* placeholder / 각주 / 툴팁 등 작은 텍스트도 18px 미만 금지 */
 ::placeholder {
   font-size: var(--fs-text-sm);
-  color: var(--text-muted);
+  color: var(--text-subtle);
   opacity: 1;
 }
 
@@ -100,23 +99,25 @@ textarea {
 .text-display {
   font-size: var(--fs-display);
   line-height: var(--lh-display);
-  font-weight: var(--font-weight-regular); /* ref1: hero는 가벼운 웨이트 */
-  letter-spacing: -0.01em;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
 }
 .text-title-lg {
   font-size: var(--fs-title-lg);
   line-height: var(--lh-title-lg);
-  font-weight: var(--font-weight-extrabold);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
 }
 .text-title-md {
   font-size: var(--fs-title-md);
   line-height: var(--lh-title-md);
   font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
 }
 .text-title-sm {
   font-size: var(--fs-title-sm);
   line-height: var(--lh-title-sm);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
 }
 .text-body-lg {
   font-size: var(--fs-text-lg);
@@ -141,20 +142,28 @@ textarea {
 
 /* 웨이트 유틸 */
 .fw-regular { font-weight: var(--font-weight-regular); }
+.fw-medium { font-weight: var(--font-weight-medium); }
+.fw-semibold { font-weight: var(--font-weight-semibold); }
 .fw-bold { font-weight: var(--font-weight-bold); }
 .fw-extrabold { font-weight: var(--font-weight-extrabold); }
 
 /* 색 유틸 */
 .text-strong { color: var(--text-strong); }
 .text-muted { color: var(--text-muted); }
-.text-on-glass { color: var(--text-on-glass); }
-.text-brand { color: var(--brand-primary); }
+.text-default { color: var(--text-default); }
+.text-subtle { color: var(--text-subtle); }
+.text-on-glass { color: var(--text-on-glass); } /* 레거시 별칭 = text-strong */
+.text-brand { color: var(--brand-text); }
+.text-danger { color: var(--danger); }
+
+/* 숫자 정렬(표·지표) — 자릿수 폭을 고정해 세로로 줄이 맞게 */
+.tabular-nums { font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------
    접근성: 키보드 포커스 링 (모든 상호작용 요소 공통)
    --------------------------------------------------------- */
 :focus-visible {
-  outline: 3px solid var(--focus-ring);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }

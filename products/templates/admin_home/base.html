@@ -32,15 +32,11 @@
   <link rel="stylesheet" href="{% static 'admin_home/css/vendor-overrides.css' %}" />
 
   <style>
-    /* 배경은 토큰으로 분리 → 페이지/이미지 교체가 쉽도록. 레이아웃은 components.css(.ah-layout) 담당 */
+    /* 배경·글자색은 테마 토큰. 레이아웃은 components.css(.ah-layout) 담당 */
     html, body { min-height: 100%; }
     body.admin-home {
-      background-color: var(--admin-bg-color);
-      background-image: var(--admin-bg-image), var(--admin-bg-gradient);
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-      color: var(--text-on-glass);
+      background: var(--bg-page);
+      color: var(--text-default);
     }
   </style>
 
