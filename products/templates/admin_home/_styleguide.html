@@ -1,8 +1,9 @@
 {% extends base_template|default:"admin_home/base.html" %}
 {% comment %}
-  스타일가이드 — 검수 전용 페이지.
-  전 컬러 토큰 스와치 + 타이포 스케일 + 모든 공통 컴포넌트를 한 페이지에 렌더.
-  실제 기능 아님. (나중에 제거 가능)
+  스타일가이드 — 검수 전용 페이지 (디자인 개편 후 시스템 카탈로그).
+  라이트/다크 테마를 한눈에 비교할 수 있도록 시맨틱 토큰 · 타이포 · 공통 컴포넌트 ·
+  목록 페이지 패턴 · 모달/토스트를 한 페이지에 렌더한다.
+  실제 기능 아님(개발 전용). 모든 스와치는 var() 로 그려서 테마 전환에 자동 추종.
 {% endcomment %}
 
 {% block title %}디자인 시스템 스타일가이드 · /admin/home{% endblock %}
@@ -11,176 +12,423 @@
 {% block extra_head %}
 <style>
   /* 스타일가이드 전용 레이아웃 보조 (토큰만 사용) */
-  .sg-section { margin-bottom: var(--space-8); }
-  .sg-section > h2 { margin-bottom: var(--space-3); }
-  .sg-note { color: var(--glass-highlight); margin-bottom: var(--space-4); }
+  .sg-section { margin-bottom: var(--space-10); }
+  .sg-section > h2 { margin-bottom: var(--space-1); color: var(--text-strong); }
+  .sg-note { color: var(--text-muted); margin-bottom: var(--space-4); }
+  .sg-sub { margin: var(--space-5) 0 var(--space-3); color: var(--text-strong); }
   .sg-swatch-grid {
     display: grid;
-    gap: var(--space-2);
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
-  .sg-swatch-label { margin-top: var(--space-1); }
-  .sg-swatch-label b { display: block; }
-  .sg-type-row { padding: var(--space-2) 0; border-bottom: 1px solid var(--glass-border); }
-  .sg-type-meta { color: var(--glass-highlight); margin-bottom: var(--space-1); }
-  .sg-panel-inner { display: grid; gap: var(--space-4); }
+  .sg-swatch-label { margin-top: var(--space-1); word-break: break-all; }
+  .sg-swatch-label b { display: block; color: var(--text-strong); }
+  .sg-swatch-label span { color: var(--text-muted); }
+  .sg-type-row { padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+  .sg-type-row:last-child { border-bottom: 0; }
+  .sg-type-meta { color: var(--text-muted); margin-bottom: var(--space-1); }
   .sg-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  .sg-form { display: grid; gap: var(--space-4); max-width: 520px; }
+  .sg-toasts { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+  .sg-toasts .ah-toast { animation: none; }
+  .sg-demo-gap { margin-bottom: var(--space-5); }
 </style>
 {% endblock %}
 
 {% block content %}
 
 <!-- ===================== 헤더 ===================== -->
-<header class="glass-panel reveal" style="margin-bottom: var(--space-8);">
-  <p class="text-caption" style="color: var(--glass-highlight);">/admin/home Design System</p>
-  <h1 class="text-display">Liquid Glass<br />Style Guide</h1>
-  <p class="text-body-sm" style="margin-top: var(--space-2); max-width: 40ch;">
-    토큰 · 타이포 · 유리 컴포넌트 검수 페이지. 모든 폰트는 <b>최소 18px</b>.
+<header class="sg-section">
+  <p class="text-caption text-muted">/admin/home Design System</p>
+  <h1 class="text-display text-strong">디자인 시스템 스타일가이드</h1>
+  <p class="text-body-sm text-muted" style="margin-top: var(--space-2);">
+    디자인 개편 후의 토큰과 공통 컴포넌트를 한곳에서 확인할 수 있어요.
   </p>
-  <div class="sg-row" style="margin-top: var(--space-4);">
-    <button type="button" class="btn btn-primary">Let's Talk</button>
-    <button type="button" class="btn btn-glass">Get in touch</button>
-    <span class="ah-badge ah-badge--ok">OK</span>
-    <span class="ah-badge ah-badge--error">Error</span>
-    <span class="ah-badge ah-badge--kakao">Kakao</span>
-  </div>
 </header>
 
-<!-- ===================== 1. 컬러 ===================== -->
+<!-- ===================== 1. 테마 ===================== -->
 <section class="sg-section">
-  <h2 class="text-title-lg">1. Color Tokens</h2>
-  <p class="sg-note text-body-sm">스와치 배경은 CSS 변수(<code>var(--color-…)</code>)로 렌더 — 토큰이 실제 해석되는지 확인.</p>
+  <h2 class="text-title-lg">1. 테마</h2>
+  <div class="glass-panel">
+    <p class="text-body-sm">
+      상단 바 오른쪽의 테마 버튼을 누르면 라이트/다크가 바뀌어요. 이 페이지의 모든 요소가 함께 바뀌는지 확인해 주세요.
+    </p>
+  </div>
+</section>
 
-  {% for scale in color_scales %}
-  <div class="glass-panel reveal" style="margin-bottom: var(--space-3);">
-    <h3 class="text-title-sm" style="margin-bottom: var(--space-3);">
-      {{ scale.title }} <span class="text-caption" style="color: var(--glass-highlight);">(main: {{ scale.main }})</span>
-    </h3>
-    <div class="sg-swatch-grid" data-reveal-stagger>
-      {% for sw in scale.swatches %}
+<!-- ===================== 2. 색상 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">2. 색상</h2>
+  <p class="sg-note text-body-sm">컴포넌트는 아래 시맨틱 토큰만 써요. 스와치는 <code>var(--token)</code> 으로 그려서 테마에 따라 바뀌어요.</p>
+
+  <div class="glass-panel">
+    <div class="sg-swatch-grid">
       <div>
-        <div class="ah-swatch" style="background: {{ sw.cssvar }};"></div>
-        <div class="sg-swatch-label text-caption">
-          <b>{{ sw.name }}</b><span style="color: var(--glass-highlight);">{{ sw.hex }}</span>
-        </div>
+        <div class="ah-swatch" style="background: var(--bg-page);"></div>
+        <div class="sg-swatch-label text-caption"><b>--bg-page</b></div>
       </div>
-      {% endfor %}
+      <div>
+        <div class="ah-swatch" style="background: var(--surface);"></div>
+        <div class="sg-swatch-label text-caption"><b>--surface</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--surface-subtle);"></div>
+        <div class="sg-swatch-label text-caption"><b>--surface-subtle</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--surface-raised);"></div>
+        <div class="sg-swatch-label text-caption"><b>--surface-raised</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--border);"></div>
+        <div class="sg-swatch-label text-caption"><b>--border</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--border-strong);"></div>
+        <div class="sg-swatch-label text-caption"><b>--border-strong</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--text-strong);"></div>
+        <div class="sg-swatch-label text-caption"><b>--text-strong</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--text-default);"></div>
+        <div class="sg-swatch-label text-caption"><b>--text-default</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--text-muted);"></div>
+        <div class="sg-swatch-label text-caption"><b>--text-muted</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--text-subtle);"></div>
+        <div class="sg-swatch-label text-caption"><b>--text-subtle</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--brand-primary);"></div>
+        <div class="sg-swatch-label text-caption"><b>--brand-primary</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--brand-text);"></div>
+        <div class="sg-swatch-label text-caption"><b>--brand-text</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--brand-weak);"></div>
+        <div class="sg-swatch-label text-caption"><b>--brand-weak</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--danger);"></div>
+        <div class="sg-swatch-label text-caption"><b>--danger</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--danger-weak);"></div>
+        <div class="sg-swatch-label text-caption"><b>--danger-weak</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--success-weak);"></div>
+        <div class="sg-swatch-label text-caption"><b>--success-weak</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--info-weak);"></div>
+        <div class="sg-swatch-label text-caption"><b>--info-weak</b></div>
+      </div>
+      <div>
+        <div class="ah-swatch" style="background: var(--warning-weak);"></div>
+        <div class="sg-swatch-label text-caption"><b>--warning-weak</b></div>
+      </div>
     </div>
   </div>
-  {% endfor %}
 
-  <div class="glass-panel reveal" style="margin-bottom: var(--space-3);">
-    <h3 class="text-title-sm" style="margin-bottom: var(--space-3);">기능색 (etc)</h3>
+  <h3 class="text-title-sm sg-sub">원시 팔레트</h3>
+  <p class="sg-note text-body-sm">테마와 무관한 고정 값이에요. 직접 쓰지 말고 시맨틱 토큰을 거쳐 써요.</p>
+  <div class="glass-panel">
+    {% for scale in color_scales %}
+    <div class="sg-demo-gap">
+      <p class="text-body-sm fw-semibold text-strong" style="margin-bottom: var(--space-2);">
+        {{ scale.title }} <span class="text-caption text-muted">(main: {{ scale.main }})</span>
+      </p>
+      <div class="sg-swatch-grid">
+        {% for sw in scale.swatches %}
+        <div>
+          <div class="ah-swatch" style="background: {{ sw.cssvar }};"></div>
+          <div class="sg-swatch-label text-caption"><b>{{ sw.name }}</b><span>{{ sw.hex }}</span></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <p class="text-body-sm fw-semibold text-strong" style="margin-bottom: var(--space-2);">기능색</p>
     <div class="sg-swatch-grid">
       {% for sw in etc_colors %}
       <div>
         <div class="ah-swatch" style="background: {{ sw.cssvar }};"></div>
-        <div class="sg-swatch-label text-caption">
-          <b>{{ sw.name }}</b><span style="color: var(--glass-highlight);">{{ sw.hex }}</span>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="glass-panel reveal">
-    <h3 class="text-title-sm" style="margin-bottom: var(--space-3);">캘린더</h3>
-    <div class="sg-swatch-grid">
-      {% for sw in calendar_colors %}
-      <div>
-        <div class="ah-swatch" style="background: {{ sw.cssvar }};"></div>
-        <div class="sg-swatch-label text-caption">
-          <b>{{ sw.name }}</b><span style="color: var(--glass-highlight);">{{ sw.hex }}</span>
-        </div>
+        <div class="sg-swatch-label text-caption"><b>{{ sw.name }}</b><span>{{ sw.hex }}</span></div>
       </div>
       {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- ===================== 2. 타이포 ===================== -->
+<!-- ===================== 3. 타이포 ===================== -->
 <section class="sg-section">
-  <h2 class="text-title-lg">2. Typography <span class="text-caption" style="color: var(--glass-highlight);">Nanum Square Neo · 18px floor</span></h2>
-  <div class="glass-panel reveal">
-    {% for t in type_scale %}
-    <div class="sg-type-row">
-      <div class="sg-type-meta text-caption">{{ t.label }} · {{ t.size }} / lh {{ t.lh }} · {{ t.use }}</div>
-      <div class="{{ t.cls }}">다시 DASII 건강기능식품 · AaBb 123</div>
+  <h2 class="text-title-lg">3. 타이포</h2>
+  <p class="sg-note text-body-sm">글자 크기는 <code>--fs-*</code> 토큰으로만 정해요. 전체 크기는 <code>--ui-scale</code> 하나로 조절해요.</p>
+  <div class="glass-panel">
+    <div class="sg-type-row"><div class="sg-type-meta text-caption">.text-display</div><div class="text-display">다시 DASII 건강기능식품 · AaBb 123</div></div>
+    <div class="sg-type-row"><div class="sg-type-meta text-caption">.text-title-lg</div><div class="text-title-lg">다시 DASII 건강기능식품 · AaBb 123</div></div>
+    <div class="sg-type-row"><div class="sg-type-meta text-caption">.text-title-md</div><div class="text-title-md">다시 DASII 건강기능식품 · AaBb 123</div></div>
+    <div class="sg-type-row"><div class="sg-type-meta text-caption">.text-title-sm</div><div class="text-title-sm">다시 DASII 건강기능식품 · AaBb 123</div></div>
+    <div class="sg-type-row"><div class="sg-type-meta text-caption">.text-body-lg</div><div class="text-body-lg">다시 DASII 건강기능식품 · AaBb 123</div></div>
+    <div class="sg-type-row"><div class="sg-type-meta text-caption">.text-body</div><div class="text-body">다시 DASII 건강기능식품 · AaBb 123</div></div>
+    <div class="sg-type-row"><div class="sg-type-meta text-caption">.text-body-sm</div><div class="text-body-sm">다시 DASII 건강기능식품 · AaBb 123</div></div>
+    <div class="sg-type-row"><div class="sg-type-meta text-caption">.text-caption</div><div class="text-caption">다시 DASII 건강기능식품 · AaBb 123</div></div>
+  </div>
+  <h3 class="text-title-sm sg-sub">텍스트 색</h3>
+  <div class="glass-panel ah-stack">
+    <p class="text-body-sm text-strong">.text-strong — 제목처럼 가장 진한 글자예요.</p>
+    <p class="text-body-sm text-default">.text-default — 기본 본문 글자예요.</p>
+    <p class="text-body-sm text-muted">.text-muted — 보조 설명 글자예요.</p>
+    <p class="text-body-sm text-subtle">.text-subtle — 비활성·안내 글자예요.</p>
+    <p class="text-body-sm text-brand">.text-brand — 강조(초록) 글자예요.</p>
+    <p class="text-body-sm text-danger">.text-danger — 오류·위험 글자예요.</p>
+  </div>
+</section>
+
+<!-- ===================== 4. 버튼 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">4. 버튼</h2>
+  <p class="sg-note text-body-sm">주요 동작은 화면당 하나만 <code>.btn-primary</code> 로 강조해요.</p>
+  <div class="glass-panel ah-stack">
+    <div class="sg-row">
+      <button type="button" class="btn btn-primary">저장하기</button>
+      <button type="button" class="btn btn-glass">보조 버튼</button>
+      <button type="button" class="btn btn-ghost">고스트</button>
+      <button type="button" class="btn btn-danger">삭제</button>
+      <button type="button" class="btn btn-primary" disabled>비활성</button>
     </div>
-    {% endfor %}
-  </div>
-</section>
-
-<!-- ===================== 3. 버튼 ===================== -->
-<section class="sg-section">
-  <h2 class="text-title-lg">3. Buttons</h2>
-  <div class="glass-panel reveal sg-row">
-    <button type="button" class="btn btn-primary">Primary</button>
-    <button type="button" class="btn btn-glass">Glass</button>
-    <button type="button" class="btn btn-primary" disabled style="opacity:.5;cursor:not-allowed;">Disabled</button>
-  </div>
-</section>
-
-<!-- ===================== 4. 유리 카드 ===================== -->
-<section class="sg-section">
-  <h2 class="text-title-lg">4. Glass Cards</h2>
-  <div class="ah-grid" data-reveal-stagger>
-    {% include "admin_home/components/_card.html" with title="Accelerate Growth" desc="Scale with precision and confidence." icon="📈" %}
-    {% include "admin_home/components/_card.html" with title="Privacy First" desc="Protect trust while driving innovation." icon="🔒" %}
-    {% include "admin_home/components/_card.html" with title="Design System" desc="토큰 기반 유리 컴포넌트." icon="🧊" %}
-  </div>
-</section>
-
-<!-- ===================== 5. 유리 변형 ===================== -->
-<section class="sg-section">
-  <h2 class="text-title-lg">5. Glass Variants</h2>
-  <div class="ah-grid" data-reveal-stagger>
-    <div class="glass reveal" style="padding: var(--space-4);"><span class="text-body-sm">.glass</span></div>
-    <div class="glass glass--strong reveal" style="padding: var(--space-4);"><span class="text-body-sm">.glass--strong</span></div>
-    <div class="glass glass--subtle reveal" style="padding: var(--space-4);"><span class="text-body-sm">.glass--subtle</span></div>
-    <div class="glass glass--dark reveal" style="padding: var(--space-4);"><span class="text-body-sm">.glass--dark</span></div>
-  </div>
-</section>
-
-<!-- ===================== 6. Nav ===================== -->
-<section class="sg-section">
-  <h2 class="text-title-lg">6. Nav (pill)</h2>
-  <div class="reveal">
-    <nav class="glass-nav">
-      <span class="glass-nav__indicator" aria-hidden="true"></span>
-      <span class="glass-nav__item is-active">Features</span>
-      <span class="glass-nav__item">Product</span>
-      <span class="glass-nav__item">About</span>
-      <span class="glass-nav__item">Reviews</span>
-    </nav>
-  </div>
-</section>
-
-<!-- ===================== 7. Form ===================== -->
-<section class="sg-section">
-  <h2 class="text-title-lg">7. Form Elements</h2>
-  <div class="glass-panel reveal sg-panel-inner" style="max-width: 640px;">
-    <div class="ah-field">
-      <label class="ah-label" for="sg-name">이름</label>
-      <input class="ah-input" id="sg-name" type="text" placeholder="예: 가르시니아" />
-    </div>
-    <div class="ah-field">
-      <label class="ah-label" for="sg-cat">카테고리</label>
-      <select class="ah-select" id="sg-cat">
-        <option>비타민</option>
-        <option>유산균</option>
-        <option>오메가3</option>
-      </select>
-    </div>
-    <div class="ah-field">
-      <label class="ah-label" for="sg-memo">설명</label>
-      <textarea class="ah-textarea" id="sg-memo" placeholder="설명을 입력하세요"></textarea>
+    <div class="sg-row">
+      <button type="button" class="btn btn-primary btn-sm">작게</button>
+      <button type="button" class="btn btn-primary">기본</button>
+      <button type="button" class="btn btn-primary btn-lg">크게</button>
     </div>
   </div>
 </section>
 
-<footer class="reveal" style="padding: var(--space-6) 0; color: var(--glass-highlight);">
-  <p class="text-caption">DASII · /admin/home 디자인 시스템 검수 페이지 (개발 전용)</p>
+<!-- ===================== 5. 폼 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">5. 폼</h2>
+  <div class="glass-panel">
+    <div class="sg-form">
+      <div class="ah-field">
+        <label class="ah-label" for="sg-name">제품명</label>
+        <input class="ah-input" id="sg-name" type="text" placeholder="예: 비타민 D 2000IU" />
+        <span class="ah-help">제품 상세 화면에 보이는 이름이에요.</span>
+      </div>
+      <div class="ah-field">
+        <label class="ah-label" for="sg-cat">카테고리</label>
+        <select class="ah-select" id="sg-cat">
+          <option>비타민</option>
+          <option>유산균</option>
+          <option>오메가3</option>
+        </select>
+      </div>
+      <div class="ah-field">
+        <label class="ah-label" for="sg-memo">설명</label>
+        <textarea class="ah-textarea" id="sg-memo" placeholder="설명을 입력해 주세요"></textarea>
+      </div>
+      <div class="ah-field">
+        <label class="ah-label" for="sg-invalid">가격</label>
+        <input class="ah-input is-invalid" id="sg-invalid" type="text" value="abc" aria-invalid="true" />
+        <span class="ah-help text-danger">숫자만 입력할 수 있어요.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 6. 배지 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">6. 배지</h2>
+  <div class="glass-panel">
+    <div class="sg-row">
+      <span class="ah-badge ah-badge--ok">정상</span>
+      <span class="ah-badge ah-badge--error">오류</span>
+      <span class="ah-badge ah-badge--neutral">기본</span>
+      <span class="ah-badge ah-badge--info">안내</span>
+      <span class="ah-badge ah-badge--warning">주의</span>
+      <span class="ah-badge ah-badge--kakao">카카오</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 7. 카드 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">7. 카드</h2>
+  <h3 class="text-title-sm sg-sub" style="margin-top: 0;">카드</h3>
+  <div class="ah-grid">
+    {% include "admin_home/components/_card.html" with title="제품 관리" desc="제품 정보를 등록하고 수정해요." icon="📦" %}
+    {% include "admin_home/components/_card.html" with title="성분 관리" desc="성분과 가이드를 한곳에서 관리해요." icon="🧪" %}
+    {% include "admin_home/components/_card.html" with title="배너 관리" desc="메인 화면 배너를 바꿔요." icon="🖼️" %}
+  </div>
+
+  <h3 class="text-title-sm sg-sub">스탯 타일</h3>
+  <div class="ah-grid ah-grid--stats">
+    {% include "admin_home/components/_stat.html" with label="전체 제품" value="1,284" unit="개" icon="📦" sub="이번 주 +12" %}
+    {% include "admin_home/components/_stat.html" with label="전체 성분" value="326" unit="개" icon="🧪" %}
+    {% include "admin_home/components/_stat.html" with label="오늘 방문" value="2,041" icon="👥" href="#" %}
+  </div>
+
+  <h3 class="text-title-sm sg-sub">패널</h3>
+  <div class="glass-panel">
+    <p class="text-body-sm">.glass-panel — 폼이나 목록을 담는 넉넉한 여백의 영역이에요.</p>
+  </div>
+</section>
+
+<!-- ===================== 8. 탭 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">8. 탭</h2>
+  <p class="sg-note text-body-sm">선택한 탭 아래로 표시가 부드럽게 이동해요.</p>
+  <nav class="glass-nav">
+    <span class="glass-nav__indicator" aria-hidden="true"></span>
+    <span class="glass-nav__item is-active">전체</span>
+    <span class="glass-nav__item">비타민</span>
+    <span class="glass-nav__item">유산균</span>
+    <span class="glass-nav__item">오메가3</span>
+  </nav>
+</section>
+
+<!-- ===================== 9. 목록 페이지 패턴 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">9. 목록 페이지 패턴</h2>
+  <p class="sg-note text-body-sm">페이지 헤더, 검색 툴바, 표, 표 하단 줄 순서로 구성해요.</p>
+
+  <header class="ah-page-header">
+    <div>
+      <h2 class="ah-page-header__title">제품</h2>
+      <p class="ah-page-header__desc">등록된 제품을 관리해요.</p>
+    </div>
+    <div class="ah-page-header__actions">
+      <button type="button" class="btn btn-primary">제품 추가</button>
+    </div>
+  </header>
+
+  <div class="ah-toolbar">
+    <input class="ah-input ah-toolbar__search" type="search" placeholder="제품명으로 검색해요" aria-label="제품명 검색" />
+    <select class="ah-select ah-toolbar__filter" aria-label="카테고리 필터">
+      <option>전체 카테고리</option>
+      <option>비타민</option>
+      <option>오메가3</option>
+      <option>유산균</option>
+    </select>
+    <span class="ah-toolbar__meta">총 <b>3</b>개</span>
+  </div>
+
+  <div class="ah-table-wrap">
+    <table class="ah-table">
+      <thead>
+        <tr>
+          <th class="ah-table__handle" aria-label="순서"></th>
+          <th>이미지</th>
+          <th>제품</th>
+          <th>카테고리</th>
+          <th class="ah-table__num" aria-sort="descending"><button type="button" class="ah-table__sort">조회수</button></th>
+          <th class="ah-table__actions" aria-label="동작"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="is-selected">
+          <td class="ah-table__handle">⋮⋮</td>
+          <td class="ah-table__thumb"><span class="ah-table__thumb-empty"></span></td>
+          <td><span class="ah-table__title">비타민 D 2000IU</span><span class="ah-table__sub">다시건강 · 90정</span></td>
+          <td><span class="ah-badge ah-badge--ok">비타민</span></td>
+          <td class="ah-table__num">12,480</td>
+          <td class="ah-table__actions"><div class="ah-table__actions-inner"><button type="button" class="btn btn-ghost btn-sm">수정</button><button type="button" class="btn btn-danger btn-sm">삭제</button></div></td>
+        </tr>
+        <tr>
+          <td class="ah-table__handle">⋮⋮</td>
+          <td class="ah-table__thumb"><span class="ah-table__thumb-empty"></span></td>
+          <td><span class="ah-table__title">알티지 오메가3 1000</span><span class="ah-table__sub">건강하루 · 60캡슐</span></td>
+          <td><span class="ah-badge ah-badge--info">오메가3</span></td>
+          <td class="ah-table__num">9,215</td>
+          <td class="ah-table__actions"><div class="ah-table__actions-inner"><button type="button" class="btn btn-ghost btn-sm">수정</button><button type="button" class="btn btn-danger btn-sm">삭제</button></div></td>
+        </tr>
+        <tr>
+          <td class="ah-table__handle">⋮⋮</td>
+          <td class="ah-table__thumb"><span class="ah-table__thumb-empty"></span></td>
+          <td><span class="ah-table__title">프로바이오틱스 유산균 100억</span><span class="ah-table__sub">장편한 · 30포</span></td>
+          <td><span class="ah-badge ah-badge--warning">유산균</span></td>
+          <td class="ah-table__num">3,907</td>
+          <td class="ah-table__actions"><div class="ah-table__actions-inner"><button type="button" class="btn btn-ghost btn-sm">수정</button><button type="button" class="btn btn-danger btn-sm">삭제</button></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="ah-table-foot">
+    <span>3개 중 1–3번째</span>
+    <span>선택한 행은 초록 배경으로 보여요.</span>
+  </div>
+
+  <h3 class="text-title-sm sg-sub">빈 상태</h3>
+  <div class="ah-table-wrap">
+    <table class="ah-table">
+      <thead>
+        <tr><th>제품</th><th>카테고리</th><th class="ah-table__num">조회수</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="ah-table__empty" colspan="3">
+            <div class="ah-empty">
+              <div class="ah-empty__icon" aria-hidden="true">📦</div>
+              <p class="ah-empty__title">아직 등록된 제품이 없어요</p>
+              <p class="ah-empty__desc">첫 제품을 추가해 보세요.</p>
+              <div class="ah-empty__action"><button type="button" class="btn btn-primary">제품 추가</button></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== 10. 모달 & 토스트 ===================== -->
+<section class="sg-section">
+  <h2 class="text-title-lg">10. 모달 &amp; 토스트</h2>
+  <div class="glass-panel ah-stack">
+    <div class="sg-row">
+      <button type="button" class="btn btn-glass" data-modal-open="sg-modal">모달 열기</button>
+    </div>
+    <p class="text-body-sm text-muted">토스트는 보통 화면 오른쪽 위에 잠깐 떠요. 아래는 종류별 정적 예시예요.</p>
+    <div class="sg-toasts">
+      <div class="ah-toast" data-toast-tag="success"><span class="ah-toast__msg">제품을 저장했어요.</span></div>
+      <div class="ah-toast" data-toast-tag="error"><span class="ah-toast__msg">저장하지 못했어요. 다시 시도해 주세요.</span></div>
+      <div class="ah-toast" data-toast-tag="warning"><span class="ah-toast__msg">이미 같은 이름의 제품이 있어요.</span></div>
+      <div class="ah-toast" data-toast-tag="info"><span class="ah-toast__msg">변경 사항은 몇 분 뒤에 반영돼요.</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="ah-modal" id="sg-modal" aria-hidden="true">
+  <div class="ah-modal__overlay" data-modal-close></div>
+  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true" aria-labelledby="sg-modal-title">
+    <div class="ah-modal__head">
+      <h2 id="sg-modal-title" class="text-title-md">카테고리 추가</h2>
+      <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="ah-modal__body">
+      <div class="ah-field">
+        <label class="ah-label" for="sg-modal-name">카테고리 이름</label>
+        <input class="ah-input" id="sg-modal-name" type="text" placeholder="예: 비타민" />
+        <span class="ah-help">앱 목록에 보이는 이름이에요.</span>
+      </div>
+      <div class="sg-row" style="justify-content: flex-end; margin-top: var(--space-2);">
+        <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+        <button type="button" class="btn btn-primary" data-modal-close>추가</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer style="padding: var(--space-6) 0;">
+  <p class="text-caption text-muted">DASII · /admin/home 디자인 시스템 검수 페이지 (개발 전용)</p>
 </footer>
 
 {% endblock %}
