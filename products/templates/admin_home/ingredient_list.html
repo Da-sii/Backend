@@ -7,7 +7,7 @@
   · 모달은 #ah-subcontent 직속(비-transform 조상)에 두어 position:fixed 가 뷰포트 기준으로 동작하게 한다
     (.reveal 등 transform/will-change 조상 안에 넣으면 중앙 정렬·오버레이가 깨진다).
   · 제품이 사용 중인 성분은 PROTECT 로 삭제가 막히며, 사용 중인 제품 수를 안내한다.
-  리스트 편집 UI(효과/부작용/핵심 포인트/출처)는 제출 직전 JSON 배열로 직렬화된다.
+  리스트 편집 UI(효과/부작용/해시태그/핵심 포인트/출처)는 제출 직전 JSON 배열로 직렬화된다.
 {% endcomment %}
 
 {% block title %}원료 · 기능성 원료 · DASII{% endblock %}
@@ -144,6 +144,36 @@
               </div>
             </div>
           </div>
+          {# 추천 목표(goals, 고정 선택지 다중 선택) + 해시태그(hashtags, 자유 입력 리스트) #}
+          <div class="ah-grid">
+            <div class="ah-field">
+              <label class="ah-label">추천 목표</label>
+              <div style="display:flex; flex-wrap:wrap; gap:var(--space-2) var(--space-4);">
+                {% for g in goal_choices %}
+                <label class="text-body-sm" style="display:inline-flex; align-items:center; gap:var(--space-2); cursor:pointer;">
+                  <input type="checkbox" name="goals" value="{{ g }}"{% if g in ing.goals %} checked{% endif %} />
+                  {{ g }}
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="ah-field">
+              <label class="ah-label">해시태그</label>
+              <div class="ah-listedit" data-listedit>
+                <div class="ah-listedit__rows">
+                  {% for h in ing.hashtags %}
+                  <div class="ah-listedit__row">
+                    <textarea class="ah-textarea text-body" data-listedit-item
+                              rows="1" aria-label="해시태그 항목">{{ h }}</textarea>
+                    <button type="button" class="btn btn-glass" data-listedit-remove>삭제</button>
+                  </div>
+                  {% endfor %}
+                </div>
+                <button type="button" class="btn btn-glass" data-listedit-add>+ 줄 추가</button>
+                <input type="hidden" name="hashtags" data-listedit-target />
+              </div>
+            </div>
+          </div>
           <p class="text-caption" style="color: var(--glass-highlight);">
             핵심 포인트·출처는 좌측 <strong>성분 가이드</strong> 메뉴에서 관리합니다.
           </p>
@@ -201,6 +231,13 @@
           </span>
           {% endif %}
         </div>
+
+        {% if ing.goals or ing.hashtags %}
+        <div style="flex-basis:100%; display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2);">
+          {% for g in ing.goals %}<span class="ah-badge ah-badge--neutral">{{ g }}</span>{% endfor %}
+          {% for h in ing.hashtags %}<span class="text-caption text-muted">#{{ h }}</span>{% endfor %}
+        </div>
+        {% endif %}
 
         <div class="ah-record__actions">
           {# 성분 가이드 유무 — 핵심 포인트/출처 중 하나라도 있으면 '있음' #}
