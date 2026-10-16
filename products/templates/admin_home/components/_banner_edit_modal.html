@@ -6,32 +6,33 @@
 {% endcomment %}
 <div class="ah-modal" id="banner-edit-{{ b.id }}" aria-hidden="true">
   <div class="ah-modal__overlay" data-modal-close></div>
-  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
-       aria-labelledby="banner-edit-{{ b.id }}-title" style="width: min(680px, 100%);">
+  <div class="ah-modal__dialog glass-panel bn-dialog" role="dialog" aria-modal="true"
+       aria-labelledby="banner-edit-{{ b.id }}-title">
     <div class="ah-modal__head">
       <h2 id="banner-edit-{{ b.id }}-title" class="text-title-md">배너 #{{ b.id }} 수정</h2>
       <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
     </div>
     <div class="ah-modal__body ah-stack">
+      {# 본문만 스크롤 — 삭제/닫기 푸터는 아래 body 바깥에 고정 #}
       {# ── 썸네일 ── 이미지에 호버하면 편집 아이콘 → 클릭 시 파일 선택 → 즉시 미리보기 후 저장 #}
       <section class="ah-edit-section">
         <div class="ah-edit-section__head">
           <h3 class="ah-edit-section__title text-title-sm">썸네일</h3>
-          <span class="text-body-sm text-muted">이미지에 마우스를 올려 교체할 수 있습니다.</span>
+          <span class="ah-help">이미지에 마우스를 올리면 바꿀 수 있어요.</span>
         </div>
         <form method="post" enctype="multipart/form-data" data-thumb-form>
           {% csrf_token %}
           <input type="hidden" name="action" value="update" />
           <input type="hidden" name="id" value="{{ b.id }}" />
-          <label class="ah-thumb-edit" title="클릭하여 이미지 교체">
+          <label class="ah-thumb-edit" title="클릭해서 이미지 바꾸기">
             <img class="ah-banner__thumb" src="{{ b.image_url }}"
                  alt="배너 #{{ b.id }} 썸네일" data-thumb-img />
             <span class="ah-thumb-edit__overlay" aria-hidden="true">
               <span class="ah-thumb-edit__icon">✎</span>
-              <span class="text-body-sm">이미지 교체</span>
+              <span class="text-body-sm">이미지 바꾸기</span>
             </span>
             <input class="ah-thumb-edit__input" type="file" name="image" accept="image/*"
-                   data-thumb-input aria-label="배너 #{{ b.id }} 썸네일 교체" />
+                   data-thumb-input aria-label="배너 #{{ b.id }} 썸네일 바꾸기" />
           </label>
         </form>
       </section>
@@ -41,7 +42,7 @@
         <div class="ah-edit-section__head">
           <h3 class="ah-edit-section__title text-title-sm">상세 이미지</h3>
           {% if b.details.all %}
-          <span class="text-body-sm text-muted">드래그하여 순서를 바꿀 수 있습니다.</span>
+          <span class="ah-help">끌어서 순서를 바꿀 수 있어요.</span>
           {% endif %}
         </div>
         {% if b.details.all %}
@@ -62,7 +63,7 @@
           {% endfor %}
         </div>
         {% else %}
-        <p class="text-body-sm text-muted">등록된 상세 이미지가 없습니다.</p>
+        <p class="ah-help">아직 상세 이미지가 없어요.</p>
         {% endif %}
 
         {# 상세 이미지 추가 — "+" 버튼 클릭 → 파일 선택 → 선택 완료 시 즉시 추가(자동 submit) #}
@@ -70,7 +71,7 @@
           {% csrf_token %}
           <input type="hidden" name="action" value="detail_create" />
           <input type="hidden" name="banner_id" value="{{ b.id }}" />
-          <label class="ah-addbtn" title="상세 이미지 추가 (여러 장 선택 가능)">
+          <label class="ah-addbtn" title="상세 이미지 추가 (여러 장 선택할 수 있어요)">
             <span class="ah-addbtn__plus" aria-hidden="true">＋</span>
             <span class="text-body-sm">상세 이미지 추가</span>
             <input class="ah-thumb-edit__input" type="file" name="detail_image" accept="image/*"
@@ -78,17 +79,18 @@
           </label>
         </form>
       </section>
+    </div>
 
-      {# ── 배너 삭제 ── #}
-      <div class="ah-edit-footer">
-        <form method="post"
-              onsubmit="return confirm('이 배너와 하위 상세 이미지가 모두 삭제됩니다. 계속할까요?');">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="delete" />
-          <input type="hidden" name="id" value="{{ b.id }}" />
-          <button type="submit" class="btn btn-danger">삭제</button>
-        </form>
-      </div>
+    {# 푸터 — 본문 바깥에 고정. 삭제(좌) / 닫기(우) #}
+    <div class="bn-modal-footer">
+      <form method="post"
+            onsubmit="return confirm('이 배너를 삭제할까요?\n상세 이미지도 함께 삭제되고 되돌릴 수 없어요.');">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete" />
+        <input type="hidden" name="id" value="{{ b.id }}" />
+        <button type="submit" class="btn btn-danger">삭제</button>
+      </form>
+      <button type="button" class="btn btn-glass" data-modal-close>닫기</button>
     </div>
   </div>
 </div>
