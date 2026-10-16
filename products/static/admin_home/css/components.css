@@ -928,3 +928,254 @@ body.ah-modal-open { overflow: hidden; }
     transition: opacity var(--transition-base), visibility var(--transition-base);
   }
 }
+
+/* =========================================================
+   Page Header — 페이지 상단: 제목 + 한 줄 설명 + 주요 버튼(1개 권장)
+   <header class="ah-page-header">
+     <div><h2 class="ah-page-header__title">제품</h2>
+          <p class="ah-page-header__desc">등록된 제품을 관리해요.</p></div>
+     <div class="ah-page-header__actions"><button class="btn btn-primary">제품 추가</button></div>
+   </header>
+   ========================================================= */
+.ah-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+.ah-page-header__title {
+  font-size: var(--fs-title-lg);
+  line-height: var(--lh-title-lg);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--text-strong);
+}
+.ah-page-header__desc {
+  margin-top: var(--space-1);
+  font-size: var(--fs-text-sm);
+  color: var(--text-muted);
+}
+.ah-page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* =========================================================
+   Toolbar — 표 위 검색/필터 줄. 오른쪽 끝에 건수 등 메타 정보.
+   <div class="ah-toolbar">
+     <input class="ah-input ah-toolbar__search" type="search" placeholder="이름으로 검색">
+     <select class="ah-select ah-toolbar__filter">…</select>
+     <span class="ah-toolbar__meta">총 <b>120</b>개</span>
+   </div>
+   ========================================================= */
+.ah-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+.ah-toolbar__search { flex: 1 1 280px; max-width: 420px; }
+.ah-toolbar__filter { flex: 0 1 200px; width: auto; }
+.ah-toolbar__meta {
+  margin-left: auto;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.ah-toolbar__meta b { color: var(--text-strong); font-weight: var(--font-weight-bold); }
+
+/* =========================================================
+   Table — 목록 공통 표
+   <div class="ah-table-wrap"><table class="ah-table">…</table></div>
+   · 래퍼가 카드 표면 + 가로 스크롤을 담당. 헤더 고정이 필요하면 래퍼에
+     .ah-table-wrap--scroll(화면 높이에 맞춘 세로 스크롤)을 붙인다.
+   · 셀 유틸: .ah-table__num(숫자 우측 정렬) .ah-table__shrink(내용 폭만큼)
+     .ah-table__thumb(썸네일) .ah-table__title/.ah-table__sub(2줄 이름 셀)
+     .ah-table__actions(우측 버튼 묶음) .ah-table__handle(행 드래그 핸들)
+   · 행 상태: tr.is-selected / tr.is-dragging / tr.ah-table__row--link(행 전체 클릭)
+   · 정렬 헤더: <th aria-sort="ascending|descending|none"><button class="ah-table__sort">이름</button></th>
+   ========================================================= */
+.ah-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.ah-table-wrap--scroll {
+  max-height: calc(100vh - var(--topbar-h) - var(--space-10) * 4);
+  overflow-y: auto;
+}
+
+.ah-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-text-sm);
+  line-height: var(--lh-text-sm);
+  color: var(--text-default);
+}
+.ah-table th,
+.ah-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+.ah-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-subtle);
+  font-size: var(--fs-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.ah-table tbody tr:last-child td { border-bottom: none; }
+.ah-table tbody tr { transition: background var(--transition-base); }
+.ah-table tbody tr:hover { background: var(--surface-hover); }
+.ah-table tbody tr.is-selected { background: var(--brand-weak); }
+.ah-table tbody tr.is-dragging { opacity: 0.5; }
+.ah-table__row--link { cursor: pointer; }
+
+/* 촘촘한 표 */
+.ah-table--compact th,
+.ah-table--compact td { padding: var(--space-2) var(--space-3); }
+
+/* 셀 유틸 */
+.ah-table .ah-table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ah-table__shrink { width: 1%; white-space: nowrap; }
+.ah-table__muted { color: var(--text-muted); }
+
+.ah-table__thumb { width: 1%; }
+.ah-table__thumb img,
+.ah-table__thumb .ah-table__thumb-empty {
+  display: block;
+  width: var(--control-h-lg);
+  height: var(--control-h-lg);
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
+}
+/* 넓은 썸네일(배너 등 가로형 이미지) */
+.ah-table__thumb--wide img,
+.ah-table__thumb--wide .ah-table__thumb-empty {
+  width: calc(var(--control-h-lg) * 2.5);
+}
+
+.ah-table__title {
+  display: block;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-strong);
+}
+.ah-table__sub {
+  display: block;
+  margin-top: calc(var(--space-1) / 2);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.ah-table .ah-table__actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+.ah-table__actions-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+/* 행 드래그 핸들 */
+.ah-table .ah-table__handle {
+  width: 1%;
+  color: var(--text-subtle);
+  cursor: grab;
+  user-select: none;
+  text-align: center;
+}
+.ah-table__handle:active { cursor: grabbing; }
+.ah-table tbody tr:hover .ah-table__handle { color: var(--text-muted); }
+
+/* 정렬 가능한 헤더 버튼 */
+.ah-table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.ah-table__sort:hover { color: var(--text-strong); }
+.ah-table__sort::after { content: "↕"; color: var(--text-subtle); }
+.ah-table th[aria-sort="ascending"] .ah-table__sort,
+.ah-table th[aria-sort="descending"] .ah-table__sort { color: var(--text-strong); }
+.ah-table th[aria-sort="ascending"] .ah-table__sort::after { content: "↑"; color: var(--brand-text); }
+.ah-table th[aria-sort="descending"] .ah-table__sort::after { content: "↓"; color: var(--brand-text); }
+
+/* 표 아래 건수/페이지네이션 줄 */
+.ah-table-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   Empty State — 데이터가 없을 때(표 안 colspan 셀 또는 단독 카드)
+   <div class="ah-empty">
+     <div class="ah-empty__icon">📦</div>
+     <p class="ah-empty__title">아직 등록된 제품이 없어요</p>
+     <p class="ah-empty__desc">첫 제품을 추가해 보세요.</p>
+     <div class="ah-empty__action"><button class="btn btn-primary">제품 추가</button></div>
+   </div>
+   표 안에서는 <td class="ah-table__empty" colspan="N"> 안에 넣는다.
+   ========================================================= */
+.ah-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-10) var(--space-6);
+  text-align: center;
+  color: var(--text-muted);
+}
+.ah-empty__icon {
+  font-size: var(--fs-display);
+  line-height: 1;
+  margin-bottom: var(--space-1);
+}
+.ah-empty__title {
+  font-size: var(--fs-title-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-strong);
+}
+.ah-empty__desc { font-size: var(--fs-text-sm); }
+.ah-empty__action { margin-top: var(--space-2); }
+.ah-table td.ah-table__empty { padding: 0; }
+.ah-table tbody tr:hover:has(> .ah-table__empty) { background: none; }
+
+@media (max-width: 900px) {
+  .ah-toolbar__search { max-width: none; }
+  .ah-toolbar__meta { margin-left: 0; width: 100%; }
+}
