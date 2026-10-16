@@ -629,7 +629,7 @@ def product_list(request):
         coupang = request.POST.get("coupang", "").strip() or None
 
         if not all([name, company, product_type]):
-            messages.error(request, "모든 필수 항목을 입력해주세요.")
+            messages.error(request, "필수 항목(제품명·제조사·제품 유형)을 모두 입력해 주세요.")
             return redirect("admin_home_product")
 
         try:
@@ -649,9 +649,9 @@ def product_list(request):
 
                 _save_product_relations(product, request)
 
-            messages.success(request, f'"{name}" 제품이 추가되었습니다.')
+            messages.success(request, f'"{name}" 제품을 추가했어요.')
         except Exception as e:
-            messages.error(request, f"오류가 발생했습니다: {str(e)}")
+            messages.error(request, f"저장하지 못했어요: {str(e)}")
         return redirect("admin_home_product")
 
     if request.method == "POST" and request.POST.get("action") == "update":
@@ -659,7 +659,7 @@ def product_list(request):
         try:
             product = Product.objects.get(id=request.POST.get("id", ""))
         except (Product.DoesNotExist, ValueError):
-            messages.error(request, "제품을 찾을 수 없습니다.")
+            messages.error(request, "제품을 찾을 수 없어요. 이미 삭제됐을 수 있어요.")
             return redirect("admin_home_product")
 
         name = request.POST.get("name", "").strip()
@@ -668,7 +668,7 @@ def product_list(request):
         coupang = request.POST.get("coupang", "").strip() or None
 
         if not all([name, company, product_type]):
-            messages.error(request, "모든 필수 항목을 입력해주세요.")
+            messages.error(request, "필수 항목(제품명·제조사·제품 유형)을 모두 입력해 주세요.")
             return redirect("admin_home_product")
 
         try:
@@ -699,9 +699,9 @@ def product_list(request):
                 CategoryProduct.objects.filter(product=product).delete()
                 _save_product_relations(product, request)
 
-            messages.success(request, f'"{name}" 제품이 수정되었습니다.')
+            messages.success(request, f'"{name}" 제품을 수정했어요.')
         except Exception as e:
-            messages.error(request, f"오류가 발생했습니다: {str(e)}")
+            messages.error(request, f"저장하지 못했어요: {str(e)}")
         return redirect("admin_home_product")
 
     if request.method == "POST" and request.POST.get("action") == "delete":
@@ -709,7 +709,7 @@ def product_list(request):
         try:
             product = Product.objects.get(id=request.POST.get("id", ""))
         except (Product.DoesNotExist, ValueError):
-            messages.error(request, "제품을 찾을 수 없습니다.")
+            messages.error(request, "제품을 찾을 수 없어요. 이미 삭제됐을 수 있어요.")
             return redirect("admin_home_product")
 
         try:
@@ -720,9 +720,9 @@ def product_list(request):
                 ProductOtherIngredient.objects.filter(product=product).delete()
                 ProductImage.objects.filter(product=product).delete()
                 product.delete()
-            messages.success(request, f'"{name}" 제품이 삭제되었습니다.')
+            messages.success(request, f'"{name}" 제품을 삭제했어요.')
         except Exception as e:
-            messages.error(request, f"삭제 중 오류가 발생했습니다: {str(e)}")
+            messages.error(request, f"삭제하지 못했어요: {str(e)}")
         return redirect("admin_home_product")
 
     products = Product.objects.annotate(
