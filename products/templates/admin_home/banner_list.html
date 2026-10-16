@@ -96,16 +96,31 @@
   .ah-switch__input:disabled + .ah-switch__track { opacity: 0.6; }
   .ah-switch__label { font-size: var(--fs-caption); color: var(--text-muted); min-width: 3.2em; }
 
-  /* 수정 모달 — 썸네일/상세 이미지 (기존 스타일 유지) */
+  /* 배너 모달 공통 — 다이얼로그 폭 · 푸터 · 필수 표시 */
+  .bn-dialog { width: min(680px, 100%); }
+  .bn-modal-footer {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+  }
+  .bn-modal-footer form { margin: 0; }
+  .bn-modal-footer--end { justify-content: flex-end; }
+  .bn-req { color: var(--danger); margin-left: var(--space-1); }
+
+  /* 썸네일/상세 이미지 */
   .ah-banner__thumb {
     height: 80px;
     max-width: 220px;
     border-radius: var(--radius-md);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--border);
     object-fit: cover;
   }
-  /* base.css 의 img{display:block} 이 UA 의 [hidden] 을 덮어써 빈 미리보기가
-     깨진 이미지로 보이는 문제 방지 — 미선택(hidden) 시 확실히 숨긴다. */
+  /* base.css 의 img{display:block} 이 UA 의 [hidden] 을 덮는 경우 대비 */
   .ah-banner__thumb[hidden] { display: none; }
   /* 수정 모달 썸네일 호버 인라인 편집 — 호버/포커스 시 편집 아이콘 오버레이 */
   .ah-thumb-edit {
@@ -126,7 +141,7 @@
     justify-content: center;
     gap: var(--space-1);
     background: var(--scrim);
-    color: var(--color-gray-0);
+    color: var(--color-gray-0); /* 스크림 위 글자 — 테마와 무관하게 흰색 */
     opacity: 0;
     transition: opacity var(--transition-base);
   }
@@ -137,13 +152,12 @@
   /* 생성 모달의 상세 이미지 미리보기(드래그로 순서 지정) */
   .ah-detail-picker { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
   .ah-detail-item { position: relative; display: inline-block; }
-  /* 드래그 가능한 상세(생성 미리보기 · 수정 모달의 기존 상세) */
   .ah-detail-item[draggable="true"] { cursor: grab; }
   .ah-detail-item.is-dragging { opacity: 0.5; }
   .ah-detail-item__img {
     height: 72px;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--border);
     object-fit: cover;
   }
   .ah-detail-item__order { position: absolute; top: var(--space-1); left: var(--space-1); }
@@ -159,57 +173,53 @@
     padding: 0;
     border: none;
     border-radius: var(--radius-pill);
-    background: var(--color-error);
-    color: var(--color-gray-0);
+    background: var(--danger);
+    color: var(--color-gray-0); /* 빨간 원 위 × — 항상 흰색 */
     font-size: var(--fs-text-sm);
     line-height: 1;
     cursor: pointer;
   }
-  .ah-detail-add { display: flex; align-items: flex-end; gap: var(--space-2); flex-wrap: wrap; }
-  /* 상세 이미지 추가 "+" 버튼 — 클릭 시 파일 선택 → 즉시 추가 */
+  .ah-detail-add { display: flex; align-items: flex-end; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); }
+  /* 상세 이미지 추가 "+" 타일 — 점선 */
   .ah-addbtn {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    border: 1px dashed var(--glass-border-strong);
+    border: 1px dashed var(--border-strong);
     border-radius: var(--radius-md);
-    background: var(--glass-bg);
-    color: var(--text-on-glass);
+    background: var(--surface-subtle);
+    color: var(--text-default);
     cursor: pointer;
-    transition: background var(--transition-base);
+    transition: background var(--transition-base), border-color var(--transition-base);
   }
-  .ah-addbtn:hover, .ah-addbtn:focus-within { background: var(--glass-bg-strong); }
-  .ah-addbtn__plus { font-size: var(--fs-text-lg); line-height: 1; color: var(--glass-highlight); }
+  .ah-addbtn:hover, .ah-addbtn:focus-within { background: var(--surface-hover); border-color: var(--brand-primary); }
+  .ah-addbtn__plus { font-size: var(--fs-text-lg); line-height: 1; color: var(--brand-text); }
 
-  /* 수정 모달 레이아웃 — 섹션 구획 + 썸네일 교체 행 */
-  .ah-edit-section { padding-top: var(--space-3); border-top: 1px solid var(--glass-border); }
-  .ah-edit-section:first-child { padding-top: 0; border-top: none; }
+  /* 모달 섹션 구획 */
+  .ah-edit-section { padding-top: var(--space-3); border-top: 1px solid var(--border); }
+  .ah-edit-section:first-of-type { padding-top: 0; border-top: none; }
   .ah-edit-section__head {
     display: flex; align-items: baseline; gap: var(--space-2);
     flex-wrap: wrap; margin-bottom: var(--space-2);
   }
-  .ah-edit-section__title { margin-bottom: var(--space-2); }
+  .ah-edit-section__title { margin-bottom: var(--space-2); color: var(--text-strong); }
   .ah-edit-section__head .ah-edit-section__title { margin-bottom: 0; }
-  .ah-edit-footer {
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--glass-border);
-    display: flex; justify-content: flex-end;
-  }
-  /* 생성 모달 하단(취소/저장 두 버튼) 간격 */
-  .ah-create-footer { gap: var(--space-2); }
-  .ah-file { font-size: var(--fs-text-sm); color: var(--text-on-glass); }
+  /* 네이티브 파일 입력 — 선택 버튼을 .btn-glass 처럼 */
+  .ah-file { font-size: var(--fs-text-sm); color: var(--text-default); }
   .ah-file::file-selector-button {
-    font-size: var(--fs-text-sm);
+    font: inherit;
     font-weight: var(--font-weight-bold);
     padding: var(--space-1) var(--space-3);
     margin-right: var(--space-2);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-pill);
-    background: var(--glass-bg-strong);
-    color: var(--text-on-glass);
+    background: var(--surface);
+    color: var(--text-strong);
     cursor: pointer;
+    transition: background var(--transition-base);
   }
+  .ah-file::file-selector-button:hover { background: var(--surface-hover); }
 
 </style>
 {% endblock %}
@@ -221,21 +231,25 @@
 {# 배너 추가 모달 — 썸네일 + 선택 상세 이미지. 순서는 자동으로 마지막에 추가된다. #}
 <div class="ah-modal" id="banner-create-modal" aria-hidden="true">
   <div class="ah-modal__overlay" data-modal-close></div>
-  <div class="ah-modal__dialog glass-panel" role="dialog" aria-modal="true"
+  <div class="ah-modal__dialog glass-panel bn-dialog" role="dialog" aria-modal="true"
        aria-labelledby="banner-create-modal-title">
     <div class="ah-modal__head">
       <h2 id="banner-create-modal-title" class="text-title-md">배너 추가</h2>
       <button type="button" class="ah-modal__close" data-modal-close aria-label="닫기">&times;</button>
     </div>
+    {# 본문만 스크롤 — 취소/저장 푸터는 body 바깥에 고정(form= 로 아래 폼과 연결) #}
     <div class="ah-modal__body">
-      <form method="post" enctype="multipart/form-data" class="ah-stack">
+      <form method="post" enctype="multipart/form-data" class="ah-stack" id="banner-create-form">
         {% csrf_token %}
         <input type="hidden" name="action" value="create" />
         <section class="ah-edit-section">
-          <h3 class="ah-edit-section__title text-title-sm">썸네일</h3>
+          <div class="ah-edit-section__head">
+            <h3 class="ah-edit-section__title text-title-sm">썸네일<span class="bn-req" aria-hidden="true">*</span></h3>
+            <span class="ah-help">앱 메인에 보이는 대표 이미지예요. 꼭 넣어 주세요.</span>
+          </div>
           <div class="ah-field">
             <input class="ah-file" type="file" id="banner-image" name="image" accept="image/*"
-                   required aria-label="썸네일 이미지" />
+                   required aria-label="썸네일 이미지 (필수)" />
             {% comment %}등록 전 미리보기. 파일 선택 시 JS 가 objectURL 로 채운다(미선택 시 hidden).{% endcomment %}
             <img class="ah-banner__thumb" data-thumb-preview alt="썸네일 미리보기" hidden />
           </div>
@@ -243,7 +257,7 @@
         <section class="ah-edit-section">
           <div class="ah-edit-section__head">
             <h3 class="ah-edit-section__title text-title-sm">상세 이미지</h3>
-            <span class="text-body-sm text-muted">선택 · 여러 장 · 드래그로 순서 지정</span>
+            <span class="ah-help">선택 사항이에요. 여러 장 고르고, 끌어서 순서를 정할 수 있어요.</span>
           </div>
           <div class="ah-field">
             {% comment %}선택용 입력. 고른 파일은 아래 미리보기로 쌓이고, 실제 전송은 hidden payload 로 한다.{% endcomment %}
@@ -254,11 +268,11 @@
             <input type="file" name="detail_images" multiple hidden data-detail-payload />
           </div>
         </section>
-        <div class="ah-edit-footer ah-create-footer">
-          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
-          <button type="submit" class="btn btn-primary">저장</button>
-        </div>
       </form>
+    </div>
+    <div class="bn-modal-footer bn-modal-footer--end">
+      <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+      <button type="submit" form="banner-create-form" class="btn btn-primary">저장</button>
     </div>
   </div>
 </div>
@@ -371,8 +385,8 @@
       }).then(function (res) {
         if (res.ok) return res.json().catch(function () { return { ok: true }; });
         return res.json().then(
-          function (d) { throw new Error(d.error || "요청 실패"); },
-          function () { throw new Error("요청 실패"); }
+          function (d) { throw new Error(d.error || "요청을 처리하지 못했어요."); },
+          function () { throw new Error("요청을 처리하지 못했어요."); }
         );
       });
     }
@@ -441,12 +455,12 @@
           refreshCountsAndEmpty();
           relabelActiveOrder();
           if (window.ahToast) {
-            window.ahToast(active ? "배너를 활성화했습니다." : "배너를 비활성화했습니다.", "success");
+            window.ahToast(active ? "배너를 켰어요." : "배너를 껐어요.", "success");
           }
         })
         .catch(function (err) {
           sw.checked = !want; // 실패 시 원복
-          if (window.ahToast) window.ahToast(err.message || "변경에 실패했습니다.", "error");
+          if (window.ahToast) window.ahToast(err.message || "바꾸지 못했어요. 다시 시도해 주세요.", "error");
         })
         .then(function () { sw.disabled = false; });
     });
@@ -508,10 +522,10 @@
       })
         .then(function () {
           relabelActiveOrder();
-          if (window.ahToast) window.ahToast("배너 순서가 저장되었습니다.", "success");
+          if (window.ahToast) window.ahToast("배너 순서를 저장했어요.", "success");
         })
         .catch(function (err) {
-          if (window.ahToast) window.ahToast(err.message || "순서 저장에 실패했습니다.", "error");
+          if (window.ahToast) window.ahToast(err.message || "순서를 저장하지 못했어요. 다시 시도해 주세요.", "error");
         });
     }
 
@@ -711,10 +725,10 @@
             var o = c.querySelector(".ah-detail-item__order");
             if (o) o.textContent = i + 1;
           });
-          if (window.ahToast) window.ahToast("상세 이미지 순서가 저장되었습니다.", "success");
+          if (window.ahToast) window.ahToast("상세 이미지 순서를 저장했어요.", "success");
         })
         .catch(function (err) {
-          if (window.ahToast) window.ahToast(err.message || "순서 저장에 실패했습니다.", "error");
+          if (window.ahToast) window.ahToast(err.message || "순서를 저장하지 못했어요. 다시 시도해 주세요.", "error");
         });
     }
   })();
