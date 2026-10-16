@@ -1,7 +1,7 @@
 {% extends base_template|default:"admin_home/base.html" %}
 {% comment %}
   카테고리 · 대/중/소 통합 트리 (category_tree).
-  대→중→소를 항상 펼친 중첩 트리로 표시하고, 노드 hover 액션으로 추가/수정/삭제한다.
+  대→중→소를 항상 펼친 중첩 트리로 표시하고, 노드 hover 액션으로 수정/삭제, 점선 버튼으로 하위 추가한다.
   · 추가·수정: 공유 모달(#category-modal)을 extra_js 가 클릭 노드의 data-cat-* 로 채워 연다
     (여는 동작 자체는 interactions.js 의 data-modal-open 이 담당).
   · 삭제: 공유 폼(#category-delete-form)에 level/id 를 채워 제출한다.
@@ -10,91 +10,236 @@
 
 {% block title %}카테고리 · DASII{% endblock %}
 {% block topbar_title %}카테고리 관리{% endblock %}
-{% block topbar_actions %}
-<button type="button" class="btn btn-primary"
-        data-modal-open="category-modal"
-        data-cat-act="create" data-cat-level="big" data-cat-title="대분류 추가">＋ 대분류 추가</button>
+
+{% block extra_head %}
+<style>
+  /* 카테고리 페이지 로컬 보강 — .cat-page 하위로만 한정, 토큰만 사용 */
+  .cat-page .ah-map { gap: 0; }
+
+  /* 열 머리글 — 아래 3열과 같은 비율(1fr 2fr → 1fr 1fr) */
+  .cat-page .cat-cols {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: var(--space-4);
+    padding-bottom: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: var(--font-weight-semibold);
+  }
+  .cat-page .cat-cols__rest {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    padding-left: calc(var(--space-4) + 2px);
+  }
+
+  /* 대분류 묶음 사이 구분선 */
+  .cat-page .ah-map__group + .ah-map__group {
+    margin-top: var(--space-6);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--border);
+  }
+
+  /* 단계별 시각 무게: 대(가장 강함) > 중 > 소(가장 가벼움) */
+  .cat-page .ah-map__node { box-shadow: none; }
+  .cat-page .ah-map__node--big {
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--surface);
+    border-color: var(--border-strong);
+    border-left: 4px solid var(--brand-primary);
+  }
+  .cat-page .ah-map__node--big .ah-map__name {
+    font-size: var(--fs-title-sm);
+    line-height: var(--lh-title-sm);
+    color: var(--text-strong);
+  }
+  .cat-page .ah-map__node--mid { background-color: var(--surface); }
+  .cat-page .ah-map__node--mid .ah-map__name { font-weight: var(--font-weight-semibold); }
+  .cat-page .ah-map__node--small {
+    background-color: transparent;
+    border-color: var(--border);
+  }
+  .cat-page .ah-map__node--small .ah-map__name {
+    font-weight: var(--font-weight-regular);
+    color: var(--text-default);
+  }
+  .cat-page .ah-map__name { min-width: 0; overflow-wrap: anywhere; }
+
+  /* 노드 액션 — 글자 버튼(수정/삭제), 호버·포커스 때만 노출(기본 동작 유지) */
+  .cat-page .ah-map__actions { flex: none; }
+  .cat-page .ah-map__btn:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+
+  /* 추가 버튼 — 점선 윤곽, 평소엔 조용하게 */
+  .cat-page .cat-add {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    height: var(--control-h-sm);
+    padding: 0 var(--space-3);
+    font-size: var(--fs-caption);
+    line-height: 1;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: color var(--transition-base), border-color var(--transition-base),
+      background var(--transition-base);
+  }
+  .cat-page .cat-add:hover {
+    color: var(--brand-text);
+    border-color: var(--brand-primary);
+    background: var(--brand-weak);
+  }
+  .cat-page .cat-add:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+
+  /* 빈 가지 안내 */
+  .cat-page .ah-map__empty {
+    padding: var(--space-2) 0;
+    color: var(--text-subtle);
+  }
+  .cat-page .cat-count { flex: none; }
+
+  /* 모달 — 본문은 스크롤, 푸터 고정 */
+  #category-modal .ah-modal__dialog { padding: 0; width: min(440px, 100%); }
+  #category-modal .ah-modal__head {
+    margin-bottom: 0;
+    padding: var(--space-5) var(--space-6) var(--space-3);
+  }
+  #category-modal .ah-modal__body {
+    padding: var(--space-2) var(--space-6) var(--space-4);
+  }
+  #category-modal .cat-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-6) var(--space-4);
+    border-top: 1px solid var(--border);
+    background: var(--surface-raised);
+  }
+  .cat-req { color: var(--danger); margin-left: var(--space-1); }
+
+  @media (max-width: 900px) {
+    .cat-page .cat-cols { display: none; }
+    .cat-page .ah-map__group { grid-template-columns: 1fr; }
+    .cat-page .ah-map__branch { grid-template-columns: 1fr; }
+    .cat-page .ah-map__actions { opacity: 1; }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-<section class="reveal">
-  {% if bigs %}
-  {# 3열 마인드맵 — 1col 대분류 · 2col 중분류 · 3col 소분류(세로 나열), 열은 동일 비율 #}
-  <div class="ah-map">
-    {% for big in bigs %}
-    <div class="ah-map__group">
-      {# col 1 — 대분류 (자기 중분류 묶음에 세로 중앙) #}
-      <div class="ah-map__node ah-map__node--big">
-        <span class="ah-map__name text-body">{{ big.category }}</span>
-        <span class="ah-map__actions">
-          <button type="button" class="ah-map__btn" title="중분류 추가"
-                  data-modal-open="category-modal"
-                  data-cat-act="create" data-cat-level="middle" data-cat-parent="{{ big.id }}"
-                  data-cat-title="중분류 추가">＋</button>
-          <button type="button" class="ah-map__btn" title="이름 수정"
-                  data-modal-open="category-modal"
-                  data-cat-act="update" data-cat-level="big" data-cat-id="{{ big.id }}"
-                  data-cat-name="{{ big.category }}" data-cat-title="대분류 수정">✎</button>
-          <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
-                  data-cat-act="delete" data-cat-level="big" data-cat-id="{{ big.id }}"
-                  data-cat-confirm="이 대분류와 하위 중·소분류, 제품 연결이 모두 삭제됩니다. 계속할까요?">🗑</button>
-        </span>
-      </div>
+<div class="cat-page">
+  <header class="ah-page-header reveal">
+    <div>
+      <h2 class="ah-page-header__title">카테고리</h2>
+      <p class="ah-page-header__desc">대분류 → 중분류 → 소분류 순서로 정리돼요. 이름에 마우스를 올리면 수정·삭제할 수 있어요.</p>
+    </div>
+    <div class="ah-page-header__actions">
+      <button type="button" class="btn btn-primary"
+              data-modal-open="category-modal"
+              data-cat-act="create" data-cat-level="big" data-cat-title="대분류 추가">대분류 추가</button>
+    </div>
+  </header>
 
-      {# col 2+3 — 중분류별 행: [중분류] [소분류들] #}
-      <div class="ah-map__branches">
-        {% for mid in big.middle_categories.all %}
-        <div class="ah-map__branch">
-          <div class="ah-map__node ah-map__node--mid">
-            <span class="ah-map__name text-body">{{ mid.category }}</span>
-            <span class="ah-map__actions">
-              <button type="button" class="ah-map__btn" title="소분류 추가"
-                      data-modal-open="category-modal"
-                      data-cat-act="create" data-cat-level="small" data-cat-parent="{{ mid.id }}"
-                      data-cat-title="소분류 추가">＋</button>
-              <button type="button" class="ah-map__btn" title="이름 수정"
-                      data-modal-open="category-modal"
-                      data-cat-act="update" data-cat-level="middle" data-cat-id="{{ mid.id }}"
-                      data-cat-name="{{ mid.category }}" data-cat-title="중분류 수정">✎</button>
-              <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
-                      data-cat-act="delete" data-cat-level="middle" data-cat-id="{{ mid.id }}"
-                      data-cat-confirm="이 중분류와 하위 소분류, 제품 연결이 모두 삭제됩니다. 계속할까요?">🗑</button>
-            </span>
-          </div>
+  <section class="reveal">
+    {% if bigs %}
+    <div class="cat-cols" aria-hidden="true">
+      <span>대분류</span>
+      <span class="cat-cols__rest"><span>중분류</span><span>소분류</span></span>
+    </div>
+    {# 3열 마인드맵 — 1col 대분류 · 2col 중분류 · 3col 소분류(세로 나열), 열은 동일 비율 #}
+    <div class="ah-map">
+      {% for big in bigs %}
+      <div class="ah-map__group">
+        {# col 1 — 대분류 #}
+        <div class="ah-map__node ah-map__node--big">
+          <span class="ah-map__name text-body">{{ big.category }}</span>
+          <span class="ah-map__actions">
+            <button type="button" class="ah-map__btn" title="이름 수정"
+                    data-modal-open="category-modal"
+                    data-cat-act="update" data-cat-level="big" data-cat-id="{{ big.id }}"
+                    data-cat-name="{{ big.category }}" data-cat-title="대분류 수정">수정</button>
+            <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
+                    data-cat-act="delete" data-cat-level="big" data-cat-id="{{ big.id }}"
+                    data-cat-confirm="이 대분류를 삭제할까요? 하위 중·소분류와 제품 연결도 함께 삭제돼요. (제품 자체는 지워지지 않아요.)">삭제</button>
+          </span>
+        </div>
 
-          <div class="ah-map__smalls">
-            {% for small in mid.small_categories.all %}
-            <div class="ah-map__node ah-map__node--small">
-              <span class="ah-map__name text-body">{{ small.category }}</span>
-              <span class="ah-badge ah-badge--neutral" title="연결된 제품 수">{{ small.product_count }}</span>
+        {# col 2+3 — 중분류별 행: [중분류] [소분류들] #}
+        <div class="ah-map__branches">
+          {% for mid in big.middle_categories.all %}
+          <div class="ah-map__branch">
+            <div class="ah-map__node ah-map__node--mid">
+              <span class="ah-map__name text-body">{{ mid.category }}</span>
               <span class="ah-map__actions">
                 <button type="button" class="ah-map__btn" title="이름 수정"
                         data-modal-open="category-modal"
-                        data-cat-act="update" data-cat-level="small" data-cat-id="{{ small.id }}"
-                        data-cat-name="{{ small.category }}" data-cat-title="소분류 수정">✎</button>
+                        data-cat-act="update" data-cat-level="middle" data-cat-id="{{ mid.id }}"
+                        data-cat-name="{{ mid.category }}" data-cat-title="중분류 수정">수정</button>
                 <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
-                        data-cat-act="delete" data-cat-level="small" data-cat-id="{{ small.id }}"
-                        data-cat-confirm="이 소분류와 제품 연결이 삭제됩니다. 계속할까요?">🗑</button>
+                        data-cat-act="delete" data-cat-level="middle" data-cat-id="{{ mid.id }}"
+                        data-cat-confirm="이 중분류를 삭제할까요? 하위 소분류와 제품 연결도 함께 삭제돼요. (제품 자체는 지워지지 않아요.)">삭제</button>
               </span>
             </div>
-            {% empty %}
-            <div class="ah-map__empty text-body-sm">소분류 없음</div>
-            {% endfor %}
+
+            <div class="ah-map__smalls">
+              {% for small in mid.small_categories.all %}
+              <div class="ah-map__node ah-map__node--small">
+                <span class="ah-map__name text-body">{{ small.category }}</span>
+                <span class="ah-badge ah-badge--neutral cat-count" title="연결된 제품 수">제품 {{ small.product_count }}개</span>
+                <span class="ah-map__actions">
+                  <button type="button" class="ah-map__btn" title="이름 수정"
+                          data-modal-open="category-modal"
+                          data-cat-act="update" data-cat-level="small" data-cat-id="{{ small.id }}"
+                          data-cat-name="{{ small.category }}" data-cat-title="소분류 수정">수정</button>
+                  <button type="button" class="ah-map__btn ah-map__btn--danger" title="삭제"
+                          data-cat-act="delete" data-cat-level="small" data-cat-id="{{ small.id }}"
+                          data-cat-confirm="이 소분류를 삭제할까요? 연결된 제품과의 연결이 해제돼요. (제품 자체는 지워지지 않아요.)">삭제</button>
+                </span>
+              </div>
+              {% empty %}
+              <div class="ah-map__empty text-body-sm">아직 소분류가 없어요</div>
+              {% endfor %}
+              <button type="button" class="cat-add"
+                      data-modal-open="category-modal"
+                      data-cat-act="create" data-cat-level="small" data-cat-parent="{{ mid.id }}"
+                      data-cat-title="소분류 추가">+ 소분류 추가</button>
+            </div>
           </div>
+          {% empty %}
+          <div class="ah-map__branch">
+            <div class="ah-map__empty text-body-sm">아직 중분류가 없어요</div>
+          </div>
+          {% endfor %}
+          <button type="button" class="cat-add"
+                  data-modal-open="category-modal"
+                  data-cat-act="create" data-cat-level="middle" data-cat-parent="{{ big.id }}"
+                  data-cat-title="중분류 추가">+ 중분류 추가</button>
         </div>
-        {% empty %}
-        <div class="ah-map__branch">
-          <div class="ah-map__empty text-body-sm">중분류 없음</div>
-        </div>
-        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="ah-empty">
+      <p class="ah-empty__title">아직 등록된 카테고리가 없어요</p>
+      <p class="ah-empty__desc">대분류부터 하나씩 추가해 보세요.</p>
+      <div class="ah-empty__action">
+        <button type="button" class="btn btn-primary"
+                data-modal-open="category-modal"
+                data-cat-act="create" data-cat-level="big" data-cat-title="대분류 추가">대분류 추가</button>
       </div>
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="ah-record-empty text-body">등록된 대분류가 없습니다. 우측 상단 ＋ 대분류 추가 로 시작하세요.</p>
-  {% endif %}
-</section>
+    {% endif %}
+  </section>
+</div>
 
 {# 공유 생성/수정 모달 — extra_js 가 클릭 노드의 data-cat-* 로 필드를 채운다 #}
 <div class="ah-modal" id="category-modal" aria-hidden="true">
@@ -113,15 +258,17 @@
         <input type="hidden" name="id" id="category-modal-id" value="" />
         <input type="hidden" name="parent" id="category-modal-parent" value="" />
         <div class="ah-field">
-          <label class="ah-label" for="category-modal-input">이름</label>
+          <label class="ah-label" for="category-modal-input">이름<span class="cat-req" aria-hidden="true">*</span></label>
           <input class="ah-input" type="text" id="category-modal-input" name="category"
                  maxlength="100" placeholder="예: 비타민" required />
-        </div>
-        <div style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
-          <button type="button" class="btn btn-glass" data-modal-close>취소</button>
-          <button type="submit" class="btn btn-primary" id="category-modal-submit">저장</button>
+          <p class="ah-help">같은 위치에는 같은 이름을 쓸 수 없어요.</p>
         </div>
       </form>
+    </div>
+    <div class="cat-modal-footer">
+      <button type="button" class="btn btn-glass" data-modal-close>취소</button>
+      <button type="submit" class="btn btn-primary" id="category-modal-submit"
+              form="category-modal-form">저장</button>
     </div>
   </div>
 </div>
