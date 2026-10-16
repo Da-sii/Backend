@@ -333,7 +333,7 @@ def _get_big_category(request):
     try:
         return BigCategory.objects.get(id=request.POST.get("id", ""))
     except (BigCategory.DoesNotExist, ValueError):
-        messages.error(request, "대분류를 찾을 수 없습니다.")
+        messages.error(request, "대분류를 찾을 수 없어요.")
         return None
 
 
@@ -342,7 +342,7 @@ def _get_parent_big(request):
     try:
         return BigCategory.objects.get(id=request.POST.get("parent", ""))
     except (BigCategory.DoesNotExist, ValueError):
-        messages.error(request, "상위 대분류를 찾을 수 없습니다.")
+        messages.error(request, "상위 대분류를 찾을 수 없어요.")
         return None
 
 
@@ -353,7 +353,7 @@ def _get_parent_middle(request):
             id=request.POST.get("parent", "")
         )
     except (MiddleCategory.DoesNotExist, ValueError):
-        messages.error(request, "상위 중분류를 찾을 수 없습니다.")
+        messages.error(request, "상위 중분류를 찾을 수 없어요.")
         return None
 
 
@@ -372,27 +372,27 @@ def _handle_category_post(request):
     if level == "big":
         if action == "create":
             if not name:
-                messages.error(request, "대분류 이름을 입력해주세요.")
+                messages.error(request, "대분류 이름을 입력해 주세요.")
             elif BigCategory.objects.filter(category=name).exists():
-                messages.error(request, f'"{name}" 대분류가 이미 존재합니다.')
+                messages.error(request, f'"{name}" 대분류가 이미 있어요.')
             else:
                 BigCategory.objects.create(category=name)
-                messages.success(request, f'"{name}" 대분류가 추가되었습니다.')
+                messages.success(request, f'"{name}" 대분류가 추가됐어요.')
         elif action == "update":
             cat = _get_big_category(request)
             if cat is not None:
                 if not name:
-                    messages.error(request, "대분류 이름을 입력해주세요.")
+                    messages.error(request, "대분류 이름을 입력해 주세요.")
                 elif (
                     BigCategory.objects.filter(category=name)
                     .exclude(id=cat.id)
                     .exists()
                 ):
-                    messages.error(request, f'"{name}" 대분류가 이미 존재합니다.')
+                    messages.error(request, f'"{name}" 대분류가 이미 있어요.')
                 else:
                     cat.category = name
                     cat.save()
-                    messages.success(request, f'"{name}" 대분류가 수정되었습니다.')
+                    messages.success(request, f'"{name}" 대분류가 수정됐어요.')
         elif action == "delete":
             cat = _get_big_category(request)
             if cat is not None:
@@ -403,32 +403,32 @@ def _handle_category_post(request):
                 )
                 CategoryProduct.objects.filter(category__in=small_cats).delete()
                 cat.delete()  # CASCADE 로 중분류·소분류 정리
-                messages.success(request, f'"{label}" 대분류가 삭제되었습니다.')
+                messages.success(request, f'"{label}" 대분류가 삭제됐어요.')
         else:
-            messages.error(request, "알 수 없는 요청입니다.")
+            messages.error(request, "알 수 없는 요청이에요.")
 
     elif level == "middle":
         if action == "create":
             big = _get_parent_big(request)
             if big is not None:
                 if not name:
-                    messages.error(request, "중분류 이름을 입력해주세요.")
+                    messages.error(request, "중분류 이름을 입력해 주세요.")
                 elif MiddleCategory.objects.filter(
                     big_category=big, category=name
                 ).exists():
                     messages.error(
-                        request, f'"{big.category} - {name}" 중분류가 이미 존재합니다.'
+                        request, f'"{big.category} - {name}" 중분류가 이미 있어요.'
                     )
                 else:
                     MiddleCategory.objects.create(big_category=big, category=name)
                     messages.success(
-                        request, f'"{big.category} - {name}" 중분류가 추가되었습니다.'
+                        request, f'"{big.category} - {name}" 중분류가 추가됐어요.'
                     )
         elif action == "update":
             mid = _get_middle_category(request)
             if mid is not None:
                 if not name:
-                    messages.error(request, "중분류 이름을 입력해주세요.")
+                    messages.error(request, "중분류 이름을 입력해 주세요.")
                 elif (
                     MiddleCategory.objects.filter(
                         big_category=mid.big_category, category=name
@@ -438,14 +438,14 @@ def _handle_category_post(request):
                 ):
                     messages.error(
                         request,
-                        f'"{mid.big_category.category} - {name}" 중분류가 이미 존재합니다.',
+                        f'"{mid.big_category.category} - {name}" 중분류가 이미 있어요.',
                     )
                 else:
                     mid.category = name
                     mid.save()
                     messages.success(
                         request,
-                        f'"{mid.big_category.category} - {name}" 중분류가 수정되었습니다.',
+                        f'"{mid.big_category.category} - {name}" 중분류가 수정됐어요.',
                     )
         elif action == "delete":
             mid = _get_middle_category(request)
@@ -454,28 +454,28 @@ def _handle_category_post(request):
                 small_cats = SmallCategory.objects.filter(middle_category=mid)
                 CategoryProduct.objects.filter(category__in=small_cats).delete()
                 mid.delete()  # CASCADE 로 소분류 정리
-                messages.success(request, f'"{label}" 중분류가 삭제되었습니다.')
+                messages.success(request, f'"{label}" 중분류가 삭제됐어요.')
         else:
-            messages.error(request, "알 수 없는 요청입니다.")
+            messages.error(request, "알 수 없는 요청이에요.")
 
     elif level == "small":
         if action == "create":
             mid = _get_parent_middle(request)
             if mid is not None:
                 if not name:
-                    messages.error(request, "소분류 이름을 입력해주세요.")
+                    messages.error(request, "소분류 이름을 입력해 주세요.")
                 elif SmallCategory.objects.filter(
                     middle_category=mid, category=name
                 ).exists():
-                    messages.error(request, f'"{name}" 소분류가 이미 존재합니다.')
+                    messages.error(request, f'"{name}" 소분류가 이미 있어요.')
                 else:
                     SmallCategory.objects.create(middle_category=mid, category=name)
-                    messages.success(request, f'"{name}" 소분류가 추가되었습니다.')
+                    messages.success(request, f'"{name}" 소분류가 추가됐어요.')
         elif action == "update":
             small = _get_small_category(request)
             if small is not None:
                 if not name:
-                    messages.error(request, "소분류 이름을 입력해주세요.")
+                    messages.error(request, "소분류 이름을 입력해 주세요.")
                 elif (
                     SmallCategory.objects.filter(
                         middle_category=small.middle_category, category=name
@@ -483,11 +483,11 @@ def _handle_category_post(request):
                     .exclude(id=small.id)
                     .exists()
                 ):
-                    messages.error(request, f'"{name}" 소분류가 이미 존재합니다.')
+                    messages.error(request, f'"{name}" 소분류가 이미 있어요.')
                 else:
                     small.category = name
                     small.save()
-                    messages.success(request, f'"{name}" 소분류가 수정되었습니다.')
+                    messages.success(request, f'"{name}" 소분류가 수정됐어요.')
         elif action == "delete":
             small = _get_small_category(request)
             if small is not None:
@@ -495,12 +495,12 @@ def _handle_category_post(request):
                 # PROTECT(CategoryProduct) 때문에 제품 연결을 먼저 제거해야 삭제 가능
                 CategoryProduct.objects.filter(category=small).delete()
                 small.delete()
-                messages.success(request, f'"{label}" 소분류가 삭제되었습니다.')
+                messages.success(request, f'"{label}" 소분류가 삭제됐어요.')
         else:
-            messages.error(request, "알 수 없는 요청입니다.")
+            messages.error(request, "알 수 없는 요청이에요.")
 
     else:
-        messages.error(request, "알 수 없는 요청입니다.")
+        messages.error(request, "알 수 없는 요청이에요.")
 
     return redirect("admin_home_category")
 
@@ -539,7 +539,7 @@ def _get_middle_category(request):
             id=request.POST.get("id", "")
         )
     except (MiddleCategory.DoesNotExist, ValueError):
-        messages.error(request, "중분류를 찾을 수 없습니다.")
+        messages.error(request, "중분류를 찾을 수 없어요.")
         return None
 
 
@@ -550,7 +550,7 @@ def _get_small_category(request):
             "middle_category__big_category"
         ).get(id=request.POST.get("id", ""))
     except (SmallCategory.DoesNotExist, ValueError):
-        messages.error(request, "소분류를 찾을 수 없습니다.")
+        messages.error(request, "소분류를 찾을 수 없어요.")
         return None
 
 
