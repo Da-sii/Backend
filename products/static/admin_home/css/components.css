@@ -1063,6 +1063,8 @@ body.ah-modal-open { overflow: hidden; }
 .ah-table__thumb .ah-table__thumb-empty {
   display: block;
   width: var(--control-h-lg);
+  /* base.css 의 img{max-width:100%} 가 폭 1% 셀에서 이미지를 찌그러뜨리지 않도록 해제 */
+  max-width: none;
   height: var(--control-h-lg);
   object-fit: cover;
   border-radius: var(--radius-sm);
