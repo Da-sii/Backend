@@ -161,6 +161,36 @@
   border-radius: var(--radius-md);
   cursor: pointer;
 }
+/* 라이트/다크 전환 버튼 — 현재 테마의 반대 아이콘을 보여준다(라이트 → 달, 다크 → 해) */
+.ah-theme-toggle {
+  flex: none;
+  width: var(--control-h);
+  height: var(--control-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background var(--transition-base), color var(--transition-base);
+}
+.ah-theme-toggle:hover { background: var(--surface-hover); color: var(--text-strong); }
+.ah-theme-toggle__icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ah-theme-toggle__icon--sun { display: none; }
+:root[data-theme="dark"] .ah-theme-toggle__icon--sun { display: block; }
+:root[data-theme="dark"] .ah-theme-toggle__icon--moon { display: none; }
+
 .ah-content-scroll {
   flex: 1 1 auto;
   padding: var(--space-6);

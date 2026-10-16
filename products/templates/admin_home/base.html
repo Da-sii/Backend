@@ -6,6 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Admin Home{% endblock %}</title>
 
+  {# 테마 결정 — CSS 보다 먼저 실행해 첫 화면 깜빡임을 막는다.
+     저장된 선택(localStorage "ah-theme") → 없으면 OS 설정(prefers-color-scheme). 토글은 theme.js #}
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("ah-theme"); } catch (e) {}
+      if (t !== "light" && t !== "dark") {
+        t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+
   {# 본문 폰트 — Pretendard(가변, 한글 동적 서브셋). 로드 실패 시 tokens.css 의 폴백 스택으로 렌더 #}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
 
@@ -104,6 +117,11 @@
         </button>
         <h1 class="ah-topbar__title text-title-md" id="ah-topbar-title">{% block topbar_title %}관리자{% endblock %}</h1>
         <div class="ah-topbar__actions" id="ah-topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+        {# 라이트/다크 전환 — #ah-topbar-actions 밖에 두어 부분 로딩 시 교체되지 않게 한다 #}
+        <button type="button" class="ah-theme-toggle" id="ah-theme-toggle" aria-label="테마 전환">
+          <svg class="ah-theme-toggle__icon ah-theme-toggle__icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="ah-theme-toggle__icon ah-theme-toggle__icon--sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+        </button>
       </header>
       {% endblock %}
 
@@ -126,6 +144,7 @@
   <script src="{% static 'admin_home/js/interactions.js' %}" defer></script>
   <script src="{% static 'admin_home/js/partial-nav.js' %}" defer></script>
   <script src="{% static 'admin_home/js/toast.js' %}" defer></script>
+  <script src="{% static 'admin_home/js/theme.js' %}" defer></script>
 
   {% block extra_js %}{% endblock %}
 </body>
