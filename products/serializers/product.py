@@ -160,10 +160,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     reviewAvg = serializers.SerializerMethodField()
     isMyReview = serializers.SerializerMethodField()
     hashtags = serializers.SerializerMethodField()
+    smallCategories = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ("id", "name", "company", "productType", "coupang", "isMyReview", "reviewCount", "reviewAvg", "hashtags", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients", "otherIngredientsCount", "otherIngredients")
+        fields = ("id", "name", "company", "productType", "coupang", "isMyReview", "reviewCount", "reviewAvg", "hashtags", "smallCategories", "ranking", "images", "reviewImages", "ingredientsCount", "ingredients", "otherIngredientsCount", "otherIngredients")
 
     def get_reviewImages(self, obj):
         # 해당 제품의 리뷰 이미지를 최신순 6개 반환
@@ -189,6 +190,15 @@ class ProductDetailSerializer(serializers.ModelSerializer):
                 if tag not in hashtags:
                     hashtags.append(tag)
         return hashtags
+
+    def get_smallCategories(self, obj: Product) -> list[dict]:
+        # 제품이 속한 소분류와 아이콘 URL (아이콘 미등록 시 빈 문자열)
+        return [
+            {"category": category, "iconUrl": icon_url}
+            for category, icon_url in obj.category_products
+            .order_by("category_id")
+            .values_list("category__category", "category__icon_url")
+        ]
 
     def get_ingredientsCount(self, obj: Product) -> int:
         return obj.ingredients.count()
