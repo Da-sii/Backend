@@ -46,10 +46,9 @@ def _build_ingredient_context(goals: list) -> list:
     ]
 
 # Gemini API 호출 -> 추천 성분 리스트 반환
-# thinking_budget=0: 응답 시간 60초대 -> 3~6초대로 단축(성분 5~56개 조건에서 검증).
-# 단, fit_score가 80~95 구간으로 압축되는 현상 확인됨(budget=512로 올려도 압축은 그대로, 속도만 2배 느려짐).
-# 추천 순위 자체는 안 흔들리지만, 점수를 절대값으로 노출하는 화면이 있다면 실사용 데이터로 UX 영향 재검토 필요.
-def _call_gemini(user_context: dict, ingredient_context: list, thinking_budget: int = 0) -> list:
+# Gemini 3 계열은 thinking_budget 미지원(400 INVALID_ARGUMENT) -> thinking_level 사용.
+# thinking을 완전히 끌 수 없어 가장 낮은 "minimal"을 기본값으로 사용.
+def _call_gemini(user_context: dict, ingredient_context: list, thinking_level: str = "minimal") -> list:
     prompt = f"""당신은 건강기능식품 성분 추천 전문가입니다.
 
     아래는 실제 보유 중인 성분 데이터입니다:
@@ -86,11 +85,11 @@ def _call_gemini(user_context: dict, ingredient_context: list, thinking_budget: 
     }}"""
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.5-flash-lite",
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            thinking_config=types.ThinkingConfig(thinking_budget=thinking_budget),
+            thinking_config=types.ThinkingConfig(thinking_level=thinking_level),
         )
     )
 
