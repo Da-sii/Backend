@@ -5,7 +5,7 @@ from products.models import Ingredient, ProductIngredient, Product
 
 from django.conf import settings
 from google import genai
-from google.genai import types
+from google.genai import errors, types
 
 from recommendations.constants import SURVEY_LABEL_MAPS
 
@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+PRIMARY_MODEL = "gemini-3.5-flash-lite"
+# 기본 모델이 503(서버 혼잡)일 때 1회 대체 호출 (임시 조치, 사용 빈도 관찰 후 정책 확정)
+# 3.1 flash lite: thinking_level="minimal" 호환, 지원 종료 예정(2027-05-07) -> 그 전에 교체 필요
+FALLBACK_MODEL = "gemini-3.1-flash-lite"
 
 # UserProfile 모델 -> Gemini 프롬프트용 딕셔너리 변환
 def _build_user_context(survey: dict) -> dict:
@@ -84,14 +89,22 @@ def _call_gemini(user_context: dict, ingredient_context: list, thinking_level: s
       ]
     }}"""
 
-    response = client.models.generate_content(
-        model="gemini-3.5-flash-lite",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            thinking_config=types.ThinkingConfig(thinking_level=thinking_level),
-        )
+    config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        thinking_config=types.ThinkingConfig(thinking_level=thinking_level),
     )
+
+    try:
+        response = client.models.generate_content(
+            model=PRIMARY_MODEL, contents=prompt, config=config
+        )
+    except errors.ServerError as e:
+        if e.code != 503:
+            raise
+        logger.warning(f"{PRIMARY_MODEL} 503 -> 대체 모델 {FALLBACK_MODEL} 호출")
+        response = client.models.generate_content(
+            model=FALLBACK_MODEL, contents=prompt, config=config
+        )
 
     result = json.loads(response.text)
 
