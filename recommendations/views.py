@@ -124,6 +124,14 @@ class SavedRecommendationView(APIView):
                                     "reason": "체지방 감소 목표에 적합한 성분입니다.",
                                     "fit_score": 95,
                                     "rank": 1,
+                                    "products": [
+                                        {
+                                            "id": 101,
+                                            "name": "뉴트리원 가르시니아",
+                                            "company": "뉴트리원",
+                                            "thumbnail": "https://s3.amazonaws.com/bucket/image1.jpg",
+                                        }
+                                    ],
                                 }
                             ],
                         },
@@ -167,6 +175,14 @@ class SavedRecommendationView(APIView):
                                         "reason": "체지방 감소 목표에 적합한 성분입니다.",
                                         "fit_score": 95,
                                         "rank": 1,
+                                        "products": [
+                                            {
+                                                "id": 101,
+                                                "name": "뉴트리원 가르시니아",
+                                                "company": "뉴트리원",
+                                                "thumbnail": "https://s3.amazonaws.com/bucket/image1.jpg",
+                                            }
+                                        ],
                                     }
                                 ],
                             }

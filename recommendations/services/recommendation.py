@@ -111,7 +111,7 @@ def _call_gemini(user_context: dict, ingredient_context: list, thinking_level: s
     return result["recommendations"]
 
 # 성분 ID -> 해당 성분을 포함한 제품 리스트 반환 (이미지 포함)
-def _get_products_by_ingredient(ingredient_id: int) -> list:
+def get_products_by_ingredient(ingredient_id: int) -> list:
     product_ids = (
         ProductIngredient.objects
         .filter(ingredient_id=ingredient_id)
@@ -153,7 +153,7 @@ def get_recommendations(survey: dict) -> list:
             logger.warning(f"Gemini가 DB에 없는 성분 추천: {rec['ingredient_name']} (id={rec['ingredient_id']})")
             continue
 
-        products = _get_products_by_ingredient(rec["ingredient_id"])
+        products = get_products_by_ingredient(rec["ingredient_id"])
 
         result.append({
             "ingredient_id": rec["ingredient_id"],

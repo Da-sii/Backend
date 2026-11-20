@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from products.models import Ingredient
 from recommendations.models import SavedRecommendation, SavedRecommendationItem
+from recommendations.services.recommendation import get_products_by_ingredient
 
 
 class SaveItemSerializer(serializers.Serializer):
@@ -52,10 +53,15 @@ class SavedItemSerializer(serializers.ModelSerializer):
 
     ingredient_id = serializers.IntegerField(source="ingredient.id", read_only=True)
     ingredient_name = serializers.CharField(source="ingredient.name", read_only=True)
+    # 제품은 저장하지 않고 조회 시점에 성분 기준으로 다시 조회
+    products = serializers.SerializerMethodField()
 
     class Meta:
         model = SavedRecommendationItem
-        fields = ["ingredient_id", "ingredient_name", "intro", "reason", "fit_score", "rank"]
+        fields = ["ingredient_id", "ingredient_name", "intro", "reason", "fit_score", "rank", "products"]
+
+    def get_products(self, obj):
+        return get_products_by_ingredient(obj.ingredient_id)
 
 class SavedRecommendationSerializer(serializers.ModelSerializer):
     """저장된 추천 조회용"""
