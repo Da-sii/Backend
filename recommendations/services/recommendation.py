@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 from products.models import Ingredient, ProductIngredient, Product
 
@@ -110,19 +111,66 @@ def _call_gemini(user_context: dict, ingredient_context: list, thinking_level: s
 
     return result["recommendations"]
 
+PRODUCT_LIMIT = 3
+
+# 함량 단위 -> mg 환산 배수 (CFU 등 개수 단위는 1로 두고 같은 성분 안에서만 비교)
+_UNIT_TO_MG = {"g": 1000, "mg": 1, "μg": 0.001, "µg": 0.001, "ug": 0.001, "mcg": 0.001}
+_KOREAN_MULTIPLIER = {"억": 10**8, "만": 10**4}
+# 예: "750mg", "1,000 mg", "15mg NE", "800μg DFE", "10억CFU", "5억 CFU"
+_AMOUNT_PATTERN = re.compile(r"^\s*([\d.,]+)\s*(억|만)?\s*([a-zA-Zμµ]*)")
+
+
+# 함량 문자열 -> 비교용 숫자 (파싱 불가 시 None)
+def _parse_amount(amount: str) -> float | None:
+    match = _AMOUNT_PATTERN.match(amount or "")
+    if not match:
+        return None
+
+    try:
+        value = float(match.group(1).replace(",", ""))
+    except ValueError:
+        return None
+
+    value *= _KOREAN_MULTIPLIER.get(match.group(2), 1)
+    value *= _UNIT_TO_MG.get(match.group(3).lower(), 1)
+
+    return value
+
+
 # 성분 ID -> 해당 성분을 포함한 제품 리스트 반환 (이미지 포함)
+# 정렬: 함량 높은 순 -> 같으면 누적 조회수 높은 순, 최대 PRODUCT_LIMIT개
+# 함량 파싱 불가 제품은 맨 뒤로
 def get_products_by_ingredient(ingredient_id: int) -> list:
-    product_ids = (
+    rows = (
         ProductIngredient.objects
         .filter(ingredient_id=ingredient_id)
-        .values_list("product_id", flat=True)
-        .distinct()
+        .values("product_id", "amount", "product__viewCount")
     )
 
-    products = Product.objects.filter(id__in=product_ids).prefetch_related("images")
+    # 한 제품에 같은 성분이 여러 행이면 가장 큰 함량 사용
+    candidates = {}
+    for row in rows:
+        amount = _parse_amount(row["amount"])
+        prev = candidates.get(row["product_id"])
+        if prev is None or (amount is not None and (prev[0] is None or amount > prev[0])):
+            candidates[row["product_id"]] = (amount, row["product__viewCount"])
+
+    top_ids = sorted(
+        candidates,
+        key=lambda pid: (
+            candidates[pid][0] is None,
+            -(candidates[pid][0] or 0),
+            -candidates[pid][1],
+            pid,  # 동점 시 순서 고정
+        ),
+    )[:PRODUCT_LIMIT]
+
+    products = Product.objects.filter(id__in=top_ids).prefetch_related("images")
+    products_by_id = {p.id: p for p in products}
 
     result = []
-    for p in products:
+    for pid in top_ids:
+        p = products_by_id[pid]
         images = [img.url for img in p.images.all()]
         result.append({
             "id": p.id,
